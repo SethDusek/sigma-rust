@@ -161,8 +161,9 @@ where
         .into_iter()
         .flat_map(|b| {
             b.tokens
-                .iter()
-                .map(|t| t.token_id.clone())
+                .into_iter()
+                .flatten()
+                .map(|t| t.token_id)
                 .collect::<Vec<TokenId>>()
         })
         .collect();
@@ -240,7 +241,9 @@ impl SigmaSerializable for Transaction {
         Ok(Transaction::new(
             inputs.try_into()?,
             data_inputs.try_into().ok(),
-            outputs.try_into()?,
+            outputs
+                .try_into()
+                .map_err(SigmaParsingError::BoundedVecOutOfBounds)?,
         )?)
     }
 }
@@ -319,7 +322,6 @@ impl TryFrom<json::transaction::TransactionJson> for Transaction {
 
 #[cfg(test)]
 pub mod tests {
-
     use std::convert::TryInto;
 
     use super::*;

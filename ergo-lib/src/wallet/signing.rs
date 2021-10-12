@@ -184,7 +184,7 @@ mod tests {
                 let tree = ErgoTree::try_from(Expr::Const(pk.into())).unwrap();
                 ErgoBox::new(BoxValue::SAFE_USER_MIN,
                              tree,
-                             vec![],
+                             None,
                              NonMandatoryRegisters::empty(),
                              0,
                              TxId::zero(),
