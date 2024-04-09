@@ -5,6 +5,7 @@ use crate::bigint256::BigInt256;
 use crate::chain::ergo_box::ErgoBox;
 use crate::chain::token::TokenId;
 use crate::mir::value::CollKind;
+use crate::reference::Ref;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializationError;
@@ -26,7 +27,7 @@ use sigma_util::AsVecU8;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::fmt::Formatter;
-use std::sync::Arc;
+use std::rc::Rc;
 
 mod constant_placeholder;
 
@@ -42,16 +43,16 @@ use thiserror::Error;
 
 #[derive(PartialEq, Eq, Clone)]
 /// Constant
-pub struct Constant {
+pub struct Constant<'ctx> {
     /// Constant type
     pub tpe: SType,
     /// Constant value
-    pub v: Literal,
+    pub v: Literal<'ctx>,
 }
 
 #[derive(PartialEq, Eq, Clone)]
 /// Possible values for `Constant`
-pub enum Literal {
+pub enum Literal<'ctx> {
     /// Unit
     Unit,
     /// Boolean
@@ -73,28 +74,28 @@ pub enum Literal {
     /// AVL tree
     AvlTree(Box<AvlTreeData>),
     /// Ergo box
-    CBox(Arc<ErgoBox>),
+    CBox(Ref<'ctx, ErgoBox>),
     /// Collection
-    Coll(CollKind<Literal>),
+    Coll(CollKind<Literal<'ctx>>),
     /// Option type
-    Opt(Box<Option<Literal>>),
+    Opt(Box<Option<Literal<'ctx>>>),
     /// Tuple (arbitrary type values)
-    Tup(TupleItems<Literal>),
+    Tup(TupleItems<Literal<'ctx>>),
 }
 
-impl std::fmt::Debug for Constant {
+impl std::fmt::Debug for Constant<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         format!("{:?}: {:?}", self.v, self.tpe).fmt(f)
     }
 }
 
-impl std::fmt::Display for Constant {
+impl std::fmt::Display for Constant<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.v.fmt(f)
     }
 }
 
-impl std::fmt::Debug for Literal {
+impl std::fmt::Debug for Literal<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(i8_bytes))) => {
@@ -118,7 +119,7 @@ impl std::fmt::Debug for Literal {
     }
 }
 
-impl std::fmt::Display for Literal {
+impl std::fmt::Display for Literal<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(i8_bytes))) => {
@@ -175,79 +176,79 @@ impl std::fmt::Display for Literal {
     }
 }
 
-impl From<()> for Literal {
-    fn from(_: ()) -> Literal {
+impl<'ctx> From<()> for Literal<'ctx> {
+    fn from(_: ()) -> Literal<'ctx> {
         Literal::Unit
     }
 }
 
-impl From<bool> for Literal {
-    fn from(v: bool) -> Literal {
+impl<'ctx> From<bool> for Literal<'ctx> {
+    fn from(v: bool) -> Literal<'ctx> {
         Literal::Boolean(v)
     }
 }
 
-impl From<i8> for Literal {
-    fn from(v: i8) -> Literal {
+impl<'ctx> From<i8> for Literal<'ctx> {
+    fn from(v: i8) -> Literal<'ctx> {
         Literal::Byte(v)
     }
 }
 
-impl From<i16> for Literal {
-    fn from(v: i16) -> Literal {
+impl<'ctx> From<i16> for Literal<'ctx> {
+    fn from(v: i16) -> Literal<'ctx> {
         Literal::Short(v)
     }
 }
 
-impl From<i32> for Literal {
-    fn from(v: i32) -> Literal {
+impl<'ctx> From<i32> for Literal<'ctx> {
+    fn from(v: i32) -> Literal<'ctx> {
         Literal::Int(v)
     }
 }
 
-impl From<i64> for Literal {
-    fn from(v: i64) -> Literal {
+impl<'ctx> From<i64> for Literal<'ctx> {
+    fn from(v: i64) -> Literal<'ctx> {
         Literal::Long(v)
     }
 }
 
-impl From<BigInt256> for Literal {
-    fn from(v: BigInt256) -> Literal {
+impl<'ctx> From<BigInt256> for Literal<'ctx> {
+    fn from(v: BigInt256) -> Literal<'ctx> {
         Literal::BigInt(v)
     }
 }
 
-impl From<SigmaProp> for Literal {
-    fn from(v: SigmaProp) -> Literal {
+impl<'ctx> From<SigmaProp> for Literal<'ctx> {
+    fn from(v: SigmaProp) -> Literal<'ctx> {
         Literal::SigmaProp(Box::new(v))
     }
 }
 
-impl From<EcPoint> for Literal {
-    fn from(v: EcPoint) -> Literal {
+impl<'ctx> From<EcPoint> for Literal<'ctx> {
+    fn from(v: EcPoint) -> Literal<'ctx> {
         Literal::GroupElement(Box::new(v))
     }
 }
 
-impl From<Arc<ErgoBox>> for Literal {
-    fn from(b: Arc<ErgoBox>) -> Self {
+impl<'ctx> From<Ref<'ctx, ErgoBox>> for Literal<'ctx> {
+    fn from(b: Ref<'ctx, ErgoBox>) -> Self {
         Literal::CBox(b)
     }
 }
 
-impl From<ErgoBox> for Literal {
+impl<'ctx> From<ErgoBox> for Literal<'ctx> {
     fn from(b: ErgoBox) -> Self {
-        Literal::CBox(Arc::new(b))
+        Literal::CBox(Rc::new(b).into())
     }
 }
 
-impl From<Vec<u8>> for Literal {
+impl<'ctx> From<Vec<u8>> for Literal<'ctx> {
     fn from(v: Vec<u8>) -> Self {
         Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(v.as_vec_i8())))
     }
 }
 
-impl From<Digest32> for Literal {
+impl<'ctx> From<Digest32> for Literal<'ctx> {
     fn from(v: Digest32) -> Self {
         let bytes: Vec<u8> = v.into();
         Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(
@@ -256,19 +257,19 @@ impl From<Digest32> for Literal {
     }
 }
 
-impl From<TokenId> for Literal {
+impl<'ctx> From<TokenId> for Literal<'ctx> {
     fn from(v: TokenId) -> Self {
         Digest32::from(v).into()
     }
 }
 
-impl From<Vec<i8>> for Literal {
-    fn from(v: Vec<i8>) -> Literal {
+impl<'ctx> From<Vec<i8>> for Literal<'ctx> {
+    fn from(v: Vec<i8>) -> Self {
         Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(v)))
     }
 }
 
-impl<T: LiftIntoSType + StoreWrapped + Into<Literal>> From<Vec<T>> for Literal {
+impl<'ctx, T: LiftIntoSType + StoreWrapped + Into<Literal<'ctx>>> From<Vec<T>> for Literal<'ctx> {
     fn from(v: Vec<T>) -> Self {
         Literal::Coll(CollKind::WrappedColl {
             elem_tpe: T::stype(),
@@ -277,16 +278,16 @@ impl<T: LiftIntoSType + StoreWrapped + Into<Literal>> From<Vec<T>> for Literal {
     }
 }
 
-impl<T: LiftIntoSType + Into<Literal>> From<Option<T>> for Literal {
+impl<'ctx, T: LiftIntoSType + Into<Literal<'ctx>>> From<Option<T>> for Literal<'ctx> {
     fn from(opt: Option<T>) -> Self {
         Literal::Opt(Box::new(opt.map(|e| e.into())))
     }
 }
 
-impl TryFrom<Value> for Constant {
+impl<'ctx> TryFrom<Value<'ctx>> for Constant<'ctx> {
     type Error = String;
     #[allow(clippy::unwrap_used)]
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
+    fn try_from(value: Value<'ctx>) -> Result<Self, Self::Error> {
         match value {
             Value::Boolean(b) => Ok(Constant::from(b)),
             Value::Byte(b) => Ok(Constant::from(b)),
@@ -361,8 +362,8 @@ impl TryFrom<Value> for Constant {
     }
 }
 
-impl From<()> for Constant {
-    fn from(_: ()) -> Constant {
+impl<'ctx> From<()> for Constant<'ctx> {
+    fn from(_: ()) -> Self {
         Constant {
             tpe: SType::SUnit,
             v: Literal::Unit,
@@ -370,8 +371,8 @@ impl From<()> for Constant {
     }
 }
 
-impl From<bool> for Constant {
-    fn from(v: bool) -> Constant {
+impl<'ctx> From<bool> for Constant<'ctx> {
+    fn from(v: bool) -> Self {
         Constant {
             tpe: bool::stype(),
             v: v.into(),
@@ -379,8 +380,8 @@ impl From<bool> for Constant {
     }
 }
 
-impl From<i8> for Constant {
-    fn from(v: i8) -> Constant {
+impl<'ctx> From<i8> for Constant<'ctx> {
+    fn from(v: i8) -> Self {
         Constant {
             tpe: i8::stype(),
             v: v.into(),
@@ -388,8 +389,8 @@ impl From<i8> for Constant {
     }
 }
 
-impl From<i16> for Constant {
-    fn from(v: i16) -> Constant {
+impl<'ctx> From<i16> for Constant<'ctx> {
+    fn from(v: i16) -> Self {
         Constant {
             tpe: i16::stype(),
             v: v.into(),
@@ -397,8 +398,8 @@ impl From<i16> for Constant {
     }
 }
 
-impl From<i32> for Constant {
-    fn from(v: i32) -> Constant {
+impl<'ctx> From<i32> for Constant<'ctx> {
+    fn from(v: i32) -> Self {
         Constant {
             tpe: i32::stype(),
             v: v.into(),
@@ -406,8 +407,8 @@ impl From<i32> for Constant {
     }
 }
 
-impl From<i64> for Constant {
-    fn from(v: i64) -> Constant {
+impl<'ctx> From<i64> for Constant<'ctx> {
+    fn from(v: i64) -> Self {
         Constant {
             tpe: i64::stype(),
             v: v.into(),
@@ -415,8 +416,8 @@ impl From<i64> for Constant {
     }
 }
 
-impl From<SigmaProp> for Constant {
-    fn from(v: SigmaProp) -> Constant {
+impl<'ctx> From<SigmaProp> for Constant<'ctx> {
+    fn from(v: SigmaProp) -> Self {
         Constant {
             tpe: SType::SSigmaProp,
             v: v.into(),
@@ -424,8 +425,8 @@ impl From<SigmaProp> for Constant {
     }
 }
 
-impl From<EcPoint> for Constant {
-    fn from(v: EcPoint) -> Constant {
+impl<'ctx> From<EcPoint> for Constant<'ctx> {
+    fn from(v: EcPoint) -> Constant<'ctx> {
         Constant {
             tpe: SType::SGroupElement,
             v: v.into(),
@@ -433,25 +434,34 @@ impl From<EcPoint> for Constant {
     }
 }
 
-impl From<Arc<ErgoBox>> for Constant {
-    fn from(b: Arc<ErgoBox>) -> Self {
+impl<'ctx> From<&'ctx ErgoBox> for Constant<'ctx> {
+    fn from(b: &'ctx ErgoBox) -> Self {
         Constant {
             tpe: SType::SBox,
-            v: b.into(),
+            v: Literal::CBox(Ref::Borrowed(b)),
         }
     }
 }
 
-impl From<ErgoBox> for Constant {
+impl<'ctx> From<ErgoBox> for Constant<'ctx> {
     fn from(b: ErgoBox) -> Self {
         Constant {
             tpe: SType::SBox,
-            v: b.into(),
+            v: Literal::CBox(Rc::new(b).into()),
         }
     }
 }
 
-impl From<Vec<u8>> for Constant {
+impl<'ctx> From<Ref<'ctx, ErgoBox>> for Constant<'ctx> {
+    fn from(b: Ref<'ctx, ErgoBox>) -> Self {
+        Constant {
+            tpe: SType::SBox,
+            v: Literal::CBox(b),
+        }
+    }
+}
+
+impl<'ctx> From<Vec<u8>> for Constant<'ctx> {
     fn from(v: Vec<u8>) -> Self {
         Constant {
             tpe: SType::SColl(Box::new(SType::SByte)),
@@ -460,7 +470,7 @@ impl From<Vec<u8>> for Constant {
     }
 }
 
-impl From<Digest32> for Constant {
+impl<'ctx> From<Digest32> for Constant<'ctx> {
     fn from(v: Digest32) -> Self {
         Constant {
             tpe: SType::SColl(Box::new(SType::SByte)),
@@ -469,14 +479,14 @@ impl From<Digest32> for Constant {
     }
 }
 
-impl From<TokenId> for Constant {
+impl<'ctx> From<TokenId> for Constant<'ctx> {
     fn from(v: TokenId) -> Self {
         Digest32::from(v).into()
     }
 }
 
-impl From<Vec<i8>> for Constant {
-    fn from(v: Vec<i8>) -> Constant {
+impl<'ctx> From<Vec<i8>> for Constant<'ctx> {
+    fn from(v: Vec<i8>) -> Self {
         Constant {
             tpe: SType::SColl(Box::new(SType::SByte)),
             v: v.into(),
@@ -484,7 +494,7 @@ impl From<Vec<i8>> for Constant {
     }
 }
 
-impl<T: LiftIntoSType + StoreWrapped + Into<Constant>> From<Vec<T>> for Constant {
+impl<'ctx, T: LiftIntoSType + StoreWrapped + Into<Constant<'ctx>>> From<Vec<T>> for Constant<'ctx> {
     fn from(v: Vec<T>) -> Self {
         Constant {
             tpe: Vec::<T>::stype(),
@@ -496,7 +506,7 @@ impl<T: LiftIntoSType + StoreWrapped + Into<Constant>> From<Vec<T>> for Constant
     }
 }
 
-impl<T: LiftIntoSType + Into<Constant>> From<Option<T>> for Constant {
+impl<'ctx, T: LiftIntoSType + Into<Constant<'ctx>>> From<Option<T>> for Constant<'ctx> {
     fn from(opt: Option<T>) -> Self {
         Constant {
             tpe: SType::SOption(Box::new(T::stype())),
@@ -505,7 +515,7 @@ impl<T: LiftIntoSType + Into<Constant>> From<Option<T>> for Constant {
     }
 }
 
-impl From<ProveDlog> for Constant {
+impl<'ctx> From<ProveDlog> for Constant<'ctx> {
     fn from(v: ProveDlog) -> Self {
         Constant::from(SigmaProp::from(SigmaBoolean::from(
             SigmaProofOfKnowledgeTree::from(v),
@@ -513,7 +523,7 @@ impl From<ProveDlog> for Constant {
     }
 }
 
-impl From<ProveDhTuple> for Constant {
+impl<'ctx> From<ProveDhTuple> for Constant<'ctx> {
     fn from(dht: ProveDhTuple) -> Self {
         Constant::from(SigmaProp::from(SigmaBoolean::from(
             SigmaProofOfKnowledgeTree::from(dht),
@@ -521,13 +531,13 @@ impl From<ProveDhTuple> for Constant {
     }
 }
 
-impl From<SigmaBoolean> for Constant {
+impl<'ctx> From<SigmaBoolean> for Constant<'ctx> {
     fn from(sb: SigmaBoolean) -> Self {
         Constant::from(SigmaProp::from(sb))
     }
 }
 
-impl From<BigInt256> for Constant {
+impl<'ctx> From<BigInt256> for Constant<'ctx> {
     fn from(b: BigInt256) -> Self {
         Constant {
             tpe: SType::SBigInt,
@@ -536,7 +546,7 @@ impl From<BigInt256> for Constant {
     }
 }
 
-impl From<AvlTreeData> for Constant {
+impl<'ctx> From<AvlTreeData> for Constant<'ctx> {
     fn from(a: AvlTreeData) -> Self {
         Constant {
             tpe: SType::SAvlTree,
@@ -545,7 +555,7 @@ impl From<AvlTreeData> for Constant {
     }
 }
 
-impl From<AvlTreeFlags> for Constant {
+impl<'ctx> From<AvlTreeFlags> for Constant<'ctx> {
     fn from(a: AvlTreeFlags) -> Self {
         Constant {
             tpe: SType::SByte,
@@ -554,7 +564,7 @@ impl From<AvlTreeFlags> for Constant {
     }
 }
 
-impl From<ADDigest> for Constant {
+impl<'ctx> From<ADDigest> for Constant<'ctx> {
     fn from(a: ADDigest) -> Self {
         Constant {
             tpe: SType::SColl(Box::new(SType::SByte)),
@@ -566,8 +576,8 @@ impl From<ADDigest> for Constant {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::from_over_into)]
 #[impl_for_tuples(2, 4)]
-impl Into<Constant> for Tuple {
-    fn into(self) -> Constant {
+impl<'ctx> Into<Constant<'ctx>> for Tuple {
+    fn into(self) -> Constant<'ctx> {
         let constants: Vec<Constant> = [for_tuples!(  #( Tuple.into() ),* )].to_vec();
         let (types, values): (Vec<SType>, Vec<Literal>) =
             constants.into_iter().map(|c| (c.tpe, c.v)).unzip();
@@ -602,13 +612,13 @@ pub trait TryExtractFrom<T>: Sized {
     fn try_extract_from(v: T) -> Result<Self, TryExtractFromError>;
 }
 
-impl<T: TryExtractFrom<Literal>> TryExtractFrom<Constant> for T {
+impl<'ctx, T: TryExtractFrom<Literal<'ctx>>> TryExtractFrom<Constant<'ctx>> for T {
     fn try_extract_from(cv: Constant) -> Result<Self, TryExtractFromError> {
         T::try_extract_from(cv.v)
     }
 }
 
-impl TryExtractFrom<Literal> for () {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for () {
     fn try_extract_from(cv: Literal) -> Result<(), TryExtractFromError> {
         match cv {
             Literal::Unit => Ok(()),
@@ -620,7 +630,7 @@ impl TryExtractFrom<Literal> for () {
     }
 }
 
-impl TryExtractFrom<Literal> for bool {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for bool {
     fn try_extract_from(cv: Literal) -> Result<bool, TryExtractFromError> {
         match cv {
             Literal::Boolean(v) => Ok(v),
@@ -632,7 +642,7 @@ impl TryExtractFrom<Literal> for bool {
     }
 }
 
-impl TryExtractFrom<Literal> for i8 {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for i8 {
     fn try_extract_from(cv: Literal) -> Result<i8, TryExtractFromError> {
         match cv {
             Literal::Byte(v) => Ok(v),
@@ -641,7 +651,7 @@ impl TryExtractFrom<Literal> for i8 {
     }
 }
 
-impl TryExtractFrom<Literal> for i16 {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for i16 {
     fn try_extract_from(cv: Literal) -> Result<i16, TryExtractFromError> {
         match cv {
             Literal::Short(v) => Ok(v),
@@ -650,7 +660,7 @@ impl TryExtractFrom<Literal> for i16 {
     }
 }
 
-impl TryExtractFrom<Literal> for i32 {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for i32 {
     fn try_extract_from(cv: Literal) -> Result<i32, TryExtractFromError> {
         match cv {
             Literal::Int(v) => Ok(v),
@@ -659,7 +669,7 @@ impl TryExtractFrom<Literal> for i32 {
     }
 }
 
-impl TryExtractFrom<Literal> for i64 {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for i64 {
     fn try_extract_from(cv: Literal) -> Result<i64, TryExtractFromError> {
         match cv {
             Literal::Long(v) => Ok(v),
@@ -668,7 +678,7 @@ impl TryExtractFrom<Literal> for i64 {
     }
 }
 
-impl TryExtractFrom<Literal> for EcPoint {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for EcPoint {
     fn try_extract_from(cv: Literal) -> Result<EcPoint, TryExtractFromError> {
         match cv {
             Literal::GroupElement(v) => Ok(*v),
@@ -680,7 +690,7 @@ impl TryExtractFrom<Literal> for EcPoint {
     }
 }
 
-impl TryExtractFrom<Literal> for SigmaProp {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for SigmaProp {
     fn try_extract_from(cv: Literal) -> Result<SigmaProp, TryExtractFromError> {
         match cv {
             Literal::SigmaProp(v) => Ok(*v),
@@ -692,10 +702,10 @@ impl TryExtractFrom<Literal> for SigmaProp {
     }
 }
 
-impl TryExtractFrom<Literal> for Arc<ErgoBox> {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for &'ctx ErgoBox {
     fn try_extract_from(c: Literal) -> Result<Self, TryExtractFromError> {
         match c {
-            Literal::CBox(b) => Ok(b),
+            Literal::CBox(b) => Ok(&*b),
             _ => Err(TryExtractFromError(format!(
                 "expected ErgoBox, found {:?}",
                 c
@@ -704,10 +714,10 @@ impl TryExtractFrom<Literal> for Arc<ErgoBox> {
     }
 }
 
-impl TryExtractFrom<Literal> for ErgoBox {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for ErgoBox {
     fn try_extract_from(c: Literal) -> Result<Self, TryExtractFromError> {
         match c {
-            Literal::CBox(b) => Ok((*b).clone()),
+            Literal::CBox(b) => Ok((&*b).clone()),
             _ => Err(TryExtractFromError(format!(
                 "expected ErgoBox, found {:?}",
                 c
@@ -716,7 +726,9 @@ impl TryExtractFrom<Literal> for ErgoBox {
     }
 }
 
-impl<T: TryExtractFrom<Literal> + StoreWrapped> TryExtractFrom<Literal> for Vec<T> {
+impl<'ctx, T: TryExtractFrom<Literal<'ctx>> + StoreWrapped> TryExtractFrom<Literal<'ctx>>
+    for Vec<T>
+{
     fn try_extract_from(c: Literal) -> Result<Self, TryExtractFromError> {
         match c {
             Literal::Coll(coll) => match coll {
@@ -739,7 +751,7 @@ impl<T: TryExtractFrom<Literal> + StoreWrapped> TryExtractFrom<Literal> for Vec<
     }
 }
 
-impl TryExtractFrom<Literal> for Vec<i8> {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for Vec<i8> {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::Coll(v) => match v {
@@ -759,14 +771,14 @@ impl TryExtractFrom<Literal> for Vec<i8> {
     }
 }
 
-impl TryExtractFrom<Literal> for Vec<u8> {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for Vec<u8> {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         use sigma_util::FromVecI8;
         Vec::<i8>::try_extract_from(v).map(Vec::<u8>::from_vec_i8)
     }
 }
 
-impl TryExtractFrom<Literal> for Digest32 {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for Digest32 {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         use sigma_util::FromVecI8;
         let bytes = Vec::<i8>::try_extract_from(v).map(Vec::<u8>::from_vec_i8)?;
@@ -776,19 +788,19 @@ impl TryExtractFrom<Literal> for Digest32 {
     }
 }
 
-impl TryExtractFrom<Literal> for TokenId {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for TokenId {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         Digest32::try_extract_from(v).map(Into::into)
     }
 }
 
-impl TryExtractFrom<Literal> for Literal {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for Literal<'ctx> {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         Ok(v)
     }
 }
 
-impl TryExtractFrom<Literal> for BigInt256 {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for BigInt256 {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::BigInt(bi) => Ok(bi),
@@ -801,7 +813,7 @@ impl TryExtractFrom<Literal> for BigInt256 {
     }
 }
 
-impl TryExtractFrom<Literal> for AvlTreeData {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for AvlTreeData {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::AvlTree(a) => Ok(*a),
@@ -814,7 +826,7 @@ impl TryExtractFrom<Literal> for AvlTreeData {
     }
 }
 
-impl<T: TryExtractFrom<Literal>> TryExtractFrom<Literal> for Option<T> {
+impl<'ctx, T: TryExtractFrom<Literal<'ctx>>> TryExtractFrom<Literal<'ctx>> for Option<T> {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::Opt(opt) => opt.map(T::try_extract_from).transpose(),
@@ -827,7 +839,7 @@ impl<T: TryExtractFrom<Literal>> TryExtractFrom<Literal> for Option<T> {
 }
 
 #[impl_for_tuples(2, 4)]
-impl TryExtractFrom<Literal> for Tuple {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for Tuple {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::Tup(items) => {
@@ -849,7 +861,7 @@ impl TryExtractFrom<Literal> for Tuple {
     }
 }
 
-impl TryFrom<Literal> for ProveDlog {
+impl<'ctx> TryFrom<Literal<'ctx>> for ProveDlog {
     type Error = TryExtractFromError;
     fn try_from(cv: Literal) -> Result<Self, Self::Error> {
         match cv {
@@ -870,21 +882,21 @@ impl TryFrom<Literal> for ProveDlog {
     }
 }
 
-impl Base16Str for &Constant {
+impl<'ctx> Base16Str for &Constant<'ctx> {
     fn base16_str(&self) -> Result<String, SigmaSerializationError> {
         self.sigma_serialize_bytes()
             .map(|bytes| base16::encode_lower(&bytes))
     }
 }
 
-impl Base16Str for Constant {
+impl<'ctx> Base16Str for Constant<'ctx> {
     fn base16_str(&self) -> Result<String, SigmaSerializationError> {
         self.sigma_serialize_bytes()
             .map(|bytes| base16::encode_lower(&bytes))
     }
 }
 
-impl TryFrom<Base16DecodedBytes> for Constant {
+impl<'ctx> TryFrom<Base16DecodedBytes> for Constant<'ctx> {
     type Error = SigmaParsingError;
 
     fn try_from(value: Base16DecodedBytes) -> Result<Self, Self::Error> {
@@ -909,7 +921,7 @@ pub(crate) mod arbitrary {
     use derive_more::From;
     use derive_more::TryInto;
 
-    fn primitive_type_value() -> BoxedStrategy<Constant> {
+    fn primitive_type_value() -> BoxedStrategy<Constant<'static>> {
         prop_oneof![
             any::<bool>().prop_map_into(),
             any::<i8>().prop_map_into(),
@@ -948,7 +960,7 @@ pub(crate) mod arbitrary {
         }
     }
 
-    fn const_with_type(tpe: SType) -> BoxedStrategy<Constant> {
+    fn const_with_type(tpe: SType) -> BoxedStrategy<Constant<'static>> {
         match tpe {
             SType::SAny => any::<Constant>(),
             SType::SBoolean => any::<bool>().prop_map_into().boxed(),
@@ -999,7 +1011,7 @@ pub(crate) mod arbitrary {
         Exact(SType),
     }
 
-    impl Arbitrary for Constant {
+    impl Arbitrary for Constant<'static> {
         type Parameters = ArbConstantParams;
         type Strategy = BoxedStrategy<Self>;
 
@@ -1071,7 +1083,12 @@ pub mod tests {
 
     fn test_constant_roundtrip<T>(v: T)
     where
-        T: TryExtractInto<T> + TryExtractFrom<Literal> + Into<Constant> + fmt::Debug + Eq + Clone,
+        T: TryExtractInto<T>
+            + TryExtractFrom<Literal<'static>>
+            + Into<Constant<'static>>
+            + fmt::Debug
+            + Eq
+            + Clone,
     {
         let constant: Constant = v.clone().into();
         let v_extracted: T = constant.try_extract_into::<T>().unwrap();

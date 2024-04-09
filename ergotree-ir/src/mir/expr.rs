@@ -89,7 +89,7 @@ pub enum Expr {
     /// Append - Concatenation of two collections
     Append(Spanned<Append>),
     /// Constant value
-    Const(Constant),
+    Const(Constant<'static>),
     /// Placeholder for a constant
     ConstPlaceholder(ConstantPlaceholder),
     /// Substitute constants in serialized ergo tree
@@ -340,7 +340,7 @@ impl Expr {
     }
 }
 
-impl<T: Into<Literal> + LiftIntoSType> From<T> for Expr {
+impl<T: Into<Literal<'static>> + LiftIntoSType> From<T> for Expr {
     fn from(t: T) -> Self {
         Expr::Const(Constant {
             tpe: T::stype(),

@@ -250,13 +250,13 @@ pub fn generate_commitments(
         let input_box = tx_context
             .get_input_box(&input.box_id)
             .ok_or(TransactionContextError::InputBoxNotFound(i))?;
-        let ctx = Rc::new(make_context(state_context, &tx_context, i)?);
+        let ctx = Rc::new(make_context(state_context, &tx_context, i)?); // TODO: Remove Rc, use Context::with_self_box_index
         let tree = input_box.ergo_tree.clone();
         let exp = tree
             .proposition()
             .map_err(ProverError::ErgoTreeError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
-        let reduction_result = reduce_to_crypto(&exp, &Env::empty(), ctx)
+        let reduction_result = reduce_to_crypto(&exp, &Env::empty(), &*ctx)
             .map_err(ProverError::EvalError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
 
@@ -278,13 +278,13 @@ pub fn extract_hints(
         let input_box = tx_ctx
             .get_input_box(&input.box_id)
             .ok_or(TransactionContextError::InputBoxNotFound(i))?;
-        let ctx = Rc::new(make_context(state_context, tx_ctx, i)?);
+        let ctx = Rc::new(make_context(state_context, tx_ctx, i)?); // TODO: remove Rc, use with_self_box
         let tree = input_box.ergo_tree.clone();
         let exp = tree
             .proposition()
             .map_err(ProverError::ErgoTreeError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
-        let reduction_result = reduce_to_crypto(&exp, &Env::empty(), ctx)
+        let reduction_result = reduce_to_crypto(&exp, &Env::empty(), &*ctx)
             .map_err(ProverError::EvalError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
         let sigma_tree = reduction_result.sigma_prop;

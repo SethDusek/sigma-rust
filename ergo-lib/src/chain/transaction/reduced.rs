@@ -70,21 +70,21 @@ pub fn reduce_tx(
     state_context: &ErgoStateContext,
 ) -> Result<ReducedTransaction, TxSigningError> {
     let tx = &tx_context.spending_tx;
+    let ctx = make_context(state_context, &tx_context, 0)?;
     let reduced_inputs = tx
         .inputs
         .clone()
         .enumerated()
-        .try_mapped::<_, _, TxSigningError>(|(idx, input)| {
+        .try_mapped::<_, _, TxSigningError>(|(idx, input)| { // TODO: use Context::with_self_box_index
             let input_box = tx_context
                 .get_input_box(&input.box_id)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))?;
-            let ctx = Rc::new(make_context(state_context, &tx_context, idx)?);
             let expr = input_box
                 .ergo_tree
                 .proposition()
                 .map_err(ProverError::ErgoTreeError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
-            let reduction_result = reduce_to_crypto(&expr, &Env::empty(), ctx)
+            let reduction_result = reduce_to_crypto(&expr, &Env::empty(), &ctx)
                 .map_err(ProverError::EvalError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
             Ok(ReducedInput {

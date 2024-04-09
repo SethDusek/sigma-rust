@@ -113,11 +113,13 @@ pub fn sign_transaction(
 ) -> Result<Transaction, TxSigningError> {
     let tx = tx_context.spending_tx.clone();
     let message_to_sign = tx.bytes_to_sign()?;
+    let ctx = make_context(state_context, &tx_context, 0)?;
     let signed_inputs = tx.inputs.enumerated().try_mapped(|(idx, _)| {
         sign_tx_input(
             prover,
             &tx_context,
             state_context,
+            &ctx, // TODO: use with_self_box_index
             tx_hints,
             idx,
             message_to_sign.as_slice(),
@@ -185,6 +187,7 @@ pub fn sign_tx_input(
     prover: &dyn Prover,
     tx_context: &TransactionContext<UnsignedTransaction>,
     state_context: &ErgoStateContext,
+    context: &Context,
     tx_hints: Option<&TransactionHintsBag>,
     input_idx: usize,
     message_to_sign: &[u8],
@@ -197,7 +200,6 @@ pub fn sign_tx_input(
     let input_box = tx_context
         .get_input_box(&unsigned_input.box_id)
         .ok_or(TransactionContextError::InputBoxNotFound(input_idx))?;
-    let ctx = Rc::new(make_context(state_context, tx_context, input_idx)?);
     let mut hints_bag = HintsBag::empty();
     if let Some(bag) = tx_hints {
         hints_bag = bag.all_hints_for_input(input_idx);
@@ -206,7 +208,7 @@ pub fn sign_tx_input(
         .prove(
             &input_box.ergo_tree,
             &Env::empty(),
-            ctx,
+            context,
             message_to_sign,
             &hints_bag,
         )

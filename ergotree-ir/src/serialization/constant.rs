@@ -7,7 +7,7 @@ use crate::serialization::{
 };
 use crate::types::stype::SType;
 
-impl Constant {
+impl<'ctx> Constant<'ctx> {
     /// Parse constant from byte stream. This function should be used instead of
     /// `sigma_parse` when type code is already read for look-ahead
     pub fn parse_with_type_code<R: SigmaByteRead>(
@@ -19,7 +19,7 @@ impl Constant {
         Ok(Constant { tpe, v })
     }
 }
-impl SigmaSerializable for Constant {
+impl SigmaSerializable for Constant<'_> {
     fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> SigmaSerializeResult {
         self.tpe.sigma_serialize(w)?;
         DataSerializer::sigma_serialize(&self.v, w)

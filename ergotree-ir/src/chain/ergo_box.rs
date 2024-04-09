@@ -66,7 +66,7 @@ pub struct ErgoBox {
     /// secondary tokens the box contains
     pub tokens: Option<BoxTokens>,
     ///  additional registers the box can carry over
-    pub additional_registers: NonMandatoryRegisters,
+    pub additional_registers: NonMandatoryRegisters<'static>,
     /// height when a transaction containing the box was created.
     /// This height is declared by user and should not exceed height of the block,
     /// containing the transaction with this box.
@@ -238,7 +238,7 @@ pub struct ErgoBoxCandidate {
     /// secondary tokens the box contains
     pub tokens: Option<BoxTokens>,
     ///  additional registers the box can carry over
-    pub additional_registers: NonMandatoryRegisters,
+    pub additional_registers: NonMandatoryRegisters<'static>,
     /// height when a transaction containing the box was created.
     /// This height is declared by user and should not exceed height of the block,
     /// containing the transaction with this box.
@@ -401,7 +401,7 @@ pub mod arbitrary {
         pub ergo_tree: BoxedStrategy<ErgoTree>,
         pub tokens: BoxedStrategy<Option<BoxTokens>>,
         pub creation_height: BoxedStrategy<u32>,
-        pub registers: BoxedStrategy<NonMandatoryRegisters>,
+        pub registers: BoxedStrategy<NonMandatoryRegisters<'static>>,
     }
     impl std::default::Default for ArbBoxParameters {
         fn default() -> Self {

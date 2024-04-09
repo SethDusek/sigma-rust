@@ -2,7 +2,6 @@
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaProp;
 use std::fmt::Display;
-use std::rc::Rc;
 
 use ergotree_ir::mir::expr::Expr;
 use ergotree_ir::mir::value::Value;
@@ -129,10 +128,10 @@ pub struct ReductionResult {
 pub fn reduce_to_crypto(
     expr: &Expr,
     env: &Env,
-    ctx: Rc<Context>,
+    ctx: &Context,
 ) -> Result<ReductionResult, EvalError> {
-    let ctx_clone = ctx.clone();
-    fn inner(expr: &Expr, env: &Env, ctx: Rc<Context>) -> Result<ReductionResult, EvalError> {
+    let ctx_clone = ctx;
+    fn inner(expr: &Expr, env: &Env, ctx: &Context) -> Result<ReductionResult, EvalError> {
         let cost_accum = CostAccumulator::new(0, None);
         let mut ectx = EvalContext::new(ctx, cost_accum);
         let mut env_mut = env.clone();
@@ -195,13 +194,13 @@ pub fn extract_sigma_boolean(expr: &Expr) -> Result<SigmaBoolean, EvalError> {
 }
 
 #[derive(Debug)]
-pub(crate) struct EvalContext {
-    pub(crate) ctx: Rc<Context>,
+pub(crate) struct EvalContext<'a> {
+    pub(crate) ctx: &'a Context,
     pub(crate) cost_accum: CostAccumulator,
 }
 
-impl EvalContext {
-    pub fn new(ctx: Rc<Context>, cost_accum: CostAccumulator) -> Self {
+impl<'a> EvalContext<'a>{
+    pub fn new(ctx: &'a Context, cost_accum: CostAccumulator) -> Self {
         EvalContext { ctx, cost_accum }
     }
 }

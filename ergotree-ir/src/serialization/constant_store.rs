@@ -4,7 +4,7 @@ use crate::mir::constant::{Constant, ConstantPlaceholder};
 
 /// Storage for constants used in ErgoTree constant segregation
 pub struct ConstantStore {
-    constants: Vec<Constant>,
+    constants: Vec<Constant<'static>>,
 }
 
 impl ConstantStore {

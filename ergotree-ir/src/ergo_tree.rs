@@ -29,7 +29,7 @@ pub use tree_header::*;
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ParsedErgoTree {
     header: ErgoTreeHeader,
-    constants: Vec<Constant>,
+    constants: Vec<Constant<'static>>,
     root: Expr,
 }
 

@@ -27,7 +27,7 @@ use gf2_192::gf2_192poly::Gf2_192Poly;
 use gf2_192::gf2_192poly::Gf2_192PolyError;
 use gf2_192::Gf2_192Error;
 use std::convert::TryInto;
-use std::rc::Rc;
+
 
 pub use context_extension::*;
 use ergotree_ir::ergo_tree::ErgoTree;
@@ -142,7 +142,7 @@ pub trait Prover {
         &self,
         tree: &ErgoTree,
         env: &Env,
-        ctx: Rc<Context>,
+        ctx: &Context,
         message: &[u8],
         hints_bag: &HintsBag,
     ) -> Result<ProverResult, ProverError> {

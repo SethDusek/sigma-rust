@@ -164,13 +164,14 @@ impl Wallet {
     ) -> Result<Input, WalletError> {
         let tx = tx_context.spending_tx.clone();
         let message_to_sign = tx.bytes_to_sign().map_err(TxSigningError::from)?;
-        Ok(sign_tx_input(
-            self.prover.as_ref(),
-            &tx_context,
-            state_context,
-            tx_hints,
-            input_idx,
-            message_to_sign.as_slice(),
-        )?)
+        todo!()
+        // Ok(sign_tx_input(
+        //     self.prover.as_ref(),
+        //     &tx_context,
+        //     state_context,
+        //     tx_hints,
+        //     input_idx,
+        //     message_to_sign.as_slice(),
+        // )?)
     }
 }

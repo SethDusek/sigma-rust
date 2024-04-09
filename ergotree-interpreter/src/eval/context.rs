@@ -10,17 +10,17 @@ pub type TxIoVec<T> = BoundedVec<T, 1, { i16::MAX as usize }>;
 
 /// Interpreter's context (blockchain state)
 #[derive(Debug)]
-pub struct Context {
+pub struct Context<'ctx> {
     /// Current height
     pub height: u32,
     /// Box that contains the script we're evaluating (from spending transaction inputs)
-    pub self_box: Arc<ErgoBox>,
+    pub self_box: &'ctx ErgoBox,
     /// Spending transaction outputs
-    pub outputs: Vec<Arc<ErgoBox>>,
+    pub outputs: &'ctx [ErgoBox],
     /// Spending transaction data inputs
-    pub data_inputs: Option<TxIoVec<Arc<ErgoBox>>>,
+    pub data_inputs: Option<&'ctx [ErgoBox]>,
     /// Spending transaction inputs
-    pub inputs: TxIoVec<Arc<ErgoBox>>,
+    pub inputs: &'ctx [ErgoBox],
     /// Pre header of current block
     pub pre_header: PreHeader,
     /// Fixed number of last block headers in descending order (first header is the newest one)

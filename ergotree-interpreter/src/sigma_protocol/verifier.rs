@@ -69,7 +69,7 @@ pub trait Verifier {
         message: &[u8],
     ) -> Result<VerificationResult, VerifierError> {
         let expr = tree.proposition()?;
-        let reduction_result = reduce_to_crypto(&expr, env, ctx)?;
+        let reduction_result = reduce_to_crypto(&expr, env, &*ctx)?;
         let res: bool = match reduction_result.sigma_prop {
             SigmaBoolean::TrivialProp(b) => b,
             sb => {

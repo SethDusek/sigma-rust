@@ -2,13 +2,13 @@
 
 use std::convert::TryInto;
 use std::fmt::Formatter;
-use std::sync::Arc;
 
 use impl_trait_for_tuples::impl_for_tuples;
 use sigma_util::AsVecI8;
 
 use crate::bigint256::BigInt256;
 use crate::chain::ergo_box::ErgoBox;
+use crate::reference::Ref;
 use crate::sigma_protocol::sigma_boolean::SigmaProp;
 use crate::types::stuple::TupleItems;
 use crate::types::stype::LiftIntoSType;
@@ -140,7 +140,7 @@ pub struct Lambda {
 
 /// Runtime value
 #[derive(PartialEq, Eq, Debug, Clone, From)]
-pub enum Value {
+pub enum Value<'ctx> {
     /// Boolean
     Boolean(bool),
     /// Byte
@@ -160,13 +160,13 @@ pub enum Value {
     /// Sigma property
     SigmaProp(Box<SigmaProp>),
     /// Ergo box
-    CBox(Arc<ErgoBox>),
+    CBox(Ref<'ctx, ErgoBox>),
     /// AVL tree
     AvlTree(Box<AvlTreeData>),
     /// Collection of values of the same type
-    Coll(CollKind<Value>),
+    Coll(CollKind<Value<'ctx>>),
     /// Tuple (arbitrary type values)
-    Tup(TupleItems<Value>),
+    Tup(TupleItems<Value<'ctx>>),
     /// Transaction(and blockchain) context info
     Context,
     /// Block header
@@ -176,49 +176,49 @@ pub enum Value {
     /// Global which is used to define global methods
     Global,
     /// Optional value
-    Opt(Box<Option<Value>>),
+    Opt(Box<Option<Value<'ctx>>>),
     /// lambda
     Lambda(Lambda),
 }
 
-impl Value {
+impl<'ctx> Value<'ctx> {
     /// Create Sigma property constant
-    pub fn sigma_prop(prop: SigmaProp) -> Value {
+    pub fn sigma_prop(prop: SigmaProp) -> Value<'ctx> {
         Value::SigmaProp(Box::new(prop))
     }
 }
 
-impl<T: Into<SigmaProp>> From<T> for Value {
+impl<'ctx, T: Into<SigmaProp>> From<T> for Value<'ctx> {
     fn from(t: T) -> Self {
         Value::SigmaProp(Box::new(t.into()))
     }
 }
 
-impl From<EcPoint> for Value {
+impl<'ctx> From<EcPoint> for Value<'ctx> {
     fn from(v: EcPoint) -> Self {
         Value::GroupElement(Box::new(v))
     }
 }
 
-impl From<Vec<i8>> for Value {
+impl<'ctx> From<Vec<i8>> for Value<'ctx> {
     fn from(v: Vec<i8>) -> Self {
         Value::Coll(CollKind::NativeColl(NativeColl::CollByte(v)))
     }
 }
 
-impl From<Vec<u8>> for Value {
+impl<'ctx> From<Vec<u8>> for Value<'ctx> {
     fn from(v: Vec<u8>) -> Self {
         Value::Coll(CollKind::NativeColl(NativeColl::CollByte(v.as_vec_i8())))
     }
 }
 
-impl<T: Into<Value>> From<Option<T>> for Value {
+impl<'ctx, T: Into<Value<'ctx>>> From<Option<T>> for Value<'ctx> {
     fn from(opt: Option<T>) -> Self {
         Value::Opt(Box::new(opt.map(|v| v.into())))
     }
 }
 
-impl From<Literal> for Value {
+impl<'ctx> From<Literal<'ctx>> for Value<'ctx> {
     fn from(lit: Literal) -> Self {
         match lit {
             Literal::Boolean(b) => Value::Boolean(b),
@@ -248,7 +248,7 @@ impl From<Literal> for Value {
     }
 }
 
-impl std::fmt::Display for Value {
+impl std::fmt::Display for Value<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Value::Coll(CollKind::NativeColl(NativeColl::CollByte(i8_bytes))) => {
@@ -319,18 +319,19 @@ impl StoreWrapped for i32 {}
 impl StoreWrapped for i64 {}
 impl StoreWrapped for BigInt256 {}
 impl StoreWrapped for Header {}
-impl StoreWrapped for Arc<ErgoBox> {}
+//impl StoreWrapped for Arc<ErgoBox> {}
+impl StoreWrapped for &ErgoBox {}
 impl StoreWrapped for EcPoint {}
 impl StoreWrapped for SigmaProp {}
 impl<T: StoreWrapped> StoreWrapped for Option<T> {}
 impl<T> StoreWrapped for Vec<T> {}
-impl StoreWrapped for Value {}
-impl StoreWrapped for Literal {}
+impl StoreWrapped for Value<'_> {}
+impl StoreWrapped for Literal<'_> {}
 
 #[impl_for_tuples(2, 4)]
 impl StoreWrapped for Tuple {}
 
-impl<T: LiftIntoSType + StoreWrapped + Into<Value>> From<Vec<T>> for Value {
+impl<'ctx, T: LiftIntoSType + StoreWrapped + Into<Value<'ctx>>> From<Vec<T>> for Value<'ctx> {
     fn from(v: Vec<T>) -> Self {
         Value::Coll(CollKind::WrappedColl {
             elem_tpe: T::stype(),
@@ -342,23 +343,23 @@ impl<T: LiftIntoSType + StoreWrapped + Into<Value>> From<Vec<T>> for Value {
 #[allow(clippy::from_over_into)]
 #[allow(clippy::unwrap_used)]
 #[impl_for_tuples(2, 4)]
-impl Into<Value> for Tuple {
-    fn into(self) -> Value {
+impl<'ctx> Into<Value<'ctx>> for Tuple {
+    fn into(self) -> Value<'ctx> {
         let v: Vec<Value> = [for_tuples!(  #( Tuple.into() ),* )].to_vec();
         Value::Tup(v.try_into().unwrap())
     }
 }
+// TODO
+// impl From<Vec<Arc<ErgoBox>>> for Value {
+//     fn from(v: Vec<Arc<ErgoBox>>) -> Self {
+//         Value::Coll(CollKind::WrappedColl {
+//             elem_tpe: SType::SBox,
+//             items: v.into_iter().map(|i| i.into()).collect(),
+//         })
+//     }
+// }
 
-impl From<Vec<Arc<ErgoBox>>> for Value {
-    fn from(v: Vec<Arc<ErgoBox>>) -> Self {
-        Value::Coll(CollKind::WrappedColl {
-            elem_tpe: SType::SBox,
-            items: v.into_iter().map(|i| i.into()).collect(),
-        })
-    }
-}
-
-impl TryExtractFrom<Value> for bool {
+impl TryExtractFrom<Value<'_>> for bool {
     fn try_extract_from(cv: Value) -> Result<bool, TryExtractFromError> {
         match cv {
             Value::Boolean(v) => Ok(v),
@@ -370,7 +371,7 @@ impl TryExtractFrom<Value> for bool {
     }
 }
 
-impl TryExtractFrom<Value> for i8 {
+impl TryExtractFrom<Value<'_>> for i8 {
     fn try_extract_from(cv: Value) -> Result<i8, TryExtractFromError> {
         match cv {
             Value::Byte(v) => Ok(v),
@@ -379,7 +380,7 @@ impl TryExtractFrom<Value> for i8 {
     }
 }
 
-impl TryExtractFrom<Value> for i16 {
+impl TryExtractFrom<Value<'_>> for i16 {
     fn try_extract_from(cv: Value) -> Result<i16, TryExtractFromError> {
         match cv {
             Value::Short(v) => Ok(v),
@@ -388,7 +389,7 @@ impl TryExtractFrom<Value> for i16 {
     }
 }
 
-impl TryExtractFrom<Value> for i32 {
+impl TryExtractFrom<Value<'_>> for i32 {
     fn try_extract_from(cv: Value) -> Result<i32, TryExtractFromError> {
         match cv {
             Value::Int(v) => Ok(v),
@@ -397,7 +398,7 @@ impl TryExtractFrom<Value> for i32 {
     }
 }
 
-impl TryExtractFrom<Value> for i64 {
+impl TryExtractFrom<Value<'_>> for i64 {
     fn try_extract_from(cv: Value) -> Result<i64, TryExtractFromError> {
         match cv {
             Value::Long(v) => Ok(v),
@@ -406,7 +407,7 @@ impl TryExtractFrom<Value> for i64 {
     }
 }
 
-impl TryExtractFrom<Value> for EcPoint {
+impl TryExtractFrom<Value<'_>> for EcPoint {
     fn try_extract_from(cv: Value) -> Result<EcPoint, TryExtractFromError> {
         match cv {
             Value::GroupElement(v) => Ok(*v),
@@ -418,7 +419,7 @@ impl TryExtractFrom<Value> for EcPoint {
     }
 }
 
-impl TryExtractFrom<Value> for SigmaProp {
+impl TryExtractFrom<Value<'_>> for SigmaProp {
     fn try_extract_from(cv: Value) -> Result<SigmaProp, TryExtractFromError> {
         match cv {
             Value::SigmaProp(v) => Ok(*v),
@@ -430,10 +431,10 @@ impl TryExtractFrom<Value> for SigmaProp {
     }
 }
 
-impl TryExtractFrom<Value> for Arc<ErgoBox> {
+impl<'ctx> TryExtractFrom<Value<'ctx>> for &'ctx ErgoBox {
     fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
         match c {
-            Value::CBox(b) => Ok(b),
+            Value::CBox(b) => Ok(&*b),
             _ => Err(TryExtractFromError(format!(
                 "expected ErgoBox, found {:?}",
                 c
@@ -442,7 +443,7 @@ impl TryExtractFrom<Value> for Arc<ErgoBox> {
     }
 }
 
-impl TryExtractFrom<Value> for Header {
+impl TryExtractFrom<Value<'_>> for Header {
     fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
         match c {
             Value::Header(h) => Ok(*h),
@@ -454,7 +455,7 @@ impl TryExtractFrom<Value> for Header {
     }
 }
 
-impl TryExtractFrom<Value> for PreHeader {
+impl TryExtractFrom<Value<'_>> for PreHeader {
     fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
         match c {
             Value::PreHeader(ph) => Ok(*ph),
@@ -466,7 +467,7 @@ impl TryExtractFrom<Value> for PreHeader {
     }
 }
 
-impl<T: TryExtractFrom<Value> + StoreWrapped> TryExtractFrom<Value> for Vec<T> {
+impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped> TryExtractFrom<Value<'ctx>> for Vec<T> {
     fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
         match c {
             Value::Coll(coll) => match coll {
@@ -489,7 +490,9 @@ impl<T: TryExtractFrom<Value> + StoreWrapped> TryExtractFrom<Value> for Vec<T> {
     }
 }
 
-impl<T: TryExtractFrom<Value> + StoreWrapped, const N: usize> TryExtractFrom<Value> for [T; N] {
+impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped, const N: usize>
+    TryExtractFrom<Value<'ctx>> for [T; N]
+{
     fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
         match c {
             Value::Coll(coll) => match coll {
@@ -519,7 +522,7 @@ impl<T: TryExtractFrom<Value> + StoreWrapped, const N: usize> TryExtractFrom<Val
     }
 }
 
-impl TryExtractFrom<Value> for Vec<i8> {
+impl TryExtractFrom<Value<'_>> for Vec<i8> {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         match v {
             Value::Coll(v) => match v {
@@ -539,20 +542,20 @@ impl TryExtractFrom<Value> for Vec<i8> {
     }
 }
 
-impl TryExtractFrom<Value> for Vec<u8> {
+impl TryExtractFrom<Value<'_>> for Vec<u8> {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         use sigma_util::FromVecI8;
         Vec::<i8>::try_extract_from(v).map(Vec::<u8>::from_vec_i8)
     }
 }
 
-impl TryExtractFrom<Value> for Value {
+impl<'ctx> TryExtractFrom<Value<'ctx>> for Value<'ctx> {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         Ok(v)
     }
 }
 
-impl TryExtractFrom<Value> for BigInt256 {
+impl TryExtractFrom<Value<'_>> for BigInt256 {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         match v {
             Value::BigInt(bi) => Ok(bi),
@@ -565,7 +568,7 @@ impl TryExtractFrom<Value> for BigInt256 {
     }
 }
 
-impl TryExtractFrom<Value> for AvlTreeData {
+impl TryExtractFrom<Value<'_>> for AvlTreeData {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         match v {
             Value::AvlTree(a) => Ok(*a),
@@ -578,7 +581,9 @@ impl TryExtractFrom<Value> for AvlTreeData {
     }
 }
 
-impl<T: TryExtractFrom<Value> + StoreWrapped> TryExtractFrom<Vec<Value>> for Vec<T> {
+impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped> TryExtractFrom<Vec<Value<'ctx>>>
+    for Vec<T>
+{
     fn try_extract_from(v: Vec<Value>) -> Result<Self, TryExtractFromError> {
         v.into_iter().map(|it| it.try_extract_into::<T>()).collect()
     }
@@ -596,7 +601,7 @@ impl<T: TryExtractFrom<Value> + StoreWrapped> TryExtractFrom<Vec<Value>> for Vec
 //     }
 // }
 
-impl<T: TryExtractFrom<Value>> TryExtractFrom<Value> for Option<T> {
+impl<'ctx, T: TryExtractFrom<Value<'ctx>>> TryExtractFrom<Value<'ctx>> for Option<T> {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         match v {
             Value::Opt(opt) => opt.map(T::try_extract_from).transpose(),
@@ -609,7 +614,7 @@ impl<T: TryExtractFrom<Value>> TryExtractFrom<Value> for Option<T> {
 }
 
 #[impl_for_tuples(2, 4)]
-impl TryExtractFrom<Value> for Tuple {
+impl<'ctx> TryExtractFrom<Value<'ctx>> for Tuple {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         match v {
             Value::Tup(items) => {
