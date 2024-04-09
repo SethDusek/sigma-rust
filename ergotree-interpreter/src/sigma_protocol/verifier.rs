@@ -1,7 +1,5 @@
 //! Verifier
 
-use std::rc::Rc;
-
 use super::dht_protocol;
 use super::dht_protocol::FirstDhTupleProverMessage;
 use super::fiat_shamir::FiatShamirTreeSerializationError;
@@ -16,7 +14,6 @@ use super::{
     SigmaBoolean, UncheckedTree,
 };
 use crate::eval::context::Context;
-use crate::eval::env::Env;
 use crate::eval::EvalError;
 use crate::eval::{reduce_to_crypto, ReductionDiagnosticInfo};
 use dlog_protocol::FirstDlogProverMessage;
@@ -60,16 +57,15 @@ pub trait Verifier {
     /// Step 1: Deserialize context variables
     /// Step 2: Evaluate expression and produce SigmaProp value, which is zero-knowledge statement (see also `SigmaBoolean`).
     /// Step 3: Verify that the proof is presented to satisfy SigmaProp conditions.
-    fn verify(
+    fn verify<'ctx>(
         &self,
         tree: &ErgoTree,
-        env: &Env,
-        ctx: Rc<Context>,
+        ctx: &Context<'ctx>,
         proof: ProofBytes,
         message: &[u8],
     ) -> Result<VerificationResult, VerifierError> {
         let expr = tree.proposition()?;
-        let reduction_result = reduce_to_crypto(&expr, env, ctx)?;
+        let reduction_result = reduce_to_crypto(&expr, ctx)?;
         let res: bool = match reduction_result.sigma_prop {
             SigmaBoolean::TrivialProp(b) => b,
             sb => {
@@ -219,15 +215,13 @@ mod tests {
                 secrets: vec![PrivateInput::DlogProverInput(secret)],
             };
             let res = prover.prove(&tree,
-                &Env::empty(),
-                Rc::new(force_any_val::<Context>()),
+                &force_any_val::<Context>(),
                 message.as_slice(),
                 &HintsBag::empty());
             let proof = res.unwrap().proof;
             let verifier = TestVerifier;
             prop_assert_eq!(verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
+                                            &force_any_val::<Context>(),
                                             proof.clone(),
                                             message.as_slice())
                             .unwrap().result,
@@ -235,8 +229,7 @@ mod tests {
 
             // possible to append bytes
             prop_assert_eq!(verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
+                                            &force_any_val::<Context>(),
                                             proof_append_some_byte(&proof),
                                             message.as_slice())
                             .unwrap().result,
@@ -244,8 +237,7 @@ mod tests {
 
             // wrong message
             prop_assert_eq!(verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
+                                            &force_any_val::<Context>(),
                                             proof,
                                             vec![1u8; 100].as_slice())
                             .unwrap().result,
@@ -261,15 +253,13 @@ mod tests {
                 secrets: vec![PrivateInput::DhTupleProverInput(secret)],
             };
             let res = prover.prove(&tree,
-                &Env::empty(),
-                Rc::new(force_any_val::<Context>()),
+                &force_any_val::<Context>(),
                 message.as_slice(),
                 &HintsBag::empty());
             let proof = res.unwrap().proof;
             let verifier = TestVerifier;
             prop_assert_eq!(verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
+                                            &force_any_val::<Context>(),
                                             proof.clone(),
                                             message.as_slice())
                             .unwrap().result,
@@ -277,8 +267,7 @@ mod tests {
 
             // possible to append bytes
             prop_assert_eq!(verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
+                                            &force_any_val::<Context>(),
                                             proof_append_some_byte(&proof),
                                             message.as_slice())
                             .unwrap().result,
@@ -286,8 +275,7 @@ mod tests {
 
             // wrong message
             prop_assert_eq!(verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
+                                            &force_any_val::<Context>(),
                                             proof,
                                             vec![1u8; 100].as_slice())
                             .unwrap().result,
@@ -308,15 +296,13 @@ mod tests {
                 secrets: vec![secret1, secret2],
             };
             let res = prover.prove(&tree,
-                &Env::empty(),
-                Rc::new(force_any_val::<Context>()),
+                &force_any_val::<Context>(),
                 message.as_slice(),
                 &HintsBag::empty());
             let proof = res.unwrap().proof;
             let verifier = TestVerifier;
             let ver_res = verifier.verify(&tree,
-                                          &Env::empty(),
-                                          Rc::new(force_any_val::<Context>()),
+                                          &force_any_val::<Context>(),
                                           proof,
                                           message.as_slice());
             prop_assert_eq!(ver_res.unwrap().result, true);
@@ -339,15 +325,13 @@ mod tests {
             let tree = ErgoTree::try_from(expr).unwrap();
             let prover = TestProver { secrets: vec![secret1, secret2, secret3] };
             let res = prover.prove(&tree,
-                &Env::empty(),
-                Rc::new(force_any_val::<Context>()),
+                &force_any_val::<Context>(),
                 message.as_slice(),
                 &HintsBag::empty());
             let proof = res.unwrap().proof;
             let verifier = TestVerifier;
             let ver_res = verifier.verify(&tree,
-                                          &Env::empty(),
-                                          Rc::new(force_any_val::<Context>()),
+                                          &force_any_val::<Context>(),
                                           proof,
                                           message.as_slice());
             prop_assert_eq!(ver_res.unwrap().result, true);
@@ -370,15 +354,13 @@ mod tests {
                     secrets: vec![secret.clone()],
                 };
                 let res = prover.prove(&tree,
-                    &Env::empty(),
-                    Rc::new(force_any_val::<Context>()),
+                    &force_any_val::<Context>(),
                     message.as_slice(),
                     &HintsBag::empty());
                 let proof = res.unwrap_or_else(|_| panic!("proof failed for secret: {:?}", secret)).proof;
                 let verifier = TestVerifier;
                 let ver_res = verifier.verify(&tree,
-                                              &Env::empty(),
-                                              Rc::new(force_any_val::<Context>()),
+                                              &force_any_val::<Context>(),
                                               proof,
                                               message.as_slice());
                 prop_assert_eq!(ver_res.unwrap().result, true, "verify failed on secret: {:?}", &secret);
@@ -407,15 +389,13 @@ mod tests {
                     secrets: vec![secret.clone()],
                 };
                 let res = prover.prove(&tree,
-                    &Env::empty(),
-                    Rc::new(force_any_val::<Context>()),
+                    &force_any_val::<Context>(),
                     message.as_slice(),
                     &HintsBag::empty());
                 let proof = res.unwrap_or_else(|_| panic!("proof failed for secret: {:?}", secret)).proof;
                 let verifier = TestVerifier;
                 let ver_res = verifier.verify(&tree,
-                                              &Env::empty(),
-                                              Rc::new(force_any_val::<Context>()),
+                                              &force_any_val::<Context>(),
                                               proof,
                                               message.as_slice());
                 prop_assert_eq!(ver_res.unwrap().result, true, "verify failed on secret: {:?}", &secret);
@@ -429,9 +409,9 @@ mod tests {
                                              message in vec(any::<u8>(), 100..200)) {
             let bound = Expr::Const(2i32.into());
             let inputs = Literal::Coll(
-                CollKind::from_vec(
+                CollKind::from_collection(
                     SType::SSigmaProp,
-                    vec![
+                    [
                         SigmaProp::from(secret1.public_image()).into(),
                         SigmaProp::from(secret2.public_image()).into(),
                         SigmaProp::from(secret3.public_image()).into(),
@@ -451,17 +431,15 @@ mod tests {
             };
 
             let res = prover.prove(&tree,
-                &Env::empty(),
-                Rc::new(force_any_val::<Context>()),
+                &force_any_val::<Context>(),
                 message.as_slice(),
                 &HintsBag::empty());
             let proof = res.unwrap().proof;
             let verifier = TestVerifier;
             let ver_res = verifier.verify(&tree,
-                                            &Env::empty(),
-                                            Rc::new(force_any_val::<Context>()),
-                                            proof,
-                                            message.as_slice());
+                &force_any_val::<Context>(),
+                proof,
+                message.as_slice());
             prop_assert_eq!(ver_res.unwrap().result, true)
         }
     }

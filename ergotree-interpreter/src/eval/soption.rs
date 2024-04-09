@@ -3,9 +3,15 @@ use crate::eval::Evaluable;
 
 use ergotree_ir::mir::value::Value;
 
-use super::EvalFn;
+use super::env::Env;
+use super::Context;
 
-pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
+pub fn map_eval<'ctx>(
+    env: &mut Env<'ctx>,
+    ctx: &Context<'ctx>,
+    obj: Value<'ctx>,
+    args: Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError> {
     let input_v = obj;
     let lambda_v = args
         .first()
@@ -19,7 +25,7 @@ pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
             input_v_clone
         ))),
     }?;
-    let mut lambda_call = |arg: Value| {
+    let mut lambda_call = |arg: Value<'ctx>| {
         let func_arg = lambda.args.first().ok_or_else(|| {
             EvalError::NotFound("map: lambda has empty arguments list".to_string())
         })?;
@@ -45,9 +51,14 @@ pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
         Some(t) => Ok(Value::Opt(Box::new(lambda_call(t)?.into()))),
         _ => Ok(Value::Opt(Box::new(None))),
     }
-};
+}
 
-pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
+pub fn filter_eval<'ctx>(
+    env: &mut Env<'ctx>,
+    ctx: &Context<'ctx>,
+    obj: Value<'ctx>,
+    args: Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError> {
     let input_v = obj;
     let lambda_v = args
         .first()
@@ -61,7 +72,7 @@ pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
             input_v_clone
         ))),
     }?;
-    let mut predicate_call = |arg: Value| {
+    let mut predicate_call = |arg: Value<'ctx>| {
         let func_arg = lambda.args.first().ok_or_else(|| {
             EvalError::NotFound("filter: lambda has empty arguments list".to_string())
         })?;
@@ -96,7 +107,7 @@ pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
         },
         None => Ok(Value::Opt(Box::new(None))),
     }
-};
+}
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]

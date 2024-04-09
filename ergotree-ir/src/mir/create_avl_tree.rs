@@ -31,7 +31,7 @@ impl CreateAvlTree {
         value_length: Option<Box<Expr>>,
     ) -> Result<Self, InvalidArgumentError> {
         flags.check_post_eval_tpe(&SType::SByte)?;
-        digest.check_post_eval_tpe(&SType::SColl(Box::new(SType::SByte)))?;
+        digest.check_post_eval_tpe(&SType::SColl(std::sync::Arc::new(SType::SByte)))?;
         key_length.check_post_eval_tpe(&SType::SInt)?;
         if !value_length
             .clone()
@@ -83,6 +83,8 @@ impl SigmaSerializable for CreateAvlTree {
 #[cfg(feature = "arbitrary")]
 /// Arbitrary impl
 mod arbitrary {
+    use std::sync::Arc;
+
     use crate::mir::expr::arbitrary::ArbExprParams;
 
     use super::*;
@@ -100,7 +102,7 @@ mod arbitrary {
                     depth: 0,
                 }),
                 any_with::<Expr>(ArbExprParams {
-                    tpe: SType::SColl(Box::new(SType::SByte)),
+                    tpe: SType::SColl(Arc::new(SType::SByte)),
                     depth: 0,
                 }),
                 any_with::<Expr>(ArbExprParams {

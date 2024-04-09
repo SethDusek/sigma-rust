@@ -1,6 +1,7 @@
 use crate::serialization::types::TypeCode;
 use crate::types::stuple::STuple;
 use crate::types::stype_companion::STypeCompanion;
+use std::sync::Arc;
 
 use super::sfunc::SFunc;
 use super::smethod::MethodId;
@@ -70,7 +71,7 @@ lazy_static! {
                 SType::SColl(SType::STypeVar(STypeVar::iv()).into()),
                 SFunc::new(
                     vec![STypeVar::iv().into()],
-                    SType::SColl(Box::new(STypeVar::ov().into())),
+                    SType::SColl(Arc::new(STypeVar::ov().into())),
                 ).into()
                 ],
             SType::SColl(SType::STypeVar(STypeVar::ov()).into()),

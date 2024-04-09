@@ -4,17 +4,21 @@ use ergotree_ir::mir::value::NativeColl;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Fold {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let zero_v = self.zero.eval(env, ctx)?;
         let fold_op_v = self.fold_op.eval(env, ctx)?;
         let input_v_clone = input_v.clone();
-        let mut fold_op_call = |arg: Value| match &fold_op_v {
+        let mut fold_op_call = |arg: Value<'ctx>| match &fold_op_v {
             Value::Lambda(func_value) => {
                 let func_arg = func_value
                     .args
@@ -64,7 +68,6 @@ impl Evaluable for Fold {
 #[cfg(test)]
 mod tests {
     use std::convert::TryInto;
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -130,9 +133,9 @@ mod tests {
             )
             .unwrap()
             .into();
-            let ctx = Rc::new(ctx);
+            let ctx = ctx;
             assert_eq!(
-                eval_out::<i64>(&expr, ctx.clone()),
+                eval_out::<i64>(&expr, &ctx),
                 ctx.data_inputs.clone()
                     .map_or(0i64, |d| d.iter().fold(0i64, |acc, b| acc + b.value.as_i64()))
             );

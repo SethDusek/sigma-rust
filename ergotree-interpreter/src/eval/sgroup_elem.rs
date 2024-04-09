@@ -2,6 +2,7 @@ use crate::eval::EvalError;
 
 use ergo_chain_types::EcPoint;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::reference::Ref;
 use ergotree_ir::serialization::SigmaSerializable;
 
 use super::EvalFn;
@@ -20,13 +21,13 @@ pub(crate) static GET_ENCODED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 
 pub(crate) static NEGATE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let negated: EcPoint = match obj {
-        Value::GroupElement(ec_point) => Ok(-(*ec_point)),
+        Value::GroupElement(ec_point) => Ok(-(*ec_point).clone()),
         _ => Err(EvalError::UnexpectedValue(format!(
             "expected obj to be Value::GroupElement, got: {0:?}",
             obj
         ))),
     }?;
-    Ok(Value::GroupElement(Box::new(negated)))
+    Ok(Value::GroupElement(Ref::from(negated)))
 };
 
 #[allow(clippy::unwrap_used)]

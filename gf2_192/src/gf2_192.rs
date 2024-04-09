@@ -125,7 +125,6 @@ impl Gf2_192 {
             a1muls[8 | i] = a1muls[8] ^ a1muls[i];
             a2muls[8 | i] = a2muls[8] ^ a2muls[i];
         }
-
         let mut w0 = 0;
         let mut w1 = 0;
         let mut w2 = 0;

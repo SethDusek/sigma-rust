@@ -2,13 +2,11 @@
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaProp;
 use std::fmt::Display;
-use std::rc::Rc;
 
 use ergotree_ir::mir::expr::Expr;
 use ergotree_ir::mir::value::Value;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 
-use cost_accum::CostAccumulator;
 use ergotree_ir::types::smethod::SMethod;
 
 use self::context::Context;
@@ -100,7 +98,7 @@ pub use error::EvalError;
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ReductionDiagnosticInfo {
     /// environment after the evaluation
-    pub env: Env,
+    pub env: Env<'static>,
     /// expression pretty-printed
     pub pretty_printed_expr: Option<String>,
 }
@@ -126,24 +124,17 @@ pub struct ReductionResult {
 }
 
 /// Evaluate the given expression by reducing it to SigmaBoolean value.
-pub fn reduce_to_crypto(
-    expr: &Expr,
-    env: &Env,
-    ctx: Rc<Context>,
-) -> Result<ReductionResult, EvalError> {
-    let ctx_clone = ctx.clone();
-    fn inner(expr: &Expr, env: &Env, ctx: Rc<Context>) -> Result<ReductionResult, EvalError> {
-        let cost_accum = CostAccumulator::new(0, None);
-        let mut ectx = EvalContext::new(ctx, cost_accum);
-        let mut env_mut = env.clone();
-        expr.eval(&mut env_mut, &mut ectx)
+pub fn reduce_to_crypto(expr: &Expr, ctx: &Context) -> Result<ReductionResult, EvalError> {
+    fn inner<'ctx>(expr: &'ctx Expr, ctx: &Context<'ctx>) -> Result<ReductionResult, EvalError> {
+        let mut env_mut = Env::empty();
+        expr.eval(&mut env_mut, ctx)
             .and_then(|v| -> Result<ReductionResult, EvalError> {
                 match v {
                     Value::Boolean(b) => Ok(ReductionResult {
                         sigma_prop: SigmaBoolean::TrivialProp(b),
                         cost: 0,
                         diag: ReductionDiagnosticInfo {
-                            env: env_mut.clone(),
+                            env: env_mut.to_static(),
                             pretty_printed_expr: None,
                         },
                     }),
@@ -151,7 +142,7 @@ pub fn reduce_to_crypto(
                         sigma_prop: sp.value().clone(),
                         cost: 0,
                         diag: ReductionDiagnosticInfo {
-                            env: env_mut.clone(),
+                            env: env_mut.to_static(),
                             pretty_printed_expr: None,
                         },
                     }),
@@ -160,7 +151,7 @@ pub fn reduce_to_crypto(
             })
     }
 
-    let res = inner(expr, env, ctx);
+    let res = inner(expr, ctx);
     if let Ok(reduction) = res {
         if reduction.sigma_prop == SigmaBoolean::TrivialProp(false) {
             let (_, printed_expr_str) = expr
@@ -182,8 +173,7 @@ pub fn reduce_to_crypto(
     let (spanned_expr, printed_expr_str) = expr
         .pretty_print()
         .map_err(|e| EvalError::Misc(e.to_string()))?;
-    inner(&spanned_expr, env, ctx_clone)
-        .map_err(|e| e.wrap_spanned_with_src(printed_expr_str.to_string()))
+    inner(&spanned_expr, ctx).map_err(|e| e.wrap_spanned_with_src(printed_expr_str.to_string()))
 }
 
 /// Expects SigmaProp constant value and returns it's value. Otherwise, returns an error.
@@ -194,27 +184,24 @@ pub fn extract_sigma_boolean(expr: &Expr) -> Result<SigmaBoolean, EvalError> {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct EvalContext {
-    pub(crate) ctx: Rc<Context>,
-    pub(crate) cost_accum: CostAccumulator,
-}
-
-impl EvalContext {
-    pub fn new(ctx: Rc<Context>, cost_accum: CostAccumulator) -> Self {
-        EvalContext { ctx, cost_accum }
-    }
-}
-
 /// Expression evaluation.
 /// Should be implemented by every node that can be evaluated.
 pub(crate) trait Evaluable {
     /// Evaluation routine to be implement by each node
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError>;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+        // TODO cost_accum: &mut CostAccumulator,
+    ) -> Result<Value<'ctx>, EvalError>;
 }
 
-type EvalFn =
-    fn(env: &mut Env, ctx: &mut EvalContext, Value, Vec<Value>) -> Result<Value, EvalError>;
+type EvalFn = for<'ctx> fn(
+    env: &mut Env<'ctx>,
+    ctx: &Context<'ctx>,
+    Value<'ctx>,
+    Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError>;
 
 fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
     use ergotree_ir::types::*;
@@ -271,7 +258,7 @@ fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
         },
         scoll::TYPE_CODE => match method.method_id() {
             scoll::INDEX_OF_METHOD_ID => self::scoll::INDEX_OF_EVAL_FN,
-            scoll::FLATMAP_METHOD_ID => self::scoll::FLATMAP_EVAL_FN,
+            scoll::FLATMAP_METHOD_ID => self::scoll::flatmap_eval,
             scoll::ZIP_METHOD_ID => self::scoll::ZIP_EVAL_FN,
             scoll::INDICES_METHOD_ID => self::scoll::INDICES_EVAL_FN,
             scoll::PATCH_METHOD_ID => self::scoll::PATCH_EVAL_FN,
@@ -295,8 +282,8 @@ fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
             }
         },
         soption::TYPE_CODE => match method.method_id() {
-            soption::MAP_METHOD_ID => self::soption::MAP_EVAL_FN,
-            soption::FILTER_METHOD_ID => self::soption::FILTER_EVAL_FN,
+            soption::MAP_METHOD_ID => self::soption::map_eval,
+            soption::FILTER_METHOD_ID => self::soption::filter_eval,
             method_id => {
                 return Err(EvalError::NotFound(format!(
                     "Eval fn: unknown method id in SOption: {:?}",
@@ -386,35 +373,40 @@ pub(crate) mod tests {
     use expect_test::expect;
     use sigma_test_util::force_any_val;
 
-    pub fn eval_out_wo_ctx<T: TryExtractFrom<Value>>(expr: &Expr) -> T {
-        let ctx = Rc::new(force_any_val::<Context>());
-        eval_out(expr, ctx)
+    pub fn eval_out_wo_ctx<T: TryExtractFrom<Value<'static>> + 'static>(expr: &Expr) -> T {
+        let ctx = force_any_val::<Context>();
+        eval_out(expr, &ctx)
     }
 
-    pub fn eval_out<T: TryExtractFrom<Value>>(expr: &Expr, ctx: Rc<Context>) -> T {
-        let cost_accum = CostAccumulator::new(0, None);
-        let mut ectx = EvalContext::new(ctx, cost_accum);
+    pub fn eval_out<T: TryExtractFrom<Value<'static>> + 'static>(
+        expr: &Expr,
+        ctx: &Context<'static>,
+    ) -> T {
         let mut env = Env::empty();
-        expr.eval(&mut env, &mut ectx)
+        expr.eval(&mut env, ctx)
             .unwrap()
+            .to_static()
             .try_extract_into::<T>()
             .unwrap()
     }
 
-    pub fn try_eval_out<T: TryExtractFrom<Value>>(
+    pub fn try_eval_out<'ctx, T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
-        ctx: Rc<Context>,
+        ctx: &'ctx Context<'ctx>,
     ) -> Result<T, EvalError> {
-        let cost_accum = CostAccumulator::new(0, None);
-        let mut ectx = EvalContext::new(ctx, cost_accum);
         let mut env = Env::empty();
-        expr.eval(&mut env, &mut ectx)
-            .and_then(|v| v.try_extract_into::<T>().map_err(EvalError::TryExtractFrom))
+        expr.eval(&mut env, ctx).and_then(|v| {
+            v.to_static()
+                .try_extract_into::<T>()
+                .map_err(EvalError::TryExtractFrom)
+        })
     }
 
-    pub fn try_eval_out_wo_ctx<T: TryExtractFrom<Value>>(expr: &Expr) -> Result<T, EvalError> {
-        let ctx = Rc::new(force_any_val::<Context>());
-        try_eval_out(expr, ctx)
+    pub fn try_eval_out_wo_ctx<T: TryExtractFrom<Value<'static>> + 'static>(
+        expr: &Expr,
+    ) -> Result<T, EvalError> {
+        let ctx = force_any_val::<Context>();
+        try_eval_out(expr, &ctx)
     }
 
     #[test]
@@ -442,8 +434,8 @@ pub(crate) mod tests {
             }
             .into(),
         );
-        let ctx = Rc::new(force_any_val::<Context>());
-        let res = reduce_to_crypto(&block, &Env::empty(), ctx).unwrap();
+        let ctx = force_any_val::<Context>();
+        let res = reduce_to_crypto(&block, &ctx).unwrap();
         assert!(res.sigma_prop == SigmaBoolean::TrivialProp(false));
         expect![[r#"
             Pretty printed expr:

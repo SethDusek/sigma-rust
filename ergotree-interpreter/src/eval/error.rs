@@ -84,7 +84,7 @@ pub struct SpannedEvalError {
     /// source span for the expression where error occurred
     source_span: SourceSpan,
     /// environment at the time when error occurred
-    env: Env,
+    env: Env<'static>,
 }
 
 /// Wrapped error with source span and source code
@@ -95,7 +95,7 @@ pub struct SpannedWithSourceEvalError {
     /// source span for the expression where error occurred
     source_span: SourceSpan,
     /// environment at the time when error occurred
-    env: Env,
+    env: Env<'static>,
     /// source code
     source: String,
 }
@@ -155,7 +155,7 @@ impl EvalError {
         EvalError::Spanned(SpannedEvalError {
             error: Box::new(self),
             source_span,
-            env,
+            env: env.to_static(),
         })
     }
 
@@ -179,7 +179,7 @@ pub trait ExtResultEvalError<T> {
 }
 
 impl<T> ExtResultEvalError<T> for Result<T, EvalError> {
-    fn enrich_err(self, span: SourceSpan, env: &Env) -> Result<T, EvalError> {
+    fn enrich_err<'ctx>(self, span: SourceSpan, env: &Env<'ctx>) -> Result<T, EvalError> {
         self.map_err(|e| match e {
             // skip already wrapped errors
             w @ EvalError::Spanned { .. } => w,
@@ -191,8 +191,6 @@ impl<T> ExtResultEvalError<T> for Result<T, EvalError> {
 #[allow(clippy::unwrap_used, unused_imports, dead_code)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use ergotree_ir::mir::coll_by_index::ByIndex;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::source_span::SourceSpan;
@@ -218,8 +216,8 @@ mod tests {
         let mut w = PosTrackingWriter::new();
         let spanned_expr = expr.print(&mut w).unwrap();
         dbg!(&spanned_expr);
-        let ctx = Rc::new(force_any_val::<Context>());
-        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, ctx)
+        let ctx = force_any_val::<Context>();
+        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, &ctx)
             .err()
             .unwrap()
             .try_into()
@@ -237,8 +235,8 @@ mod tests {
         let mut w = PosTrackingWriter::new();
         let spanned_expr = expr.print(&mut w).unwrap();
         dbg!(&spanned_expr);
-        let ctx = Rc::new(force_any_val::<Context>());
-        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, ctx)
+        let ctx = force_any_val::<Context>();
+        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, &ctx)
             .err()
             .unwrap()
             .try_into()

@@ -1,19 +1,25 @@
+use std::sync::Arc;
+
 use ergotree_ir::mir::coll_filter::Filter;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Filter {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let condition_v = self.condition.eval(env, ctx)?;
         let input_v_clone = input_v.clone();
-        let mut condition_call = |arg: Value| match &condition_v {
+        let mut condition_call = |arg: Value<'ctx>| match &condition_v {
             Value::Lambda(func_value) => {
                 let func_arg = func_value.args.first().ok_or_else(|| {
                     EvalError::NotFound(
@@ -37,7 +43,7 @@ impl Evaluable for Filter {
         };
         let normalized_input_vals: Vec<Value> = match input_v {
             Value::Coll(coll) => {
-                if *coll.elem_tpe() != self.elem_tpe {
+                if coll.elem_tpe() != &*self.elem_tpe {
                     return Err(EvalError::UnexpectedValue(format!(
                         "expected Filter input element type to be {0:?}, got: {1:?}",
                         self.elem_tpe,
@@ -67,9 +73,9 @@ impl Evaluable for Filter {
             .zip(items_conditions)
             .filter(|(_, condition)| *condition)
             .map(|(item, _)| item)
-            .collect();
-        Ok(Value::Coll(CollKind::from_vec(
-            self.elem_tpe.clone(),
+            .collect::<Arc<_>>();
+        Ok(Value::Coll(CollKind::from_collection(
+            (*self.elem_tpe).clone(),
             filtered_items,
         )?))
     }
@@ -79,8 +85,6 @@ impl Evaluable for Filter {
 #[allow(clippy::panic)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-    use std::sync::Arc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -97,6 +101,7 @@ mod tests {
     use ergotree_ir::mir::property_call::PropertyCall;
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use ergotree_ir::mir::val_use::ValUse;
+    use ergotree_ir::reference::Ref;
     use ergotree_ir::types::scontext;
     use ergotree_ir::types::stype::SType;
     use proptest::prelude::*;
@@ -136,21 +141,23 @@ mod tests {
             )
             .unwrap()
             .into();
-            let ctx = Rc::new(ctx);
             let expected: Vec<_> = ctx
                 .data_inputs
                 .clone()
                 .map_or(
                      vec![],
                      |d| d
-                         .as_vec()
-                         .iter().filter(|& b| 1 <= b.value.as_i64()).cloned()
+                         .iter()
+                         .cloned()
+                         .filter(|b| 1 <= b.value.as_i64())
                          .collect()
                 );
-            assert_eq!(
-                eval_out::<Vec<Arc<ErgoBox>>>(&expr, ctx),
-                expected,
-            );
-        }
+
+
+            eval_out::<Vec<Ref<'_, ErgoBox>>>(&expr, &ctx)
+                .into_iter()
+                .zip(expected)
+                .for_each(|(left, right)| assert_eq!(&*left, right));
+       }
     }
 }

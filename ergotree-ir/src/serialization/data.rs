@@ -55,7 +55,8 @@ impl DataSerializer {
                     w.put_usize_as_u16_unwrapped(v.len())?;
                     let maybe_bools: Result<Vec<bool>, TryExtractFromError> = v
                         .clone()
-                        .into_iter()
+                        .iter()
+                        .cloned()
                         .map(|i| i.try_extract_into::<bool>())
                         .collect();
                     w.put_bits(maybe_bools?.as_slice())?
@@ -110,7 +111,7 @@ impl DataSerializer {
                 }
             }
             SUnit => Literal::Unit,
-            SGroupElement => Literal::GroupElement(Box::new(EcPoint::sigma_parse(r)?)),
+            SGroupElement => Literal::GroupElement(Arc::new(EcPoint::sigma_parse(r)?)),
             SSigmaProp => {
                 Literal::SigmaProp(Box::new(SigmaProp::new(SigmaBoolean::sigma_parse(r)?)))
             }
@@ -126,18 +127,17 @@ impl DataSerializer {
                 let len = r.get_u16()? as usize;
                 let bools = r.get_bits(len)?;
                 Literal::Coll(CollKind::WrappedColl {
-                    elem_tpe: *elem_type.clone(),
+                    elem_tpe: (**elem_type).clone(),
                     items: bools.into_iter().map(|b| b.into()).collect(),
                 })
             }
             SColl(elem_type) => {
                 let len = r.get_u16()? as usize;
-                let mut elems = Vec::with_capacity(len);
-                for _ in 0..len {
-                    elems.push(DataSerializer::sigma_parse(elem_type, r)?);
-                }
+                let elems = (0..len)
+                    .map(|_| DataSerializer::sigma_parse(elem_type, r))
+                    .collect::<Result<Arc<[_]>, SigmaParsingError>>()?;
                 Literal::Coll(CollKind::WrappedColl {
-                    elem_tpe: *elem_type.clone(),
+                    elem_tpe: (**elem_type).clone(),
                     items: elems,
                 })
             }
@@ -151,7 +151,7 @@ impl DataSerializer {
                 // is correct
                 Literal::Tup(items.try_into()?)
             }
-            SBox => Literal::CBox(Arc::new(ErgoBox::sigma_parse(r)?)),
+            SBox => Literal::CBox(Arc::new(ErgoBox::sigma_parse(r)?).into()),
             SAvlTree => Literal::AvlTree(Box::new(AvlTreeData::sigma_parse(r)?)),
             STypeVar(_) => return Err(SigmaParsingError::NotSupported("TypeVar data")),
             SAny => return Err(SigmaParsingError::NotSupported("SAny data")),

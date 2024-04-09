@@ -9,6 +9,7 @@ pub mod unsigned;
 
 use bounded_vec::BoundedVec;
 use ergo_chain_types::blake2b256_hash;
+use ergotree_interpreter::eval::context::Context;
 pub use ergotree_interpreter::eval::context::TxIoVec;
 use ergotree_interpreter::eval::env::Env;
 use ergotree_interpreter::eval::extract_sigma_boolean;
@@ -38,6 +39,7 @@ use ergotree_ir::serialization::SigmaSerializeResult;
 pub use input::*;
 
 use crate::wallet::signing::make_context;
+use crate::wallet::signing::update_context;
 use crate::wallet::signing::TransactionContext;
 use crate::wallet::tx_context::TransactionContextError;
 
@@ -342,8 +344,9 @@ pub enum TransactionError {
 }
 
 /// Verify transaction input's proof
-pub fn verify_tx_input_proof(
-    tx_context: &TransactionContext<Transaction>,
+pub fn verify_tx_input_proof<'ctx>(
+    tx_context: &'ctx TransactionContext<Transaction>,
+    ctx: &mut Context<'ctx>,
     state_context: &ErgoStateContext,
     input_idx: usize,
     bytes_to_sign: &[u8],
@@ -356,10 +359,10 @@ pub fn verify_tx_input_proof(
     let input_box = tx_context
         .get_input_box(&input.box_id)
         .ok_or(TransactionContextError::InputBoxNotFound(input_idx))?;
-    let ctx = Rc::new(make_context(state_context, tx_context, input_idx)?);
+    update_context(ctx, tx_context, input_idx)?;
     let verifier = TestVerifier;
     // Try spending in storage rent, if any condition is not satisfied fallback to normal script validation
-    match try_spend_storage_rent(input, &input_box, state_context, &ctx) {
+    match try_spend_storage_rent(input, input_box, state_context, ctx) {
         Some(()) => Ok(VerificationResult {
             result: true,
             cost: 0,
@@ -371,8 +374,7 @@ pub fn verify_tx_input_proof(
         None => verifier
             .verify(
                 &input_box.ergo_tree,
-                &Env::empty(),
-                ctx,
+                &ctx,
                 input.spending_proof.proof.clone(),
                 bytes_to_sign,
             )

@@ -1,18 +1,24 @@
+use std::sync::Arc;
+
 use ergotree_ir::mir::coll_map::Map;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Map {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let mapper_v = self.mapper.eval(env, ctx)?;
         let input_v_clone = input_v.clone();
-        let mut mapper_call = |arg: Value| match &mapper_v {
+        let mut mapper_call = |arg: Value<'ctx>| match &mapper_v {
             Value::Lambda(func_value) => {
                 let func_arg = func_value.args.first().ok_or_else(|| {
                     EvalError::NotFound(
@@ -63,9 +69,10 @@ impl Evaluable for Map {
         normalized_input_vals
             .iter()
             .map(|item| mapper_call(item.clone()))
-            .collect::<Result<Vec<Value>, EvalError>>()
+            .collect::<Result<Arc<[Value]>, EvalError>>()
             .map(|values| {
-                CollKind::from_vec(self.out_elem_tpe(), values).map_err(EvalError::TryExtractFrom)
+                CollKind::from_collection(self.out_elem_tpe(), values)
+                    .map_err(EvalError::TryExtractFrom)
             })
             .and_then(|v| v) // flatten <Result<Result<Value, _>, _>
             .map(Value::Coll)
@@ -76,7 +83,6 @@ impl Evaluable for Map {
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::context::TxIoVec;
@@ -132,9 +138,8 @@ mod tests {
             )
             .unwrap()
             .into();
-            let ctx = Rc::new(ctx);
             let output = {
-                let e = eval_out::<Vec<i64>>(&expr, ctx.clone());
+                let e = eval_out::<Vec<i64>>(&expr, &ctx);
                 if e.is_empty() {
                   None
                 } else {
@@ -144,7 +149,7 @@ mod tests {
 
             assert_eq!(
                 output,
-                ctx.data_inputs.clone().map(|d| d.mapped(| b| b.value.as_i64() + 1))
+                ctx.data_inputs.clone().map(|d| d.iter().map(| b| b.value.as_i64() + 1).collect::<Vec<_>>().try_into().unwrap())
             );
         }
 

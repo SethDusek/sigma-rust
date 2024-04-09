@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
 use super::unary_op::OneArgOp;
@@ -12,13 +14,13 @@ pub struct OptionGet {
     /// Object of SOption type
     pub input: Box<Expr>,
     /// Option element type
-    elem_tpe: SType,
+    elem_tpe: Arc<SType>,
 }
 
 impl OptionGet {
     /// Type
     pub fn tpe(&self) -> SType {
-        self.elem_tpe.clone()
+        (*self.elem_tpe).clone()
     }
 }
 
@@ -37,7 +39,7 @@ impl OneArgOpTryBuild for OptionGet {
         match input.post_eval_tpe() {
             SType::SOption(elem_tpe) => Ok(OptionGet {
                 input: Box::new(input),
-                elem_tpe: *elem_tpe,
+                elem_tpe,
             }),
             _ => Err(InvalidArgumentError(format!(
                 "expected OptionGet::input type to be SOption, got: {0:?}",

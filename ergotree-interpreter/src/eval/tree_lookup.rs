@@ -3,7 +3,7 @@ use ergotree_ir::mir::tree_lookup::TreeLookup;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 use ergo_avltree_rust::batch_avl_verifier::BatchAVLVerifier;
@@ -14,7 +14,11 @@ use ergotree_ir::mir::constant::TryExtractInto;
 use sigma_util::AsVecU8;
 
 impl Evaluable for TreeLookup {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let normalized_tree_val = self
             .tree
             .eval(env, ctx)?

@@ -1,6 +1,6 @@
 //! Evaluating predefined `Header` (or SHeader) type properties
 
-use std::convert::TryInto;
+use std::{convert::TryInto, sync::Arc};
 
 use ergo_chain_types::Header;
 use ergotree_ir::{bigint256::BigInt256, mir::constant::TryExtractInto};
@@ -59,16 +59,12 @@ pub(crate) static HEIGHT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 
 pub(crate) static MINER_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
-    Ok(header.autolykos_solution.miner_pk.into())
+    Ok(Arc::new(*header.autolykos_solution.miner_pk).into())
 };
 
 pub(crate) static POW_ONETIME_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
-    Ok(header
-        .autolykos_solution
-        .pow_onetime_pk
-        .unwrap_or_default()
-        .into())
+    Ok((*header.autolykos_solution.pow_onetime_pk.unwrap_or_default()).into())
 };
 
 pub(crate) static POW_NONCE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
@@ -97,7 +93,6 @@ pub(crate) static VOTES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 #[allow(clippy::expect_used, clippy::panic, clippy::unwrap_used)]
 mod tests {
     use std::convert::{TryFrom, TryInto};
-    use std::rc::Rc;
 
     use ergo_chain_types::{BlockId, Digest, Digest32, EcPoint, Votes};
     use ergotree_ir::{
@@ -117,10 +112,10 @@ mod tests {
     const HEADER_INDEX: usize = 0;
 
     // Evaluates `Header.minerPk`, `Header.powOnetimePk`
-    fn eval_header_pks(ctx: Rc<Context>) -> [Box<EcPoint>; 2] {
+    fn eval_header_pks(ctx: &Context<'static>) -> [Box<EcPoint>; 2] {
         let miner_pk = eval_out::<EcPoint>(
             &create_get_header_property_expr(sheader::MINER_PK_PROPERTY.clone()),
-            ctx.clone(),
+            ctx,
         );
         let pow_onetime_pk = eval_out::<EcPoint>(
             &create_get_header_property_expr(sheader::POW_ONETIME_PK_PROPERTY.clone()),
@@ -130,14 +125,14 @@ mod tests {
     }
 
     // Evaluates `Header.AdProofsRoot`, `Header.transactionRoot`, `Header.extensionRoot`
-    fn eval_header_roots(ctx: Rc<Context>) -> [Digest32; 3] {
+    fn eval_header_roots(ctx: &Context<'static>) -> [Digest32; 3] {
         vec![
             sheader::AD_PROOFS_ROOT_PROPERTY.clone(),
             sheader::TRANSACTIONS_ROOT_PROPERTY.clone(),
             sheader::EXTENSION_ROOT_PROPERTY.clone(),
         ]
         .into_iter()
-        .map(|smethod| eval_out::<Vec<i8>>(&create_get_header_property_expr(smethod), ctx.clone()))
+        .map(|smethod| eval_out::<Vec<i8>>(&create_get_header_property_expr(smethod), ctx))
         .map(digest_from_bytes_signed::<32>)
         .collect::<Vec<_>>()
         .try_into()
@@ -145,10 +140,10 @@ mod tests {
     }
 
     // Evaluates `Header.id` and `Header.parentId`
-    fn eval_header_ids(ctx: Rc<Context>) -> [BlockId; 2] {
+    fn eval_header_ids(ctx: &Context<'static>) -> [BlockId; 2] {
         let id = eval_out::<Vec<i8>>(
             &create_get_header_property_expr(sheader::ID_PROPERTY.clone()),
-            ctx.clone(),
+            ctx,
         );
         let parent_id = eval_out::<Vec<i8>>(
             &create_get_header_property_expr(sheader::PARENT_ID_PROPERTY.clone()),
@@ -198,74 +193,74 @@ mod tests {
     #[test]
     fn test_eval_version() {
         let expr = create_get_header_property_expr(sheader::VERSION_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let version = ctx.headers[HEADER_INDEX].version as i8;
-        assert_eq!(version, eval_out::<i8>(&expr, ctx));
+        assert_eq!(version, eval_out::<i8>(&expr, &ctx));
     }
 
     #[test]
     fn test_eval_ids() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx
             .headers
             .get(HEADER_INDEX)
             .map(|h| [h.id, h.parent_id])
             .expect("internal error: empty headers array");
-        let actual = eval_header_ids(ctx);
+        let actual = eval_header_ids(&ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_roots() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx
             .headers
             .get(HEADER_INDEX)
             .map(|h| [h.ad_proofs_root, h.transaction_root, h.extension_root])
             .expect("internal error: empty headers array");
-        let actual = eval_header_roots(ctx);
+        let actual = eval_header_roots(&ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_state_root() {
         let expr = create_get_header_property_expr(sheader::STATE_ROOT_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX].state_root;
-        let actual = digest_from_bytes_signed::<33>(eval_out::<Vec<i8>>(&expr, ctx));
+        let actual = digest_from_bytes_signed::<33>(eval_out::<Vec<i8>>(&expr, &ctx));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_timestamp() {
         let expr = create_get_header_property_expr(sheader::TIMESTAMP_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX].timestamp as i64;
-        let actual = eval_out::<i64>(&expr, ctx);
+        let actual = eval_out::<i64>(&expr, &ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_n_bits() {
         let expr = create_get_header_property_expr(sheader::N_BITS_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX].n_bits as i64;
-        let actual = eval_out::<i64>(&expr, ctx);
+        let actual = eval_out::<i64>(&expr, &ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_height() {
         let expr = create_get_header_property_expr(sheader::HEIGHT_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX].height as i32;
-        let actual = eval_out::<i32>(&expr, ctx);
+        let actual = eval_out::<i32>(&expr, &ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_pks() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx
             .headers
             .get(HEADER_INDEX)
@@ -279,21 +274,21 @@ mod tests {
                 ]
             })
             .expect("internal error: empty headers array");
-        let actual = eval_header_pks(ctx);
+        let actual = eval_header_pks(&ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_pow_distance() {
         let expr = create_get_header_property_expr(sheader::POW_DISTANCE_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX]
             .autolykos_solution
             .pow_distance
             .clone()
             .unwrap_or_default();
         let actual = {
-            let bi = eval_out::<BigInt256>(&expr, ctx);
+            let bi = eval_out::<BigInt256>(&expr, &ctx);
             bi.into()
         };
         assert_eq!(expected, actual);
@@ -302,19 +297,19 @@ mod tests {
     #[test]
     fn test_eval_pow_nonce() {
         let expr = create_get_header_property_expr(sheader::POW_NONCE_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX].autolykos_solution.nonce.clone();
-        let actual = eval_out::<Vec<i8>>(&expr, ctx).as_vec_u8();
+        let actual = eval_out::<Vec<i8>>(&expr, &ctx).as_vec_u8();
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_votes() {
         let expr = create_get_header_property_expr(sheader::VOTES_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.headers[HEADER_INDEX].votes.clone();
         let actual = {
-            let votes_bytes = eval_out::<Vec<i8>>(&expr, ctx).as_vec_u8();
+            let votes_bytes = eval_out::<Vec<i8>>(&expr, &ctx).as_vec_u8();
             Votes::try_from(votes_bytes)
                 .expect("internal error: votes bytes buffer length isn't equal to 3")
         };

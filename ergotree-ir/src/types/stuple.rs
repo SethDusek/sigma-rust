@@ -71,9 +71,9 @@ impl STuple {
         }
     }
 
-    pub(crate) fn with_subst(self, subst: &HashMap<STypeVar, SType>) -> Self {
+    pub(crate) fn with_subst(&self, subst: &HashMap<STypeVar, SType>) -> Self {
         STuple {
-            items: self.items.mapped(|a| a.with_subst(subst)),
+            items: self.items.clone().mapped(|a| a.with_subst(subst)),
         }
     }
 }

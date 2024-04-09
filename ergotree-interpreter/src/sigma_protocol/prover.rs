@@ -27,7 +27,6 @@ use gf2_192::gf2_192poly::Gf2_192Poly;
 use gf2_192::gf2_192poly::Gf2_192PolyError;
 use gf2_192::Gf2_192Error;
 use std::convert::TryInto;
-use std::rc::Rc;
 
 pub use context_extension::*;
 use ergotree_ir::ergo_tree::ErgoTree;
@@ -55,7 +54,6 @@ use super::FirstProverMessage::FirstDhtProverMessage;
 use super::FirstProverMessage::FirstDlogProverMessage;
 
 use crate::eval::context::Context;
-use crate::eval::env::Env;
 use crate::eval::EvalError;
 
 use crate::sigma_protocol::dht_protocol::SecondDhTupleProverMessage;
@@ -138,17 +136,16 @@ pub trait Prover {
     /// <https://ergoplatform.org/docs/ErgoScript.pdf>, Appendix A
     ///
     /// Generate proofs for the given message for ErgoTree reduced to Sigma boolean expression
-    fn prove(
+    fn prove<'ctx>(
         &self,
         tree: &ErgoTree,
-        env: &Env,
-        ctx: Rc<Context>,
+        ctx: &'ctx Context,
         message: &[u8],
         hints_bag: &HintsBag,
     ) -> Result<ProverResult, ProverError> {
         let expr = tree.proposition()?;
         let ctx_ext = ctx.extension.clone();
-        let reduction_result = reduce_to_crypto(&expr, env, ctx).map_err(ProverError::EvalError)?;
+        let reduction_result = reduce_to_crypto(&expr, ctx).map_err(ProverError::EvalError)?;
         self.generate_proof(reduction_result.sigma_prop, message, hints_bag)
             .map(|p| ProverResult {
                 proof: p,
@@ -1222,7 +1219,6 @@ mod tests {
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
     use std::convert::TryFrom;
-    use std::rc::Rc;
 
     #[test]
     fn test_prove_true_prop() {
@@ -1236,8 +1232,7 @@ mod tests {
         let prover = TestProver { secrets: vec![] };
         let res = prover.prove(
             &bool_true_tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1257,8 +1252,7 @@ mod tests {
         let prover = TestProver { secrets: vec![] };
         let res = prover.prove(
             &bool_false_tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1277,8 +1271,7 @@ mod tests {
         };
         let res = prover.prove(
             &tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1303,8 +1296,7 @@ mod tests {
         };
         let res = prover.prove(
             &tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1335,8 +1327,7 @@ mod tests {
         };
         let res = prover.prove(
             &tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1360,8 +1351,7 @@ mod tests {
         };
         let res = prover.prove(
             &tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1392,8 +1382,7 @@ mod tests {
         };
         let res = prover.prove(
             &tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1412,8 +1401,7 @@ mod tests {
         };
         let res = prover.prove(
             &tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             message.as_slice(),
             &HintsBag::empty(),
         );
@@ -1461,14 +1449,8 @@ mod tests {
         };
 
         let message = vec![0u8; 100];
-        let ctx: Rc<Context> = force_any_val::<Context>().into();
-        let res = prover.prove(
-            &tree,
-            &Env::empty(),
-            ctx,
-            message.as_slice(),
-            &HintsBag::empty(),
-        );
+        let ctx: Context = force_any_val::<Context>();
+        let res = prover.prove(&tree, &ctx, message.as_slice(), &HintsBag::empty());
         assert!(res.is_err());
     }
 }

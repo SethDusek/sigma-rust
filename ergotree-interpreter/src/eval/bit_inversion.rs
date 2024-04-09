@@ -2,12 +2,16 @@ use ergotree_ir::mir::bit_inversion::BitInversion;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for BitInversion {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         match input_v {
             Value::Byte(v) => Ok(Value::Byte(!v)),
@@ -36,7 +40,7 @@ mod tests {
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use num_traits::Num;
 
-    fn run_eval<T: Num + Into<Constant> + TryExtractFrom<Value>>(input: T) -> T {
+    fn run_eval<T: Num + Into<Constant> + TryExtractFrom<Value<'static>> + 'static>(input: T) -> T {
         let expr: Expr = BitInversion::try_build(Expr::Const(input.into()))
             .unwrap()
             .into();

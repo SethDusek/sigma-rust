@@ -1,4 +1,6 @@
 //! Convert byte array to SBigInt
+use std::sync::Arc;
+
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
 
@@ -34,7 +36,7 @@ impl OneArgOp for ByteArrayToBigInt {
 
 impl OneArgOpTryBuild for ByteArrayToBigInt {
     fn try_build(input: Expr) -> Result<Self, InvalidArgumentError> {
-        input.check_post_eval_tpe(&SType::SColl(Box::new(SType::SByte)))?;
+        input.check_post_eval_tpe(&SType::SColl(Arc::new(SType::SByte)))?;
         Ok(ByteArrayToBigInt {
             input: Box::new(input),
         })

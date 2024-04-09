@@ -6,13 +6,17 @@ use ergotree_ir::mir::value::Value;
 use std::convert::TryFrom;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::EvalError::UnexpectedValue;
 use crate::eval::Evaluable;
 
 impl Evaluable for ByteArrayToBigInt {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input = self.input.eval(env, ctx)?.try_extract_into::<Vec<u8>>()?;
         if input.is_empty() {
             return Err(UnexpectedValue(

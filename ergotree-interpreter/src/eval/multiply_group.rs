@@ -2,17 +2,23 @@ use ergotree_ir::mir::multiply_group::MultiplyGroup;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for MultiplyGroup {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let left_v = self.left.eval(env, ctx)?;
         let right_v = self.right.eval(env, ctx)?;
 
-        match (left_v.clone(), right_v.clone()) {
-            (Value::GroupElement(left), Value::GroupElement(right)) => Ok((*left * &*right).into()),
+        match (&left_v, &right_v) {
+            (Value::GroupElement(left), Value::GroupElement(right)) => {
+                Ok(((**left).clone() * right).into())
+            }
             _ => Err(EvalError::UnexpectedValue(format!(
                 "Expected MultiplyGroup input to be GroupElement, got: {0:?}",
                 (left_v, right_v)
@@ -33,7 +39,6 @@ mod tests {
     use ergotree_ir::mir::expr::Expr;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     proptest! {
 
@@ -48,8 +53,8 @@ mod tests {
             }
             .into();
 
-            let ctx = Rc::new(force_any_val::<Context>());
-            assert_eq!(eval_out::<EcPoint>(&expr, ctx), expected_mul);
+            let ctx = force_any_val::<Context>();
+            assert_eq!(eval_out::<EcPoint>(&expr, &ctx), expected_mul);
         }
     }
 }

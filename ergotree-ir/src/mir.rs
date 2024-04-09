@@ -28,6 +28,8 @@ pub mod coll_filter;
 pub mod coll_fold;
 /// Tests whether a predicate holds for all elements of this collection
 pub mod coll_forall;
+/// Operations over Coll
+pub mod coll_iter;
 /// Collection.map
 pub mod coll_map;
 /// Collection.size

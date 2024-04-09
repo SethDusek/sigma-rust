@@ -448,7 +448,7 @@ impl Print for ExtractRegisterAs {
             expr: ExtractRegisterAs::new(
                 input,
                 self.register_id,
-                SType::SOption(self.elem_tpe.clone().into()),
+                SType::SOption(self.elem_tpe.clone()),
             )
             .unwrap(),
         }

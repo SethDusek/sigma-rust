@@ -1,5 +1,4 @@
 use ergotree_interpreter::eval::context::Context;
-use ergotree_interpreter::eval::env::Env;
 use ergotree_interpreter::sigma_protocol::private_input::DlogProverInput;
 use ergotree_interpreter::sigma_protocol::verifier::{TestVerifier, Verifier};
 use ergotree_ir::ergo_tree::ErgoTree;
@@ -15,7 +14,6 @@ use ergotree_ir::types::stype::SType;
 use num_bigint::BigUint;
 use sigma_test_util::force_any_val;
 use std::convert::TryInto;
-use std::rc::Rc;
 
 #[test]
 fn sig_test_vector_provedlog() {
@@ -43,8 +41,7 @@ fn sig_test_vector_provedlog() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -81,8 +78,7 @@ fn sig_test_vector_prove_dht() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -138,8 +134,7 @@ fn sig_test_vector_conj_and() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -195,8 +190,7 @@ fn sig_test_vector_conj_or() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -246,8 +240,7 @@ fn sig_test_vector_conj_or_prove_dht() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -317,8 +310,7 @@ fn sig_test_vector_conj_and_or() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -388,8 +380,7 @@ fn sig_test_vector_conj_or_and() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -436,9 +427,9 @@ fn sig_test_vector_threshold() {
     let bound = Expr::Const(2i32.into());
 
     let inputs = Literal::Coll(
-        CollKind::from_vec(
+        CollKind::from_collection(
             SType::SSigmaProp,
-            vec![
+            [
                 SigmaProp::from(sk1.public_image()).into(),
                 SigmaProp::from(sk2.public_image()).into(),
                 SigmaProp::from(sk3.public_image()).into(),
@@ -457,8 +448,7 @@ fn sig_test_vector_threshold() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );

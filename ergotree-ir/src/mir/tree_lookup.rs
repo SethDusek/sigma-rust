@@ -63,6 +63,7 @@ impl SigmaSerializable for TreeLookup {
 /// Arbitrary impl
 mod arbitrary {
     use crate::mir::expr::arbitrary::ArbExprParams;
+    use std::sync::Arc;
 
     use super::*;
     use proptest::prelude::*;
@@ -78,11 +79,11 @@ mod arbitrary {
                     depth: 0,
                 }),
                 any_with::<Expr>(ArbExprParams {
-                    tpe: SType::SColl(Box::new(SType::SByte)),
+                    tpe: SType::SColl(Arc::new(SType::SByte)),
                     depth: 0,
                 }),
                 any_with::<Expr>(ArbExprParams {
-                    tpe: SType::SColl(Box::new(SType::SByte)),
+                    tpe: SType::SColl(Arc::new(SType::SByte)),
                     depth: 0,
                 }),
             )

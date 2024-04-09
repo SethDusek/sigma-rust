@@ -11,16 +11,14 @@ use ergotree_interpreter::sigma_protocol::prover::hint::HintsBag;
 use ergotree_interpreter::sigma_protocol::sig_serializer::SigParsingError;
 use ergotree_ir::serialization::SigmaSerializationError;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
-use std::rc::Rc;
-use std::sync::Arc;
 
 use crate::chain::transaction::storage_rent::check_storage_rent_conditions;
 use crate::wallet::multi_sig::TransactionHintsBag;
 use ergotree_interpreter::eval::context::Context;
-use ergotree_interpreter::eval::env::Env;
+use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
+use ergotree_interpreter::sigma_protocol::prover::Prover;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
 use ergotree_interpreter::sigma_protocol::prover::ProverResult;
-use ergotree_interpreter::sigma_protocol::prover::{ProofBytes, Prover};
 use thiserror::Error;
 
 pub use super::tx_context::TransactionContext;
@@ -44,11 +42,11 @@ pub enum TxSigningError {
 }
 
 /// `self_index` - index of the SELF box in the tx_ctx.spending_tx.inputs
-pub fn make_context<T: ErgoTransaction>(
-    state_ctx: &ErgoStateContext,
-    tx_ctx: &TransactionContext<T>,
+pub fn make_context<'ctx, T: ErgoTransaction>(
+    state_ctx: &'ctx ErgoStateContext,
+    tx_ctx: &'ctx TransactionContext<T>,
     self_index: usize,
-) -> Result<Context, TransactionContextError> {
+) -> Result<Context<'ctx>, TransactionContextError> {
     let height = state_ctx.pre_header.height;
 
     // Find self_box by matching BoxIDs
@@ -63,22 +61,28 @@ pub fn make_context<T: ErgoTransaction>(
         .ok_or(TransactionContextError::InputBoxNotFound(self_index))?;
 
     let outputs = tx_ctx.spending_tx.outputs();
-    let data_inputs_ir = if let Some(data_inputs) = tx_ctx.spending_tx.data_inputs().as_ref() {
-        Some(data_inputs.clone().enumerated().try_mapped(|(idx, di)| {
-            tx_ctx
-                .data_boxes
-                .as_ref()
-                .ok_or(TransactionContextError::DataInputBoxNotFound(idx))?
+    let data_inputs_ir = if let Some(data_inputs) = tx_ctx.spending_tx.data_inputs() {
+        Some(
+            #[allow(clippy::unwrap_used)]
+            data_inputs
                 .iter()
-                .find(|b| di.box_id == b.box_id())
-                .map(|b| Arc::new(b.clone()))
-                .ok_or(TransactionContextError::DataInputBoxNotFound(idx))
-        })?)
+                .enumerate()
+                .map(|(idx, di)| {
+                    tx_ctx
+                        .data_boxes
+                        .as_ref()
+                        .ok_or(TransactionContextError::DataInputBoxNotFound(idx))?
+                        .iter()
+                        .find(|b| di.box_id == b.box_id())
+                        .ok_or(TransactionContextError::DataInputBoxNotFound(idx))
+                })
+                .collect::<Result<Vec<_>, _>>()?
+                .try_into()
+                .unwrap(),
+        )
     } else {
         None
     };
-    let self_box_ir = Arc::new(self_box);
-    let outputs_ir = outputs.into_iter().map(Arc::new).collect();
     let inputs_ir = tx_ctx
         .spending_tx
         .inputs_ids()
@@ -86,7 +90,6 @@ pub fn make_context<T: ErgoTransaction>(
         .try_mapped(|(idx, u)| {
             tx_ctx
                 .get_input_box(&u)
-                .map(Arc::new)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))
         })?;
     let extension = tx_ctx
@@ -95,14 +98,38 @@ pub fn make_context<T: ErgoTransaction>(
         .ok_or(TransactionError::InputNofFound(self_index))?;
     Ok(Context {
         height,
-        self_box: self_box_ir,
-        outputs: outputs_ir,
+        self_box,
+        outputs,
         data_inputs: data_inputs_ir,
         inputs: inputs_ir,
         pre_header: state_ctx.pre_header.clone(),
         extension,
         headers: state_ctx.headers.clone(),
     })
+}
+// Updates a Context, changing its self box and context extension to transaction.inputs[i]
+pub(crate) fn update_context<'ctx, T: ErgoTransaction>(
+    ctx: &mut Context<'ctx>,
+    tx_ctx: &'ctx TransactionContext<T>,
+    self_index: usize,
+) -> Result<(), TransactionContextError> {
+    // Find self_box by matching BoxIDs
+    let self_box = tx_ctx
+        .get_input_box(
+            tx_ctx
+                .spending_tx
+                .inputs_ids()
+                .get(self_index)
+                .ok_or(TransactionError::InputNofFound(self_index))?,
+        )
+        .ok_or(TransactionContextError::InputBoxNotFound(self_index))?;
+    let extension = tx_ctx
+        .spending_tx
+        .context_extension(self_index)
+        .ok_or(TransactionError::InputNofFound(self_index))?;
+    ctx.self_box = self_box;
+    ctx.extension = extension;
+    Ok(())
 }
 
 /// Signs a transaction (generating proofs for inputs)
@@ -114,11 +141,13 @@ pub fn sign_transaction(
 ) -> Result<Transaction, TxSigningError> {
     let tx = tx_context.spending_tx.clone();
     let message_to_sign = tx.bytes_to_sign()?;
+    let ctx = make_context(state_context, &tx_context, 0)?;
     let signed_inputs = tx.inputs.enumerated().try_mapped(|(idx, _)| {
         sign_tx_input(
             prover,
             &tx_context,
             state_context,
+            &ctx, // TODO: use with_self_box_index
             tx_hints,
             idx,
             message_to_sign.as_slice(),
@@ -186,6 +215,7 @@ pub fn sign_tx_input(
     prover: &dyn Prover,
     tx_context: &TransactionContext<UnsignedTransaction>,
     state_context: &ErgoStateContext,
+    context: &Context,
     tx_hints: Option<&TransactionHintsBag>,
     input_idx: usize,
     message_to_sign: &[u8],
@@ -198,31 +228,24 @@ pub fn sign_tx_input(
     let input_box = tx_context
         .get_input_box(&unsigned_input.box_id)
         .ok_or(TransactionContextError::InputBoxNotFound(input_idx))?;
-    let ctx = Rc::new(make_context(state_context, tx_context, input_idx)?);
     let mut hints_bag = HintsBag::empty();
     if let Some(bag) = tx_hints {
         hints_bag = bag.all_hints_for_input(input_idx);
     }
 
-    match check_storage_rent_conditions(&input_box, state_context, &ctx.clone()) {
+    match check_storage_rent_conditions(input_box, state_context, context) {
         // if input is storage rent set ProofBytes to empty because no proof is needed
         Some(()) => Ok(Input::new(
             unsigned_input.box_id,
             ProverResult {
                 proof: ProofBytes::Empty,
-                extension: ctx.extension.clone(),
+                extension: context.extension.clone(),
             }
             .into(),
         )),
         // if input is not storage rent use prover
         None => prover
-            .prove(
-                &input_box.ergo_tree,
-                &Env::empty(),
-                ctx.clone(),
-                message_to_sign,
-                &hints_bag,
-            )
+            .prove(&input_box.ergo_tree, context, message_to_sign, &hints_bag)
             .map(|proof| Input::new(unsigned_input.box_id, proof.into()))
             .map_err(|e| TxSigningError::ProverError(e, input_idx)),
     }
@@ -281,8 +304,7 @@ mod tests {
                 .unwrap();
             let res = verifier.verify(
                 &b.ergo_tree,
-                &Env::empty(),
-                Rc::new(force_any_val::<Context>()),
+                &force_any_val::<Context>(),
                 input.spending_proof.proof.clone(),
                 &message,
             )?;
@@ -379,12 +401,21 @@ mod tests {
           )
           .unwrap();
 
-          let expected_data_input_boxes = Some(TxIoVec::from_vec(expected_data_input_boxes).unwrap().mapped(Arc::new));
-          let expected_input_boxes = TxIoVec::from_vec(expected_input_boxes).unwrap().mapped(Arc::new);
+          let expected_data_input_boxes = Some(TxIoVec::from_vec(expected_data_input_boxes).unwrap());
+          let expected_input_boxes = TxIoVec::from_vec(expected_input_boxes).unwrap();
           for i in 0..num_inputs {
-              let context = make_context(&force_any_val::<ErgoStateContext>(), &tx_context, i).unwrap();
-              assert_eq!(expected_data_input_boxes, context.data_inputs);
-              assert_eq!(expected_input_boxes, context.inputs);
+              let state_ctx = force_any_val::<ErgoStateContext>();
+              let context = make_context(&state_ctx, &tx_context, i).unwrap();
+              expected_data_input_boxes
+                  .iter()
+                  .flatten()
+                  .zip(context.data_inputs.iter().flatten())
+                  .for_each(|(left, right)| assert_eq!(&left, right));
+
+              expected_input_boxes
+                  .iter()
+                  .zip(context.inputs.iter())
+                  .for_each(|(left, right)| assert_eq!(&left, right));
               assert_eq!(tx_context.spending_tx.inputs.as_vec()[i].box_id, context.self_box.box_id());
           }
         }
@@ -518,8 +549,7 @@ mod tests {
         let verifier = TestVerifier;
         let ver_res = verifier.verify(
             &ergo_tree,
-            &Env::empty(),
-            Rc::new(force_any_val::<Context>()),
+            &force_any_val::<Context>(),
             tx.inputs.get(1).unwrap().spending_proof.proof.clone(),
             message.as_slice(),
         );

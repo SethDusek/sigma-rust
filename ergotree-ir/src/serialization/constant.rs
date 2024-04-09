@@ -40,6 +40,7 @@ mod tests {
     use crate::mir::constant::arbitrary::ArbConstantParams;
     use crate::serialization::sigma_serialize_roundtrip;
     use proptest::prelude::*;
+    use std::sync::Arc;
 
     proptest! {
 
@@ -66,7 +67,7 @@ mod tests {
             println!("Failed to parse constant: {}", e);
         }
         assert!(c_res.is_ok());
-        assert_eq!(c_res.unwrap().tpe, SType::SColl(Box::new(SType::SBox)));
+        assert_eq!(c_res.unwrap().tpe, SType::SColl(Arc::new(SType::SBox)));
     }
 
     #[test]
