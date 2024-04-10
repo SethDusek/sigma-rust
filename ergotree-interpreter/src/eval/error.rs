@@ -191,8 +191,6 @@ impl<T> ExtResultEvalError<T> for Result<T, EvalError> {
 #[allow(clippy::unwrap_used, unused_imports, dead_code)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use ergotree_ir::mir::coll_by_index::ByIndex;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::source_span::SourceSpan;
@@ -218,8 +216,8 @@ mod tests {
         let mut w = PosTrackingWriter::new();
         let spanned_expr = expr.print(&mut w).unwrap();
         dbg!(&spanned_expr);
-        let ctx = Rc::new(force_any_val::<Context>());
-        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, ctx)
+        let ctx = force_any_val::<Context>();
+        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, &ctx)
             .err()
             .unwrap()
             .try_into()
@@ -237,8 +235,8 @@ mod tests {
         let mut w = PosTrackingWriter::new();
         let spanned_expr = expr.print(&mut w).unwrap();
         dbg!(&spanned_expr);
-        let ctx = Rc::new(force_any_val::<Context>());
-        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, ctx)
+        let ctx = force_any_val::<Context>();
+        let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, &ctx)
             .err()
             .unwrap()
             .try_into()

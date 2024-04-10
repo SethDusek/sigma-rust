@@ -72,9 +72,9 @@ mod tests {
         let expr: Expr = PropertyCall::new(Expr::Global, sglobal::GROUP_GENERATOR_METHOD.clone())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<EcPoint>(&expr, ctx),
+            eval_out::<EcPoint>(&expr, &ctx),
             ergo_chain_types::ec_point::generator()
         );
     }
@@ -92,7 +92,7 @@ mod tests {
         )
         .unwrap()
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
     }
 }

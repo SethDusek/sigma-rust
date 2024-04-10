@@ -80,7 +80,6 @@ impl Evaluable for Filter {
 #[cfg(test)]
 mod tests {
     use std::rc::Rc;
-    use std::sync::Arc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -143,14 +142,14 @@ mod tests {
                 .map_or(
                      vec![],
                      |d| d
-                         .as_vec()
+
                          .iter()
                          .cloned()
                          .filter(| b| 1 <= b.value.as_i64())
                          .collect()
                 );
             assert_eq!(
-                eval_out::<Vec<Arc<ErgoBox>>>(&expr, ctx),
+                eval_out::<Vec<ErgoBox>>(&expr, &ctx),
                 expected,
             );
         }

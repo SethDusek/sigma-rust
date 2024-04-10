@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::sigma_protocol::prover::ContextExtension;
 use bounded_vec::BoundedVec;
 use ergo_chain_types::{Header, PreHeader};
@@ -29,7 +27,7 @@ pub struct Context<'ctx> {
     pub extension: ContextExtension,
 }
 
-impl Context {
+impl<'ctx> Context<'ctx> {
     /// Return a new Context with given context extension
     pub fn with_extension(self, ext: ContextExtension) -> Self {
         Context {
@@ -46,7 +44,7 @@ mod arbitrary {
     use super::*;
     use proptest::{collection::vec, option::of, prelude::*};
 
-    impl Arbitrary for Context {
+    impl Arbitrary for Context<'static> {
         type Parameters = ();
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
@@ -73,13 +71,10 @@ mod arbitrary {
                     )| {
                         Self {
                             height,
-                            self_box: Arc::new(self_box),
-                            outputs: outputs.into_iter().map(Arc::new).collect(),
-                            data_inputs: data_inputs.map(|v| {
-                                TxIoVec::from_vec(v.into_iter().map(Arc::new).collect()).unwrap()
-                            }),
-                            inputs: TxIoVec::from_vec(inputs.into_iter().map(Arc::new).collect())
-                                .unwrap(),
+                            self_box: Box::leak(Box::new(self_box)),
+                            outputs: Vec::leak(outputs),
+                            data_inputs: data_inputs.map(|v| &*Vec::leak(v)),
+                            inputs: Vec::leak(inputs),
                             pre_header,
                             extension,
                             headers,

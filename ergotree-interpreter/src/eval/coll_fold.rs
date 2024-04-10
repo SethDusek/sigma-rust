@@ -64,7 +64,6 @@ impl Evaluable for Fold {
 #[cfg(test)]
 mod tests {
     use std::convert::TryInto;
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -130,9 +129,9 @@ mod tests {
             )
             .unwrap()
             .into();
-            let ctx = Rc::new(ctx);
+            let ctx = ctx;
             assert_eq!(
-                eval_out::<i64>(&expr, ctx.clone()),
+                eval_out::<i64>(&expr, &ctx),
                 ctx.data_inputs.clone()
                     .map_or(0i64, |d| d.iter().fold(0i64, |acc, b| acc + b.value.as_i64()))
             );

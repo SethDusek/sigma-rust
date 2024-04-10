@@ -1,5 +1,4 @@
 use std::convert::TryInto;
-use std::sync::Arc;
 
 use crate::eval::EvalError;
 
@@ -11,7 +10,7 @@ use super::EvalFn;
 
 pub(crate) static VALUE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     Ok(Value::Long(
-        obj.try_extract_into::<Arc<ErgoBox>>()?.value.as_i64(),
+        (&obj).try_extract_into::<&ErgoBox>()?.value.as_i64(),
     ))
 };
 
@@ -29,7 +28,8 @@ pub(crate) static GET_REG_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     })?;
 
     Ok(Value::Opt(Box::new(
-        obj.try_extract_into::<Arc<ErgoBox>>()?
+        (&obj)
+            .try_extract_into::<&ErgoBox>()?
             .get_register(reg_id)
             .map_err(|e| {
                 EvalError::NotFound(format!(
@@ -41,7 +41,7 @@ pub(crate) static GET_REG_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 };
 
 pub(crate) static TOKENS_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
-    let res: Value = obj.try_extract_into::<Arc<ErgoBox>>()?.tokens_raw().into();
+    let res: Value = (&obj).try_extract_into::<&ErgoBox>()?.tokens_raw().into();
     Ok(res)
 };
 
@@ -57,18 +57,14 @@ mod tests {
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
-    use std::rc::Rc;
 
     #[test]
     fn eval_box_value() {
         let expr: Expr = PropertyCall::new(GlobalVars::SelfBox.into(), sbox::VALUE_METHOD.clone())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(
-            eval_out::<i64>(&expr, ctx.clone()),
-            ctx.self_box.value.as_i64()
-        );
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<i64>(&expr, &ctx), ctx.self_box.value.as_i64());
     }
 
     #[test]
@@ -76,7 +72,7 @@ mod tests {
         let expr: Expr = PropertyCall::new(GlobalVars::SelfBox.into(), sbox::TOKENS_METHOD.clone())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
             eval_out::<Vec<(Vec<i8>, i64)>>(&expr, ctx.clone()),
             ctx.self_box.tokens_raw()

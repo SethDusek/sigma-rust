@@ -195,11 +195,11 @@ pub fn extract_sigma_boolean(expr: &Expr) -> Result<SigmaBoolean, EvalError> {
 
 #[derive(Debug)]
 pub(crate) struct EvalContext<'a> {
-    pub(crate) ctx: &'a Context,
+    pub(crate) ctx: &'a Context<'a>,
     pub(crate) cost_accum: CostAccumulator,
 }
 
-impl<'a> EvalContext<'a>{
+impl<'a> EvalContext<'a> {
     pub fn new(ctx: &'a Context, cost_accum: CostAccumulator) -> Self {
         EvalContext { ctx, cost_accum }
     }
@@ -212,8 +212,12 @@ pub(crate) trait Evaluable {
     fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError>;
 }
 
-type EvalFn =
-    fn(env: &mut Env, ctx: &mut EvalContext, Value, Vec<Value>) -> Result<Value, EvalError>;
+type EvalFn<'ctx> = fn(
+    env: &mut Env,
+    ctx: &mut EvalContext,
+    Value<'ctx>,
+    Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError>;
 
 fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
     use ergotree_ir::types::*;
@@ -363,6 +367,7 @@ fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
     })
 }
 
+//TODO
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]
@@ -385,12 +390,15 @@ pub(crate) mod tests {
     use expect_test::expect;
     use sigma_test_util::force_any_val;
 
-    pub fn eval_out_wo_ctx<T: TryExtractFrom<Value>>(expr: &Expr) -> T {
-        let ctx = Rc::new(force_any_val::<Context>());
-        eval_out(expr, ctx)
+    pub fn eval_out_wo_ctx<'ctx, T: TryExtractFrom<Value<'ctx>>>(expr: &Expr) -> T {
+        let ctx = force_any_val::<Context>();
+        eval_out(expr, &ctx)
     }
 
-    pub fn eval_out<T: TryExtractFrom<Value>>(expr: &Expr, ctx: Rc<Context>) -> T {
+    pub fn eval_out<'ctx, T: TryExtractFrom<Value<'ctx>>>(
+        expr: &Expr,
+        ctx: &'ctx Context<'ctx>,
+    ) -> T {
         let cost_accum = CostAccumulator::new(0, None);
         let mut ectx = EvalContext::new(ctx, cost_accum);
         let mut env = Env::empty();
@@ -400,9 +408,9 @@ pub(crate) mod tests {
             .unwrap()
     }
 
-    pub fn try_eval_out<T: TryExtractFrom<Value>>(
+    pub fn try_eval_out<'ctx, T: TryExtractFrom<Value<'ctx>>>(
         expr: &Expr,
-        ctx: Rc<Context>,
+        ctx: &'ctx Context<'ctx>,
     ) -> Result<T, EvalError> {
         let cost_accum = CostAccumulator::new(0, None);
         let mut ectx = EvalContext::new(ctx, cost_accum);
@@ -411,9 +419,11 @@ pub(crate) mod tests {
             .and_then(|v| v.try_extract_into::<T>().map_err(EvalError::TryExtractFrom))
     }
 
-    pub fn try_eval_out_wo_ctx<T: TryExtractFrom<Value>>(expr: &Expr) -> Result<T, EvalError> {
-        let ctx = Rc::new(force_any_val::<Context>());
-        try_eval_out(expr, ctx)
+    pub fn try_eval_out_wo_ctx<'ctx, T: TryExtractFrom<Value<'ctx>>>(
+        expr: &Expr,
+    ) -> Result<T, EvalError> {
+        let ctx = force_any_val::<Context>();
+        try_eval_out(expr, &ctx)
     }
 
     #[test]

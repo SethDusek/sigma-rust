@@ -36,7 +36,11 @@ pub struct ParsedErgoTree {
 impl ParsedErgoTree {
     /// Returns new ParsedTree with a new constant value for a given index in constants list
     /// (as stored in serialized ErgoTree), or an error
-    fn with_constant(self, index: usize, constant: Constant) -> Result<Self, SetConstantError> {
+    fn with_constant(
+        self,
+        index: usize,
+        constant: Constant<'static>,
+    ) -> Result<Self, SetConstantError> {
         let mut new_constants = self.constants.clone();
         if let Some(old_constant) = self.constants.get(index) {
             if constant.tpe == old_constant.tpe {
@@ -155,7 +159,7 @@ impl ErgoTree {
 
     fn sigma_parse_constants<R: SigmaByteRead>(
         r: &mut R,
-    ) -> Result<Vec<Constant>, SigmaParsingError> {
+    ) -> Result<Vec<Constant<'static>>, SigmaParsingError> {
         let constants_len = r.get_u32()?;
         if constants_len as usize > ErgoTree::MAX_CONSTANTS_COUNT {
             return Err(SigmaParsingError::ValueOutOfBounds(
@@ -177,7 +181,8 @@ impl ErgoTree {
         Ok(if header.is_constant_segregation() {
             let mut data = Vec::new();
             let cs = ConstantStore::empty();
-            let mut w = SigmaByteWriter::new(&mut data, Some(cs));
+            let ww = &mut data;
+            let mut w = SigmaByteWriter::new(ww, Some(cs));
             expr.sigma_serialize(&mut w)?;
             #[allow(clippy::unwrap_used)]
             // We set constant store earlier
@@ -268,7 +273,11 @@ impl ErgoTree {
     /// Returns new ErgoTree with a new constant value for a given index in constants list (as
     /// stored in serialized ErgoTree), or an error. Note that the type of the new constant must
     /// coincide with that of the constant being replaced, or an error is returned too.
-    pub fn with_constant(self, index: usize, constant: Constant) -> Result<Self, ErgoTreeError> {
+    pub fn with_constant(
+        self,
+        index: usize,
+        constant: Constant<'static>,
+    ) -> Result<Self, ErgoTreeError> {
         let parsed_tree = self.parsed_tree()?.clone();
         Ok(Self::Parsed(
             parsed_tree

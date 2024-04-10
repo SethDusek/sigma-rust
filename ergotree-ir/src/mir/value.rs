@@ -219,7 +219,7 @@ impl<'ctx, T: Into<Value<'ctx>>> From<Option<T>> for Value<'ctx> {
 }
 
 impl<'ctx> From<Literal<'ctx>> for Value<'ctx> {
-    fn from(lit: Literal) -> Self {
+    fn from(lit: Literal<'ctx>) -> Self {
         match lit {
             Literal::Boolean(b) => Value::Boolean(b),
             Literal::Byte(b) => Value::Byte(b),
@@ -431,8 +431,8 @@ impl TryExtractFrom<Value<'_>> for SigmaProp {
     }
 }
 
-impl<'ctx> TryExtractFrom<Value<'ctx>> for &'ctx ErgoBox {
-    fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
+impl<'ctx> TryExtractFrom<&'ctx Value<'ctx>> for &'ctx ErgoBox {
+    fn try_extract_from(c: &'ctx Value<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
             Value::CBox(b) => Ok(&*b),
             _ => Err(TryExtractFromError(format!(
@@ -468,7 +468,7 @@ impl TryExtractFrom<Value<'_>> for PreHeader {
 }
 
 impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped> TryExtractFrom<Value<'ctx>> for Vec<T> {
-    fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(c: Value<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
             Value::Coll(coll) => match coll {
                 CollKind::WrappedColl {
@@ -493,7 +493,7 @@ impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped> TryExtractFrom<Value<'
 impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped, const N: usize>
     TryExtractFrom<Value<'ctx>> for [T; N]
 {
-    fn try_extract_from(c: Value) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(c: Value<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
             Value::Coll(coll) => match coll {
                 CollKind::WrappedColl {
@@ -550,7 +550,7 @@ impl TryExtractFrom<Value<'_>> for Vec<u8> {
 }
 
 impl<'ctx> TryExtractFrom<Value<'ctx>> for Value<'ctx> {
-    fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Value<'ctx>) -> Result<Self, TryExtractFromError> {
         Ok(v)
     }
 }
@@ -584,7 +584,7 @@ impl TryExtractFrom<Value<'_>> for AvlTreeData {
 impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped> TryExtractFrom<Vec<Value<'ctx>>>
     for Vec<T>
 {
-    fn try_extract_from(v: Vec<Value>) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Vec<Value<'ctx>>) -> Result<Self, TryExtractFromError> {
         v.into_iter().map(|it| it.try_extract_into::<T>()).collect()
     }
 }
@@ -602,7 +602,7 @@ impl<'ctx, T: TryExtractFrom<Value<'ctx>> + StoreWrapped> TryExtractFrom<Vec<Val
 // }
 
 impl<'ctx, T: TryExtractFrom<Value<'ctx>>> TryExtractFrom<Value<'ctx>> for Option<T> {
-    fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Value<'ctx>) -> Result<Self, TryExtractFromError> {
         match v {
             Value::Opt(opt) => opt.map(T::try_extract_from).transpose(),
             _ => Err(TryExtractFromError(format!(
@@ -615,7 +615,7 @@ impl<'ctx, T: TryExtractFrom<Value<'ctx>>> TryExtractFrom<Value<'ctx>> for Optio
 
 #[impl_for_tuples(2, 4)]
 impl<'ctx> TryExtractFrom<Value<'ctx>> for Tuple {
-    fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Value<'ctx>) -> Result<Self, TryExtractFromError> {
         match v {
             Value::Tup(items) => {
                 let mut iter = items.iter();

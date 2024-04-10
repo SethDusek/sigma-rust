@@ -9,12 +9,12 @@ use crate::serialization::SigmaSerializable;
 
 /// Register value (either Constant or bytes if it's unparseable)
 #[derive(PartialEq, Eq, Debug, Clone, From)]
-pub enum RegisterValue<'ctx> {
+pub enum RegisterValue {
     /// Constant value
-    Parsed(Constant<'ctx>),
+    Parsed(Constant<'static>),
     /// Parsed evaluated Tuple expression
     /// see https://github.com/ergoplatform/sigma-rust/issues/700
-    ParsedTupleExpr(EvaluatedTuple<'ctx>),
+    ParsedTupleExpr(EvaluatedTuple<'static>),
     /// Unparseable bytes
     Invalid {
         /// Bytes that were not parsed (whole register bytes)
@@ -68,7 +68,7 @@ pub enum RegisterValueError {
     UnexpectedRegisterValue(String),
 }
 
-impl<'ctx> RegisterValue<'ctx> {
+impl RegisterValue {
     /// Return a Constant if it's parsed, otherwise None
     pub fn as_constant(&self) -> Result<&Constant, RegisterValueError> {
         match self {
@@ -125,7 +125,7 @@ impl<'ctx> RegisterValue<'ctx> {
 
 /// Convert evaluated Tuple expression to Constant
 /// see https://github.com/ergoplatform/sigma-rust/issues/700
-fn tuple_to_constant(t: &Tuple) -> Result<Constant, String> {
+fn tuple_to_constant(t: &Tuple) -> Result<Constant<'static>, String> {
     let values = t.items.try_mapped_ref(|tuple_item| match tuple_item {
         Expr::Const(c) => Ok(c.v.clone()),
         Expr::Tuple(t) => Ok(tuple_to_constant(t)?.v),

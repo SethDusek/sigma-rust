@@ -33,7 +33,6 @@ mod tests {
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval_non_empty() {
@@ -48,8 +47,8 @@ mod tests {
         let option_get_expr: Expr = OptionGetOrElse::new(get_reg_expr, default_expr.into())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        let v = eval_out::<i64>(&option_get_expr, ctx.clone());
+        let ctx = force_any_val::<Context>();
+        let v = eval_out::<i64>(&option_get_expr, &ctx);
         assert_eq!(v, ctx.self_box.value.as_i64());
     }
 
@@ -64,8 +63,8 @@ mod tests {
         let option_get_expr: Expr = OptionGetOrElse::new(get_var_expr, default_expr.into())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        let v = eval_out::<i64>(&option_get_expr, ctx);
+        let ctx = force_any_val::<Context>();
+        let v = eval_out::<i64>(&option_get_expr, &ctx);
         assert_eq!(v, 1i64);
     }
 }

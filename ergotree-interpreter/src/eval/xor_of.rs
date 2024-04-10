@@ -25,15 +25,14 @@ mod tests {
     use proptest::collection;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     proptest! {
 
         #[test]
         fn eval(bools in collection::vec(any::<bool>(), 0..=10)) {
             let expr: Expr = XorOf {input: Expr::Const(bools.clone().into()).into()}.into();
-            let ctx = Rc::new(force_any_val::<Context>());
-            let res = eval_out::<bool>(&expr, ctx);
+            let ctx = force_any_val::<Context>();
+            let res = eval_out::<bool>(&expr, &ctx);
             // eval is true when collection has odd number of "true" values
             let expected = bools.into_iter().filter(|x| *x).count() & 1 == 1;
             prop_assert_eq!(res, expected);

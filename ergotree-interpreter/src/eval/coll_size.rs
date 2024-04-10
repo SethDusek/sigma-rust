@@ -30,17 +30,13 @@ mod tests {
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval() {
         let expr: Expr = SizeOf::try_build(GlobalVars::Outputs.into())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(
-            eval_out::<i32>(&expr, ctx.clone()),
-            ctx.outputs.len() as i32
-        );
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<i32>(&expr, &ctx), ctx.outputs.len() as i32);
     }
 }

@@ -44,7 +44,6 @@ mod tests {
     use ergotree_ir::mir::expr::Expr;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval_1_xor_0() {
@@ -58,8 +57,8 @@ mod tests {
         }
         .into();
 
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
     }
 
     #[test]
@@ -74,7 +73,7 @@ mod tests {
         }
         .into();
 
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
     }
 
@@ -90,8 +89,8 @@ mod tests {
         }
         .into();
 
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
     }
 
     #[test]
@@ -106,8 +105,8 @@ mod tests {
         }
         .into();
 
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
     }
 
     #[test]
@@ -122,8 +121,8 @@ mod tests {
         }
         .into();
 
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
     }
 
     proptest! {
@@ -139,8 +138,8 @@ mod tests {
             }
             .into();
 
-            let ctx = Rc::new(force_any_val::<Context>());
-            assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+            let ctx = force_any_val::<Context>();
+            assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
         }
     }
 }

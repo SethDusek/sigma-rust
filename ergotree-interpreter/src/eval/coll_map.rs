@@ -76,7 +76,6 @@ impl Evaluable for Map {
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::context::TxIoVec;
@@ -132,9 +131,8 @@ mod tests {
             )
             .unwrap()
             .into();
-            let ctx = Rc::new(ctx);
             let output = {
-                let e = eval_out::<Vec<i64>>(&expr, ctx.clone());
+                let e = eval_out::<Vec<i64>>(&expr, &ctx);
                 if e.is_empty() {
                   None
                 } else {
@@ -144,7 +142,7 @@ mod tests {
 
             assert_eq!(
                 output,
-                ctx.data_inputs.clone().map(|d| d.mapped(| b| b.value.as_i64() + 1))
+                ctx.data_inputs.clone().map(|d| d.iter().map(| b| b.value.as_i64() + 1).collect::<Vec<_>>().try_into().unwrap())
             );
         }
 

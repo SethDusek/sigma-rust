@@ -36,7 +36,6 @@ mod tests {
     use ergotree_ir::mir::expr::Expr;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     proptest! {
 
@@ -47,8 +46,8 @@ mod tests {
                 input: Box::new(Expr::Const(byte_array.into())),
             }
             .into();
-            let ctx = Rc::new(force_any_val::<Context>());
-            assert_eq!(eval_out::<Vec<i8>>(&expr, ctx).as_vec_u8(), expected_hash);
+            let ctx = force_any_val::<Context>();
+            assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx).as_vec_u8(), expected_hash);
         }
 
     }

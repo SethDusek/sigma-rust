@@ -52,12 +52,12 @@ impl Evaluable for DeserializeRegister {
     }
 }
 
-fn eval_default(
+fn eval_default<'ctx>(
     deserialize_reg_tpe: &SType,
     default_expr: &Expr,
     env: &mut Env,
-    ctx: &mut EvalContext,
-) -> Result<Value, EvalError> {
+    ctx: &'ctx mut EvalContext,
+) -> Result<Value<'ctx>, EvalError> {
     if &default_expr.tpe() != deserialize_reg_tpe {
         Err(EvalError::UnexpectedExpr(format!(
             "DeserializeRegister: expected default expr to have type {:?}, got {:?}",
@@ -73,9 +73,6 @@ fn eval_default(
 #[cfg(feature = "arbitrary")]
 #[cfg(test)]
 mod tests {
-
-    use std::rc::Rc;
-    use std::sync::Arc;
 
     use ergotree_ir::chain::ergo_box::ErgoBox;
     use ergotree_ir::chain::ergo_box::NonMandatoryRegisters;
@@ -93,11 +90,11 @@ mod tests {
 
     use super::*;
 
-    fn make_ctx_with_self_box(self_box: ErgoBox) -> Context {
+    fn make_ctx_with_self_box(self_box: ErgoBox) -> Context<'static> {
         let ctx = force_any_val::<Context>();
         Context {
             height: 0u32,
-            self_box: Arc::new(self_box),
+            self_box: Box::leak(Box::new(self_box)),
             ..ctx
         }
     }
@@ -122,7 +119,7 @@ mod tests {
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert!(try_eval_out::<bool>(&expr, Rc::new(ctx)).unwrap());
+        assert!(try_eval_out::<bool>(&expr, &ctx).unwrap());
     }
 
     #[test]
@@ -137,7 +134,7 @@ mod tests {
         }
         .into();
         let ctx = make_ctx_with_self_box(b.clone());
-        assert!(try_eval_out::<Value>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<Value>(&expr, &ctx).is_err());
 
         // default with wrong type provided
         let expr: Expr = DeserializeRegister {
@@ -147,7 +144,7 @@ mod tests {
         }
         .into();
         let ctx = make_ctx_with_self_box(b.clone());
-        assert!(try_eval_out::<i32>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<i32>(&expr, &ctx).is_err());
 
         // default provided
         let expr: Expr = DeserializeRegister {
@@ -157,7 +154,7 @@ mod tests {
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert_eq!(try_eval_out::<i32>(&expr, Rc::new(ctx)).unwrap(), 1i32);
+        assert_eq!(try_eval_out::<i32>(&expr, &ctx).unwrap(), 1i32);
     }
 
     #[test]
@@ -173,7 +170,7 @@ mod tests {
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert!(try_eval_out::<Value>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<Value>(&expr, &ctx).is_err());
     }
 
     #[test]
@@ -191,6 +188,6 @@ mod tests {
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert!(try_eval_out::<bool>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<bool>(&expr, &ctx).is_err());
     }
 }

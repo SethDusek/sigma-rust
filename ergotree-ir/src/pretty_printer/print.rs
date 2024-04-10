@@ -222,7 +222,7 @@ impl Print for ValDef {
     }
 }
 
-impl Print for Constant<'_> {
+impl Print for Constant<'static> {
     fn print(&self, w: &mut dyn Printer) -> Result<Expr, PrintError> {
         write!(w, "{:?}", self.v)?;
         Ok(self.clone().into())

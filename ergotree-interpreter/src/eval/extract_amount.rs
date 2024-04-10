@@ -28,7 +28,6 @@ mod tests {
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval() {
@@ -36,10 +35,7 @@ mod tests {
             input: Box::new(GlobalVars::SelfBox.into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(
-            eval_out::<i64>(&e, ctx.clone()),
-            ctx.self_box.value.as_i64()
-        )
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<i64>(&e, &ctx), ctx.self_box.value.as_i64())
     }
 }

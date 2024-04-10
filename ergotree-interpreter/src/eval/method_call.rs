@@ -20,8 +20,6 @@ impl Evaluable for MethodCall {
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
-    use std::rc::Rc;
-
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
@@ -45,9 +43,9 @@ mod tests {
         .unwrap()
         .into();
         let option_get_expr: Expr = OptionGet::try_build(mc).unwrap().into();
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<i64>(&option_get_expr, ctx.clone()),
+            eval_out::<i64>(&option_get_expr, &ctx),
             ctx.self_box.value.as_i64()
         );
     }

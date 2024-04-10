@@ -18,8 +18,6 @@ impl Evaluable for And {
 #[allow(clippy::panic)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
 
@@ -35,8 +33,8 @@ mod tests {
         #[test]
         fn eval(bools in collection::vec(any::<bool>(), 0..10)) {
             let expr: Expr = And {input: Expr::Const(bools.clone().into()).into()}.into();
-            let ctx = Rc::new(force_any_val::<Context>());
-            let res = eval_out::<bool>(&expr, ctx);
+            let ctx = force_any_val::<Context>();
+            let res = eval_out::<bool>(&expr, &ctx);
             prop_assert_eq!(res, bools.iter().all(|b| *b));
         }
     }

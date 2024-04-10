@@ -50,8 +50,6 @@ impl Evaluable for Apply {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use std::rc::Rc;
-
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::bin_op::RelationOp;
     use ergotree_ir::mir::block::BlockValue;
@@ -115,7 +113,7 @@ mod tests {
         )
         .unwrap()
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert!(eval_out::<bool>(&apply, ctx));
+        let ctx = force_any_val::<Context>();
+        assert!(eval_out::<bool>(&apply, &ctx));
     }
 }

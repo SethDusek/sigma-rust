@@ -40,8 +40,6 @@ impl Evaluable for DeserializeContext {
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use sigma_test_util::force_any_val;
@@ -67,7 +65,7 @@ mod tests {
                 .collect(),
         };
         let ctx = force_any_val::<Context>().with_extension(ctx_ext);
-        assert!(try_eval_out::<bool>(&expr, Rc::new(ctx)).unwrap());
+        assert!(try_eval_out::<bool>(&expr, &ctx).unwrap());
     }
 
     #[test]
@@ -78,7 +76,7 @@ mod tests {
         }
         .into();
         let ctx = force_any_val::<Context>().with_extension(ContextExtension::empty());
-        assert!(try_eval_out::<bool>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<bool>(&expr, &ctx).is_err());
     }
 
     #[test]
@@ -94,7 +92,7 @@ mod tests {
             values: [(1u8, ctx_ext_val)].iter().cloned().collect(),
         };
         let ctx = force_any_val::<Context>().with_extension(ctx_ext);
-        assert!(try_eval_out::<bool>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<bool>(&expr, &ctx).is_err());
     }
 
     #[test]
@@ -113,6 +111,6 @@ mod tests {
                 .collect(),
         };
         let ctx = force_any_val::<Context>().with_extension(ctx_ext);
-        assert!(try_eval_out::<Value>(&expr, Rc::new(ctx)).is_err());
+        assert!(try_eval_out::<Value>(&expr, &ctx).is_err());
     }
 }

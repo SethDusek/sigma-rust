@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use ergotree_ir::mir::constant::Constant;
 
 /// Environment with values substituted for identifiers during compilation
-pub struct ScriptEnv(HashMap<String, Constant>);
+pub struct ScriptEnv(HashMap<String, Constant<'static>>);
 
 impl Default for ScriptEnv {
     fn default() -> Self {

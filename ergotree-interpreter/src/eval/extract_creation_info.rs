@@ -24,7 +24,6 @@ impl Evaluable for ExtractCreationInfo {
 mod tests {
     use crate::eval::tests::eval_out;
     use crate::eval::Context;
-    use std::rc::Rc;
 
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
@@ -38,8 +37,8 @@ mod tests {
         let expr: Expr = ExtractCreationInfo::try_build(GlobalVars::SelfBox.into())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        let v = eval_out::<(i32, Vec<i8>)>(&expr, ctx.clone());
+        let ctx = force_any_val::<Context>();
+        let v = eval_out::<(i32, Vec<i8>)>(&expr, &ctx);
         assert_eq!(v, ctx.self_box.creation_info());
     }
 }

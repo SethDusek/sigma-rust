@@ -29,20 +29,20 @@ pub use value::*;
         try_from = "HashMap<NonMandatoryRegisterId, crate::chain::json::ergo_box::ConstantHolder>"
     )
 )]
-pub struct NonMandatoryRegisters<'ctx>(Vec<RegisterValue<'ctx>>);
+pub struct NonMandatoryRegisters(Vec<RegisterValue>);
 
-impl<'ctx> NonMandatoryRegisters<'ctx> {
+impl NonMandatoryRegisters {
     /// Maximum number of non-mandatory registers
     pub const MAX_SIZE: usize = NonMandatoryRegisterId::NUM_REGS;
 
     /// Empty non-mandatory registers
-    pub fn empty() -> NonMandatoryRegisters<'ctx> {
+    pub fn empty() -> NonMandatoryRegisters {
         NonMandatoryRegisters(vec![])
     }
 
     /// Create new from map
     pub fn new(
-        regs: HashMap<NonMandatoryRegisterId, Constant>,
+        regs: HashMap<NonMandatoryRegisterId, Constant<'static>>,
     ) -> Result<NonMandatoryRegisters, NonMandatoryRegistersError> {
         NonMandatoryRegisters::try_from(
             regs.into_iter()
@@ -86,7 +86,7 @@ impl<'ctx> NonMandatoryRegisters<'ctx> {
 }
 
 /// Create new from ordered values (first element will be R4, and so on)
-impl<'ctx> TryFrom<Vec<RegisterValue<'ctx>>> for NonMandatoryRegisters<'ctx> {
+impl TryFrom<Vec<RegisterValue>> for NonMandatoryRegisters {
     type Error = NonMandatoryRegistersError;
 
     fn try_from(values: Vec<RegisterValue>) -> Result<Self, Self::Error> {
@@ -98,10 +98,10 @@ impl<'ctx> TryFrom<Vec<RegisterValue<'ctx>>> for NonMandatoryRegisters<'ctx> {
     }
 }
 
-impl<'ctx> TryFrom<Vec<Constant<'ctx>>> for NonMandatoryRegisters<'ctx> {
+impl TryFrom<Vec<Constant<'static>>> for NonMandatoryRegisters {
     type Error = NonMandatoryRegistersError;
 
-    fn try_from(values: Vec<Constant>) -> Result<Self, Self::Error> {
+    fn try_from(values: Vec<Constant<'static>>) -> Result<Self, Self::Error> {
         NonMandatoryRegisters::try_from(
             values
                 .into_iter()
@@ -111,7 +111,7 @@ impl<'ctx> TryFrom<Vec<Constant<'ctx>>> for NonMandatoryRegisters<'ctx> {
     }
 }
 
-impl SigmaSerializable for NonMandatoryRegisters<'_> {
+impl SigmaSerializable for NonMandatoryRegisters {
     fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> SigmaSerializeResult {
         let regs_num = self.len();
         w.put_u8(regs_num as u8)?;
@@ -168,7 +168,7 @@ pub enum NonMandatoryRegistersError {
     NonDenselyPacked(u8),
 }
 
-impl<'ctx> From<NonMandatoryRegisters<'ctx>>
+impl From<NonMandatoryRegisters>
     for HashMap<NonMandatoryRegisterId, ergo_chain_types::Base16EncodedBytes>
 {
     fn from(v: NonMandatoryRegisters) -> Self {
@@ -186,9 +186,7 @@ impl<'ctx> From<NonMandatoryRegisters<'ctx>>
     }
 }
 
-impl<'ctx> From<NonMandatoryRegisters<'ctx>>
-    for HashMap<NonMandatoryRegisterId, RegisterValue<'ctx>>
-{
+impl From<NonMandatoryRegisters> for HashMap<NonMandatoryRegisterId, RegisterValue> {
     fn from(v: NonMandatoryRegisters) -> Self {
         v.0.into_iter()
             .enumerate()
@@ -197,9 +195,7 @@ impl<'ctx> From<NonMandatoryRegisters<'ctx>>
     }
 }
 
-impl<'ctx> TryFrom<HashMap<NonMandatoryRegisterId, RegisterValue<'ctx>>>
-    for NonMandatoryRegisters<'ctx>
-{
+impl TryFrom<HashMap<NonMandatoryRegisterId, RegisterValue>> for NonMandatoryRegisters {
     type Error = NonMandatoryRegistersError;
     fn try_from(
         reg_map: HashMap<NonMandatoryRegisterId, RegisterValue>,
@@ -223,7 +219,7 @@ impl<'ctx> TryFrom<HashMap<NonMandatoryRegisterId, RegisterValue<'ctx>>>
 
 #[cfg(feature = "json")]
 impl TryFrom<HashMap<NonMandatoryRegisterId, crate::chain::json::ergo_box::ConstantHolder>>
-    for NonMandatoryRegisters<'_>
+    for NonMandatoryRegisters
 {
     type Error = NonMandatoryRegistersError;
     fn try_from(
@@ -252,7 +248,7 @@ pub(crate) mod arbitrary {
         pub allow_unparseable: bool,
     }
 
-    impl Arbitrary for NonMandatoryRegisters<'_> {
+    impl Arbitrary for NonMandatoryRegisters {
         type Parameters = ArbNonMandatoryRegistersParams;
         type Strategy = BoxedStrategy<Self>;
 

@@ -11,7 +11,7 @@ impl Evaluable for GlobalVars {
     fn eval(&self, _env: &mut Env, ectx: &mut EvalContext) -> Result<Value, EvalError> {
         match self {
             GlobalVars::Height => Ok((ectx.ctx.height as i32).into()),
-            GlobalVars::SelfBox => Ok(ectx.ctx.self_box.clone().into()),
+            GlobalVars::SelfBox => Ok(ectx.ctx.self_box.into()),
             GlobalVars::Outputs => Ok(ectx.ctx.outputs.clone().into()),
             GlobalVars::Inputs => Ok(ectx.ctx.inputs.as_vec().clone().into()),
             GlobalVars::MinerPubKey => {
@@ -25,7 +25,6 @@ impl Evaluable for GlobalVars {
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
     use std::sync::Arc;
 
     use crate::eval::context::Context;
@@ -40,41 +39,41 @@ mod tests {
 
     #[test]
     fn eval_height() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expr = compile_expr("HEIGHT", ScriptEnv::new()).unwrap();
-        assert_eq!(eval_out::<i32>(&expr, ctx.clone()), ctx.height as i32);
+        assert_eq!(eval_out::<i32>(&expr, &ctx), ctx.height as i32);
     }
 
     #[test]
     fn eval_self_box() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<Arc<ErgoBox>>(&GlobalVars::SelfBox.into(), ctx.clone()).as_ref(),
-            ctx.self_box.as_ref()
+            eval_out::<&ErgoBox>(&GlobalVars::SelfBox.into(), &ctx),
+            ctx.self_box
         );
     }
 
     #[test]
     fn eval_outputs() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<Vec<Arc<ErgoBox>>>(&GlobalVars::Outputs.into(), ctx.clone()),
+            eval_out::<Vec<Arc<ErgoBox>>>(&GlobalVars::Outputs.into(), &ctx),
             ctx.outputs
         );
     }
 
     #[test]
     fn eval_inputs() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<Vec<Arc<ErgoBox>>>(&GlobalVars::Inputs.into(), ctx.clone()),
+            eval_out::<Vec<Arc<ErgoBox>>>(&GlobalVars::Inputs.into(), &ctx),
             *ctx.inputs.as_vec()
         );
     }
 
     #[test]
     fn eval_group_generator() {
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
             eval_out::<EcPoint>(&GlobalVars::GroupGenerator.into(), ctx),
             ergo_chain_types::ec_point::generator()

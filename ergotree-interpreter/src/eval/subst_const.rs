@@ -117,7 +117,9 @@ mod tests {
         }
     }
 
-    fn test_single_substitution<T: Clone + LiftIntoSType + StoreWrapped + Into<Constant>>(
+    fn test_single_substitution<
+        T: Clone + LiftIntoSType + StoreWrapped + Into<Constant<'static>>,
+    >(
         original: T,
         new: T,
     ) {

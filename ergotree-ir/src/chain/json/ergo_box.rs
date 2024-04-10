@@ -38,7 +38,7 @@ pub struct ErgoBoxJson {
     pub tokens: Vec<Token>,
     ///  additional registers the box can carry over
     #[serde(rename = "additionalRegisters")]
-    pub additional_registers: NonMandatoryRegisters<'static>,
+    pub additional_registers: NonMandatoryRegisters,
     /// height when a transaction containing the box was created.
     /// This height is declared by user and should not exceed height of the block,
     /// containing the transaction with this box.
@@ -131,7 +131,7 @@ pub struct ErgoBoxCandidateJson {
     pub tokens: Vec<Token>,
     ///  additional registers the box can carry over
     #[serde(rename = "additionalRegisters")]
-    pub additional_registers: NonMandatoryRegisters<'static>,
+    pub additional_registers: NonMandatoryRegisters,
     /// height when a transaction containing the box was created.
     /// This height is declared by user and should not exceed height of the block,
     /// containing the transaction with this box.
@@ -196,7 +196,7 @@ pub enum ErgoBoxFromJsonError {
 #[derive(Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct ConstantHolder(#[serde(deserialize_with = "super::t_as_string_or_struct")] RichConstant);
 
-impl From<ConstantHolder> for RegisterValue<'static> {
+impl From<ConstantHolder> for RegisterValue {
     fn from(ch: ConstantHolder) -> Self {
         RegisterValue::sigma_parse_bytes(ch.0.raw_value.0.as_slice())
     }

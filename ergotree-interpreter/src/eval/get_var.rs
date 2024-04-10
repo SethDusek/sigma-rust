@@ -29,17 +29,16 @@ mod tests {
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     const VAR_IDX: u8 = 3;
     const VAR_VAL: i32 = 123;
 
     /// Prepare context with single extension variable
-    fn prepare_context() -> Rc<Context> {
+    fn prepare_context() -> Context<'static> {
         let mut ctx = force_any_val::<Context>();
         ctx.extension.values.clear();
         ctx.extension.values.insert(VAR_IDX, VAR_VAL.into());
-        Rc::new(ctx)
+        ctx
     }
 
     /// Normal evaluation
@@ -51,7 +50,7 @@ mod tests {
             var_tpe: SType::SInt,
         }
         .into();
-        let res = eval_out::<Option<i32>>(&expr, ctx);
+        let res = eval_out::<Option<i32>>(&expr, &ctx);
         assert_eq!(res, Some(VAR_VAL));
     }
 
@@ -64,7 +63,7 @@ mod tests {
             var_tpe: SType::SInt,
         }
         .into();
-        let res = eval_out::<Option<i32>>(&expr, ctx);
+        let res = eval_out::<Option<i32>>(&expr, &ctx);
         assert_eq!(res, None);
     }
 
@@ -77,7 +76,7 @@ mod tests {
             var_tpe: SType::SBoolean,
         }
         .into();
-        let res = try_eval_out::<Value>(&expr, ctx);
+        let res = try_eval_out::<Value>(&expr, &ctx);
         assert!(res.is_err());
     }
 }

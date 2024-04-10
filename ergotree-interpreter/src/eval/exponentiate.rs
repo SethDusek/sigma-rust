@@ -46,7 +46,6 @@ mod tests {
     use num_traits::Num;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     proptest! {
 
@@ -67,8 +66,8 @@ mod tests {
             }
             .into();
 
-            let ctx = Rc::new(force_any_val::<Context>());
-            assert_eq!(eval_out::<EcPoint>(&expr, ctx), expected_exp);
+            let ctx = force_any_val::<Context>();
+            assert_eq!(eval_out::<EcPoint>(&expr, &ctx), expected_exp);
         }
     }
 
@@ -82,7 +81,7 @@ mod tests {
         }
         .into();
 
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert!(try_eval_out::<EcPoint>(&expr, ctx).is_err());
+        let ctx = force_any_val::<Context>();
+        assert!(try_eval_out::<EcPoint>(&expr, &ctx).is_err());
     }
 }

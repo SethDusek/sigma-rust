@@ -62,7 +62,6 @@ mod tests {
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaConjecture;
     use ergotree_ir::types::stype::SType;
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -84,8 +83,8 @@ mod tests {
                 sigmaprops.into_iter().map(|s| s.into()).collect::<Vec<Literal>>()).unwrap());
             let expr: Expr = Atleast::new(2i32.into(),
                 Constant {tpe: SType::SColl(SType::SSigmaProp.into()), v: items}.into()).unwrap().into();
-            let ctx = Rc::new(force_any_val::<Context>());
-            let res = eval_out::<SigmaProp>(&expr, ctx);
+            let ctx = force_any_val::<Context>();
+            let res = eval_out::<SigmaProp>(&expr, &ctx);
             prop_assert!(matches!(res.into(),
                 SigmaBoolean::SigmaConjecture(SigmaConjecture::Cthreshold(_))));
         }

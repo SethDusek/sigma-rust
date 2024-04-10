@@ -612,8 +612,8 @@ pub trait TryExtractFrom<T>: Sized {
     fn try_extract_from(v: T) -> Result<Self, TryExtractFromError>;
 }
 
-impl<'ctx, T: TryExtractFrom<Literal<'ctx>>> TryExtractFrom<Constant<'ctx>> for T {
-    fn try_extract_from(cv: Constant) -> Result<Self, TryExtractFromError> {
+impl<'ctx, T: TryExtractFrom<Literal<'ctx>> + 'ctx> TryExtractFrom<Constant<'ctx>> for T {
+    fn try_extract_from(cv: Constant<'ctx>) -> Result<Self, TryExtractFromError> {
         T::try_extract_from(cv.v)
     }
 }
@@ -702,8 +702,8 @@ impl<'ctx> TryExtractFrom<Literal<'ctx>> for SigmaProp {
     }
 }
 
-impl<'ctx> TryExtractFrom<Literal<'ctx>> for &'ctx ErgoBox {
-    fn try_extract_from(c: Literal) -> Result<Self, TryExtractFromError> {
+impl<'ctx> TryExtractFrom<&'ctx Literal<'ctx>> for &'ctx ErgoBox {
+    fn try_extract_from(c: &'ctx Literal<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
             Literal::CBox(b) => Ok(&*b),
             _ => Err(TryExtractFromError(format!(
@@ -726,10 +726,10 @@ impl<'ctx> TryExtractFrom<Literal<'ctx>> for ErgoBox {
     }
 }
 
-impl<'ctx, T: TryExtractFrom<Literal<'ctx>> + StoreWrapped> TryExtractFrom<Literal<'ctx>>
+impl<'ctx, T: TryExtractFrom<Literal<'ctx>> + StoreWrapped + 'ctx> TryExtractFrom<Literal<'ctx>>
     for Vec<T>
 {
-    fn try_extract_from(c: Literal) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(c: Literal<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
             Literal::Coll(coll) => match coll {
                 CollKind::WrappedColl {
@@ -795,7 +795,7 @@ impl<'ctx> TryExtractFrom<Literal<'ctx>> for TokenId {
 }
 
 impl<'ctx> TryExtractFrom<Literal<'ctx>> for Literal<'ctx> {
-    fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Literal<'ctx>) -> Result<Self, TryExtractFromError> {
         Ok(v)
     }
 }
@@ -827,7 +827,7 @@ impl<'ctx> TryExtractFrom<Literal<'ctx>> for AvlTreeData {
 }
 
 impl<'ctx, T: TryExtractFrom<Literal<'ctx>>> TryExtractFrom<Literal<'ctx>> for Option<T> {
-    fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Literal<'ctx>) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::Opt(opt) => opt.map(T::try_extract_from).transpose(),
             _ => Err(TryExtractFromError(format!(
@@ -840,7 +840,7 @@ impl<'ctx, T: TryExtractFrom<Literal<'ctx>>> TryExtractFrom<Literal<'ctx>> for O
 
 #[impl_for_tuples(2, 4)]
 impl<'ctx> TryExtractFrom<Literal<'ctx>> for Tuple {
-    fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
+    fn try_extract_from(v: Literal<'ctx>) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::Tup(items) => {
                 let mut iter = items.iter();
@@ -1088,7 +1088,8 @@ pub mod tests {
             + Into<Constant<'static>>
             + fmt::Debug
             + Eq
-            + Clone,
+            + Clone
+            + 'static,
     {
         let constant: Constant = v.clone().into();
         let v_extracted: T = constant.try_extract_into::<T>().unwrap();

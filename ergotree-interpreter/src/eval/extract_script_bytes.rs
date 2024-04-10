@@ -36,9 +36,9 @@ mod tests {
             input: Box::new(GlobalVars::SelfBox.into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<Vec<i8>>(&e, ctx.clone()),
+            eval_out::<Vec<i8>>(&e, &ctx),
             ctx.self_box.script_bytes().unwrap()
         );
     }

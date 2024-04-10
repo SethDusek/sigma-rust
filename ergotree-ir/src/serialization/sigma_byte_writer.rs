@@ -23,7 +23,7 @@ impl<'a, W: Write> SigmaByteWriter<'a, W> {
 /// Sigma byte writer trait with a store for constant segregation
 pub trait SigmaByteWrite: WriteSigmaVlqExt {
     /// Constant store (if any) attached to the writer to collect segregated constants
-    fn constant_store_mut_ref(&mut self) -> Option<&mut ConstantStore>;
+    fn constant_store_mut_ref<'a>(&'a mut self) -> Option<&'a mut ConstantStore>;
 }
 
 impl<'a, W: Write> Write for SigmaByteWriter<'a, W> {
