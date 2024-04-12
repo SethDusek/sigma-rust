@@ -104,7 +104,11 @@ fn downcast_to_byte(in_v: Value) -> Result<Value, EvalError> {
 }
 
 impl Evaluable for Downcast {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         match self.tpe {
             SType::SBigInt => downcast_to_bigint(input_v),

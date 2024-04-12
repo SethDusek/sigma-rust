@@ -27,7 +27,8 @@ pub mod chain;
 pub mod ergo_tree;
 pub mod mir;
 pub mod pretty_printer;
-pub(crate) mod reference;
+/// TODO
+pub mod reference;
 pub mod serialization;
 pub mod sigma_protocol;
 pub mod source_span;

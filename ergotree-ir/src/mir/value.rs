@@ -182,6 +182,46 @@ pub enum Value<'ctx> {
 }
 
 impl<'ctx> Value<'ctx> {
+    /// Convert a Value<'ctx> to a Value<'static>.
+    /// Useful for returning errors especially in bindings where we can't return  borrowed values
+    pub fn to_static(&'ctx self) -> Value<'static> {
+        match self {
+            Value::Boolean(b) => Value::Boolean(*b),
+            Value::Byte(b) => Value::Byte(*b),
+            Value::Short(b) => Value::Short(*b),
+            Value::Int(b) => Value::Int(*b),
+            Value::Long(b) => Value::Long(*b),
+            Value::Unit => Value::Unit,
+            Value::BigInt(b) => Value::BigInt(b.clone()),
+            Value::GroupElement(b) => Value::GroupElement(b.clone()),
+            Value::SigmaProp(p) => Value::SigmaProp(p.clone()),
+            Value::AvlTree(t) => Value::AvlTree(t.clone()),
+            Value::Coll(coll) => match coll {
+                CollKind::NativeColl(c) => Value::Coll(CollKind::NativeColl(c.clone())),
+                CollKind::WrappedColl { elem_tpe, items } => Value::Coll(CollKind::WrappedColl {
+                    items: items.iter().map(|v| v.to_static()).collect(),
+                    elem_tpe: elem_tpe.clone(),
+                }),
+            },
+            Value::Tup(tup) => Value::Tup(
+                tup.iter()
+                    .map(|v| v.to_static())
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+            ),
+            Value::Context => Value::Context,
+            Value::Header(h) => Value::Header(h.clone()),
+            Value::PreHeader(h) => Value::PreHeader(h.clone()),
+            Value::Global => Value::Global,
+            Value::CBox(c) => Value::CBox(c.to_static()),
+            Value::Opt(opt) => Value::Opt(Box::new(Option::as_ref(opt).map(|o| o.to_static()))),
+            Value::Lambda(l) => Value::Lambda(l.clone()),
+        }
+    }
+}
+
+impl<'ctx> Value<'ctx> {
     /// Create Sigma property constant
     pub fn sigma_prop(prop: SigmaProp) -> Value<'ctx> {
         Value::SigmaProp(Box::new(prop))
@@ -319,8 +359,8 @@ impl StoreWrapped for i32 {}
 impl StoreWrapped for i64 {}
 impl StoreWrapped for BigInt256 {}
 impl StoreWrapped for Header {}
-//impl StoreWrapped for Arc<ErgoBox> {}
-impl StoreWrapped for &ErgoBox {}
+impl StoreWrapped for ErgoBox {}
+impl StoreWrapped for Ref<'_, ErgoBox> {}
 impl StoreWrapped for EcPoint {}
 impl StoreWrapped for SigmaProp {}
 impl<T: StoreWrapped> StoreWrapped for Option<T> {}
@@ -350,14 +390,14 @@ impl<'ctx> Into<Value<'ctx>> for Tuple {
     }
 }
 // TODO
-// impl From<Vec<Arc<ErgoBox>>> for Value {
-//     fn from(v: Vec<Arc<ErgoBox>>) -> Self {
-//         Value::Coll(CollKind::WrappedColl {
-//             elem_tpe: SType::SBox,
-//             items: v.into_iter().map(|i| i.into()).collect(),
-//         })
-//     }
-// }
+impl<'ctx> From<Vec<Ref<'ctx, ErgoBox>>> for Value<'ctx> {
+    fn from(v: Vec<Ref<'ctx, ErgoBox>>) -> Self {
+        Value::Coll(CollKind::WrappedColl {
+            elem_tpe: SType::SBox,
+            items: v.into_iter().map(|i| i.into()).collect(),
+        })
+    }
+}
 
 impl TryExtractFrom<Value<'_>> for bool {
     fn try_extract_from(cv: Value) -> Result<bool, TryExtractFromError> {
@@ -431,10 +471,10 @@ impl TryExtractFrom<Value<'_>> for SigmaProp {
     }
 }
 
-impl<'ctx> TryExtractFrom<&'ctx Value<'ctx>> for &'ctx ErgoBox {
-    fn try_extract_from(c: &'ctx Value<'ctx>) -> Result<Self, TryExtractFromError> {
+impl<'ctx> TryExtractFrom<Value<'ctx>> for Ref<'ctx, ErgoBox> {
+    fn try_extract_from(c: Value<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
-            Value::CBox(b) => Ok(&*b),
+            Value::CBox(b) => Ok(b),
             _ => Err(TryExtractFromError(format!(
                 "expected ErgoBox, found {:?}",
                 c

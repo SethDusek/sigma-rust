@@ -8,7 +8,11 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for ByIndex {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let index_v = self.index.eval(env, ctx)?;
         let normalized_input_vals: Vec<Value> = match input_v {
@@ -46,6 +50,7 @@ mod tests {
     use ergotree_ir::chain::ergo_box::ErgoBox;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
+    use ergotree_ir::reference::Ref;
     use sigma_test_util::force_any_val;
 
     use super::*;
@@ -60,7 +65,7 @@ mod tests {
             .into();
         let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<&ErgoBox>(&expr, &ctx).box_id(),
+            eval_out::<Ref<'_, ErgoBox>>(&expr, &ctx).box_id(),
             ctx.outputs.get(0).unwrap().box_id()
         );
     }

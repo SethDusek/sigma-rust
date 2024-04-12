@@ -11,7 +11,11 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for BlockValue {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         // The start of the top-level block of statements does not contain any
         // pre-existing `ValDef`s.
         let is_top_level_block = env.is_empty();

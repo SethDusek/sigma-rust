@@ -99,7 +99,7 @@ pub use error::EvalError;
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ReductionDiagnosticInfo {
     /// environment after the evaluation
-    pub env: Env,
+    pub env: Env<'static>,
     /// expression pretty-printed
     pub pretty_printed_expr: Option<String>,
 }
@@ -125,16 +125,12 @@ pub struct ReductionResult {
 }
 
 /// Evaluate the given expression by reducing it to SigmaBoolean value.
-pub fn reduce_to_crypto(
-    expr: &Expr,
-    env: &Env,
-    ctx: &Context,
-) -> Result<ReductionResult, EvalError> {
+pub fn reduce_to_crypto<'a>(expr: &Expr, ctx: &Context) -> Result<ReductionResult, EvalError> {
     let ctx_clone = ctx;
-    fn inner(expr: &Expr, env: &Env, ctx: &Context) -> Result<ReductionResult, EvalError> {
+    fn inner<'ctx>(expr: &'ctx Expr, ctx: &Context<'ctx>) -> Result<ReductionResult, EvalError> {
         let cost_accum = CostAccumulator::new(0, None);
         let mut ectx = EvalContext::new(ctx, cost_accum);
-        let mut env_mut = env.clone();
+        let mut env_mut = Env::empty(); //env.clone();
         expr.eval(&mut env_mut, &mut ectx)
             .and_then(|v| -> Result<ReductionResult, EvalError> {
                 match v {
@@ -142,7 +138,7 @@ pub fn reduce_to_crypto(
                         sigma_prop: SigmaBoolean::TrivialProp(b),
                         cost: 0,
                         diag: ReductionDiagnosticInfo {
-                            env: env_mut.clone(),
+                            env: env_mut.to_static(),
                             pretty_printed_expr: None,
                         },
                     }),
@@ -150,7 +146,7 @@ pub fn reduce_to_crypto(
                         sigma_prop: sp.value().clone(),
                         cost: 0,
                         diag: ReductionDiagnosticInfo {
-                            env: env_mut.clone(),
+                            env: env_mut.to_static(),
                             pretty_printed_expr: None,
                         },
                     }),
@@ -159,7 +155,7 @@ pub fn reduce_to_crypto(
             })
     }
 
-    let res = inner(expr, env, ctx);
+    let res = inner(expr, ctx);
     if let Ok(reduction) = res {
         if reduction.sigma_prop == SigmaBoolean::TrivialProp(false) {
             let (_, printed_expr_str) = expr
@@ -181,7 +177,7 @@ pub fn reduce_to_crypto(
     let (spanned_expr, printed_expr_str) = expr
         .pretty_print()
         .map_err(|e| EvalError::Misc(e.to_string()))?;
-    inner(&spanned_expr, env, ctx_clone)
+    inner(&spanned_expr, ctx_clone)
         .map_err(|e| e.wrap_spanned_with_src(printed_expr_str.to_string()))
 }
 
@@ -193,9 +189,9 @@ pub fn extract_sigma_boolean(expr: &Expr) -> Result<SigmaBoolean, EvalError> {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct EvalContext<'a> {
-    pub(crate) ctx: &'a Context<'a>,
+#[derive(Debug, Clone)] // TODO
+pub(crate) struct EvalContext<'ctx> {
+    pub(crate) ctx: &'ctx Context<'ctx>,
     pub(crate) cost_accum: CostAccumulator,
 }
 
@@ -209,12 +205,17 @@ impl<'a> EvalContext<'a> {
 /// Should be implemented by every node that can be evaluated.
 pub(crate) trait Evaluable {
     /// Evaluation routine to be implement by each node
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError>;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+        // TODO cost_accum: &mut CostAccumulator,
+    ) -> Result<Value<'ctx>, EvalError>;
 }
 
-type EvalFn<'ctx> = fn(
-    env: &mut Env,
-    ctx: &mut EvalContext,
+type EvalFn = for<'ctx> fn(
+    env: &mut Env<'ctx>,
+    ctx: &EvalContext<'ctx>,
     Value<'ctx>,
     Vec<Value<'ctx>>,
 ) -> Result<Value<'ctx>, EvalError>;
@@ -390,36 +391,40 @@ pub(crate) mod tests {
     use expect_test::expect;
     use sigma_test_util::force_any_val;
 
-    pub fn eval_out_wo_ctx<'ctx, T: TryExtractFrom<Value<'ctx>>>(expr: &Expr) -> T {
+    pub fn eval_out_wo_ctx<T: TryExtractFrom<Value<'static>> + 'static>(expr: &Expr) -> T {
         let ctx = force_any_val::<Context>();
         eval_out(expr, &ctx)
     }
 
-    pub fn eval_out<'ctx, T: TryExtractFrom<Value<'ctx>>>(
+    pub fn eval_out<T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
-        ctx: &'ctx Context<'ctx>,
+        ctx: &Context<'static>,
     ) -> T {
         let cost_accum = CostAccumulator::new(0, None);
         let mut ectx = EvalContext::new(ctx, cost_accum);
         let mut env = Env::empty();
         expr.eval(&mut env, &mut ectx)
             .unwrap()
+            .to_static()
             .try_extract_into::<T>()
             .unwrap()
     }
 
-    pub fn try_eval_out<'ctx, T: TryExtractFrom<Value<'ctx>>>(
+    pub fn try_eval_out<'ctx, T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
         ctx: &'ctx Context<'ctx>,
     ) -> Result<T, EvalError> {
         let cost_accum = CostAccumulator::new(0, None);
         let mut ectx = EvalContext::new(ctx, cost_accum);
         let mut env = Env::empty();
-        expr.eval(&mut env, &mut ectx)
-            .and_then(|v| v.try_extract_into::<T>().map_err(EvalError::TryExtractFrom))
+        expr.eval(&mut env, &mut ectx).and_then(|v| {
+            v.to_static()
+                .try_extract_into::<T>()
+                .map_err(EvalError::TryExtractFrom)
+        })
     }
 
-    pub fn try_eval_out_wo_ctx<'ctx, T: TryExtractFrom<Value<'ctx>>>(
+    pub fn try_eval_out_wo_ctx<T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
     ) -> Result<T, EvalError> {
         let ctx = force_any_val::<Context>();
@@ -451,8 +456,8 @@ pub(crate) mod tests {
             }
             .into(),
         );
-        let ctx = Rc::new(force_any_val::<Context>());
-        let res = reduce_to_crypto(&block, &Env::empty(), ctx).unwrap();
+        let ctx = force_any_val::<Context>();
+        let res = reduce_to_crypto(&block, &ctx).unwrap();
         assert!(res.sigma_prop == SigmaBoolean::TrivialProp(false));
         expect![[r#"
             Pretty printed expr:

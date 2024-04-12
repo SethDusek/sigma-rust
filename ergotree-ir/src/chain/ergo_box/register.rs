@@ -71,7 +71,7 @@ impl NonMandatoryRegisters {
     pub fn get_constant(
         &self,
         reg_id: NonMandatoryRegisterId,
-    ) -> Result<Option<Constant>, RegisterValueError> {
+    ) -> Result<Option<Constant<'static>>, RegisterValueError> {
         match self
             .0
             .get(reg_id as usize - NonMandatoryRegisterId::START_INDEX)

@@ -6,13 +6,13 @@ use ergotree_ir::mir::value::Value;
 
 /// Environment for the interpreter
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub struct Env {
-    store: HashMap<ValId, Value>,
+pub struct Env<'ctx> {
+    store: HashMap<ValId, Value<'ctx>>, // TODO: consider changing to another lifetime
 }
 
-impl Env {
+impl<'ctx> Env<'ctx> {
     /// Empty environment
-    pub fn empty() -> Env {
+    pub fn empty() -> Env<'ctx> {
         Env {
             store: HashMap::new(),
         }
@@ -24,14 +24,14 @@ impl Env {
     }
 
     /// Extend this environment (create new) with added element
-    pub fn extend(&self, idx: ValId, v: Value) -> Env {
+    pub fn extend(&self, idx: ValId, v: Value<'ctx>) -> Env<'ctx> {
         let mut new_store = self.store.clone();
         new_store.insert(idx, v);
         Env { store: new_store }
     }
 
     /// Insert a Value for the given ValId
-    pub fn insert(&mut self, idx: ValId, v: Value) {
+    pub fn insert(&mut self, idx: ValId, v: Value<'ctx>) {
         self.store.insert(idx, v);
     }
 
@@ -41,12 +41,21 @@ impl Env {
     }
 
     /// Get an element
-    pub fn get(&self, idx: ValId) -> Option<&Value> {
+    pub fn get(&self, idx: ValId) -> Option<&Value<'ctx>> {
         self.store.get(&idx)
+    }
+    pub fn to_static(&'ctx self) -> Env<'static> {
+        Env {
+            store: self
+                .store
+                .iter()
+                .map(|(&k, v)| (k, v.to_static()))
+                .collect(),
+        }
     }
 }
 
-impl Display for Env {
+impl Display for Env<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut keys: Vec<&ValId> = self.store.keys().collect();
         keys.sort();

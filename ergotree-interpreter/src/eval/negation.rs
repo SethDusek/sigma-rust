@@ -8,13 +8,19 @@ use crate::eval::Evaluable;
 use num_traits::CheckedNeg;
 
 impl Evaluable for Negation {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
 
         fn overflow_err<T: std::fmt::Display>(v: &T) -> EvalError {
             EvalError::ArithmeticException(format!("Overflow on Negation of value {}", *v))
         }
-        fn neg<T: CheckedNeg + Into<Value> + std::fmt::Display>(v: &T) -> Result<Value, EvalError> {
+        fn neg<'ctx, T: CheckedNeg + Into<Value<'ctx>> + std::fmt::Display>(
+            v: &T,
+        ) -> Result<Value<'ctx>, EvalError> {
             v.checked_neg()
                 .map(|v| v.into())
                 .ok_or_else(|| overflow_err(v))
@@ -46,7 +52,7 @@ mod tests {
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use num_traits::{Bounded, Num};
 
-    fn try_run_eval<T: Num + Into<Constant> + TryExtractFrom<Value>>(
+    fn try_run_eval<T: Num + Into<Constant<'static>> + TryExtractFrom<Value<'static>> + 'static>(
         input: T,
     ) -> Result<T, EvalError> {
         let expr: Expr = Negation::try_build(Expr::Const(input.into()))
@@ -54,7 +60,9 @@ mod tests {
             .into();
         try_eval_out_wo_ctx::<T>(&expr)
     }
-    fn run_eval<T: Num + Into<Constant> + TryExtractFrom<Value>>(input: T) -> T {
+    fn run_eval<T: Num + Into<Constant<'static>> + TryExtractFrom<Value<'static>> + 'static>(
+        input: T,
+    ) -> T {
         try_run_eval(input).unwrap()
     }
 

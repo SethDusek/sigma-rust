@@ -137,17 +137,16 @@ pub trait Prover {
     /// <https://ergoplatform.org/docs/ErgoScript.pdf>, Appendix A
     ///
     /// Generate proofs for the given message for ErgoTree reduced to Sigma boolean expression
-    fn prove(
+    fn prove<'ctx>(
         &self,
         tree: &ErgoTree,
-        env: &Env,
-        ctx: &Context,
+        ctx: &'ctx Context,
         message: &[u8],
         hints_bag: &HintsBag,
     ) -> Result<ProverResult, ProverError> {
         let expr = tree.proposition()?;
         let ctx_ext = ctx.extension.clone();
-        let reduction_result = reduce_to_crypto(&expr, env, ctx).map_err(ProverError::EvalError)?;
+        let reduction_result = reduce_to_crypto(&expr, ctx).map_err(ProverError::EvalError)?;
         self.generate_proof(reduction_result.sigma_prop, message, hints_bag)
             .map(|p| ProverResult {
                 proof: p,

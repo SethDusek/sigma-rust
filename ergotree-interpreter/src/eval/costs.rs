@@ -6,7 +6,7 @@ use derive_more::{From, Into};
 #[derive(PartialEq, Eq, Debug, Clone, From, Into)]
 pub struct Cost(u32);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)] // TODO
 pub struct Costs {
     pub eq_const_size: Cost,
 }

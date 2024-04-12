@@ -5,12 +5,13 @@ use crate::eval::EvalError;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::reference::Ref;
 
 use super::EvalFn;
 
 pub(crate) static VALUE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     Ok(Value::Long(
-        (&obj).try_extract_into::<&ErgoBox>()?.value.as_i64(),
+        obj.try_extract_into::<Ref<'_, ErgoBox>>()?.value.as_i64(),
     ))
 };
 
@@ -28,8 +29,7 @@ pub(crate) static GET_REG_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     })?;
 
     Ok(Value::Opt(Box::new(
-        (&obj)
-            .try_extract_into::<&ErgoBox>()?
+        obj.try_extract_into::<Ref<'_, ErgoBox>>()?
             .get_register(reg_id)
             .map_err(|e| {
                 EvalError::NotFound(format!(
@@ -41,7 +41,10 @@ pub(crate) static GET_REG_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 };
 
 pub(crate) static TOKENS_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
-    let res: Value = (&obj).try_extract_into::<&ErgoBox>()?.tokens_raw().into();
+    let res: Value = obj
+        .try_extract_into::<Ref<'_, ErgoBox>>()?
+        .tokens_raw()
+        .into();
     Ok(res)
 };
 
@@ -74,7 +77,7 @@ mod tests {
             .into();
         let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<Vec<(Vec<i8>, i64)>>(&expr, ctx.clone()),
+            eval_out::<Vec<(Vec<i8>, i64)>>(&expr, &ctx),
             ctx.self_box.tokens_raw()
         );
     }

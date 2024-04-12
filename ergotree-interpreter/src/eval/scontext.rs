@@ -2,6 +2,7 @@ use ergotree_ir::mir::avl_tree_data::AvlTreeData;
 use ergotree_ir::mir::avl_tree_data::AvlTreeFlags;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::reference::Ref;
 use ergotree_ir::serialization::SigmaSerializable;
 use ergotree_ir::types::stype::SType;
 
@@ -16,11 +17,9 @@ pub(crate) static DATA_INPUTS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
         )));
     }
     Ok(Value::Coll(CollKind::WrappedColl {
-        items: ctx
-            .ctx
-            .data_inputs
-            .clone()
-            .map_or(vec![], |d| d.iter().map(Ref::from).(Value::CBox).as_vec().clone()),
+        items: ctx.ctx.data_inputs.clone().map_or(vec![], |d| {
+            d.iter().map(Ref::from).map(Value::CBox).collect()
+        }),
         elem_tpe: SType::SBox,
     }))
 };
@@ -150,7 +149,7 @@ mod tests {
             .expect("internal error: `headers` method has parameters length != 1")
             .into();
         let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<[Header; 10]>(&expr, ctx.clone()), ctx.headers);
+        assert_eq!(eval_out::<[Header; 10]>(&expr, &ctx), ctx.headers);
     }
 
     #[test]

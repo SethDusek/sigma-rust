@@ -97,7 +97,6 @@ pub(crate) static VOTES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 #[allow(clippy::expect_used, clippy::panic, clippy::unwrap_used)]
 mod tests {
     use std::convert::{TryFrom, TryInto};
-    use std::rc::Rc;
 
     use ergo_chain_types::{BlockId, Digest, Digest32, EcPoint, Votes};
     use ergotree_ir::{
@@ -117,7 +116,7 @@ mod tests {
     const HEADER_INDEX: usize = 0;
 
     // Evaluates `Header.minerPk`, `Header.powOnetimePk`
-    fn eval_header_pks(ctx: &Context) -> [Box<EcPoint>; 2] {
+    fn eval_header_pks(ctx: &Context<'static>) -> [Box<EcPoint>; 2] {
         let miner_pk = eval_out::<EcPoint>(
             &create_get_header_property_expr(sheader::MINER_PK_PROPERTY.clone()),
             ctx.clone(),
@@ -130,7 +129,7 @@ mod tests {
     }
 
     // Evaluates `Header.AdProofsRoot`, `Header.transactionRoot`, `Header.extensionRoot`
-    fn eval_header_roots(ctx: &Context) -> [Digest32; 3] {
+    fn eval_header_roots(ctx: &Context<'static>) -> [Digest32; 3] {
         vec![
             sheader::AD_PROOFS_ROOT_PROPERTY.clone(),
             sheader::TRANSACTIONS_ROOT_PROPERTY.clone(),
@@ -145,7 +144,7 @@ mod tests {
     }
 
     // Evaluates `Header.id` and `Header.parentId`
-    fn eval_header_ids(ctx: &Context) -> [BlockId; 2] {
+    fn eval_header_ids(ctx: &Context<'static>) -> [BlockId; 2] {
         let id = eval_out::<Vec<i8>>(
             &create_get_header_property_expr(sheader::ID_PROPERTY.clone()),
             ctx,

@@ -60,7 +60,6 @@ mod tests {
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::method_call::MethodCall;
     use ergotree_ir::mir::property_call::PropertyCall;
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;

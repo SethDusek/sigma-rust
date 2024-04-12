@@ -9,12 +9,16 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Fold {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let zero_v = self.zero.eval(env, ctx)?;
         let fold_op_v = self.fold_op.eval(env, ctx)?;
         let input_v_clone = input_v.clone();
-        let mut fold_op_call = |arg: Value| match &fold_op_v {
+        let mut fold_op_call = |arg: Value<'ctx>| match &fold_op_v {
             Value::Lambda(func_value) => {
                 let func_arg = func_value
                     .args

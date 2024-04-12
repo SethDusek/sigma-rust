@@ -84,7 +84,7 @@ pub struct SpannedEvalError {
     /// source span for the expression where error occurred
     source_span: SourceSpan,
     /// environment at the time when error occurred
-    env: Env,
+    env: Env<'static>, // TODO: using 'static will probably simplify error handling (especially bindings), but require us to clone everything in Env when returning an error
 }
 
 /// Wrapped error with source span and source code
@@ -95,7 +95,7 @@ pub struct SpannedWithSourceEvalError {
     /// source span for the expression where error occurred
     source_span: SourceSpan,
     /// environment at the time when error occurred
-    env: Env,
+    env: Env<'static>,
     /// source code
     source: String,
 }
@@ -155,7 +155,7 @@ impl EvalError {
         EvalError::Spanned(SpannedEvalError {
             error: Box::new(self),
             source_span,
-            env,
+            env: env.to_static(),
         })
     }
 
@@ -179,7 +179,7 @@ pub trait ExtResultEvalError<T> {
 }
 
 impl<T> ExtResultEvalError<T> for Result<T, EvalError> {
-    fn enrich_err(self, span: SourceSpan, env: Env) -> Result<T, EvalError> {
+    fn enrich_err<'ctx>(self, span: SourceSpan, env: Env<'ctx>) -> Result<T, EvalError> {
         self.map_err(|e| match e {
             // skip already wrapped errors
             w @ EvalError::Spanned { .. } => w,

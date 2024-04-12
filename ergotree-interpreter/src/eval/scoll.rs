@@ -8,6 +8,8 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::types::stuple::STuple;
 use ergotree_ir::types::stype::SType::SInt;
 
+use super::env::Env;
+use super::EvalContext;
 use super::EvalFn;
 use std::convert::TryFrom;
 
@@ -41,7 +43,12 @@ pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     }))
 };
 
-pub(crate) static FLATMAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
+pub fn flatmap_eval<'ctx>(
+    env: &mut Env<'ctx>,
+    ctx: &EvalContext<'ctx>,
+    obj: Value<'ctx>,
+    args: Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError> {
     let input_v = obj;
     let lambda_v = args
         .get(0)
@@ -68,7 +75,7 @@ pub(crate) static FLATMAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
             return Err(EvalError::UnexpectedValue(unsupported_msg));
         }
     }
-    let mut lambda_call = |arg: Value| {
+    let mut lambda_call = |arg: Value<'ctx>| {
         let func_arg = lambda.args.first().ok_or_else(|| {
             EvalError::NotFound("flatmap: lambda has empty arguments list".to_string())
         })?;
@@ -117,7 +124,8 @@ pub(crate) static FLATMAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
         })
         .and_then(|v| v) // flatten <Result<Result<Value, _>, _>
         .map(Value::Coll)
-};
+}
+pub(crate) static FLATMAP_EVAL_FN: EvalFn = flatmap_eval;
 
 pub(crate) static ZIP_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     let (type_1, coll_1) = match obj {

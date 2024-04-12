@@ -11,7 +11,11 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for DeserializeContext {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         match ctx.ctx.extension.values.get(&self.id) {
             Some(c) => {
                 let expected_tpe = SType::SColl(SType::SByte.into());

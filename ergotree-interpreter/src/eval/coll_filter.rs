@@ -9,11 +9,15 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Filter {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let condition_v = self.condition.eval(env, ctx)?;
         let input_v_clone = input_v.clone();
-        let mut condition_call = |arg: Value| match &condition_v {
+        let mut condition_call = |arg: Value<'ctx>| match &condition_v {
             Value::Lambda(func_value) => {
                 let func_arg = func_value.args.first().ok_or_else(|| {
                     EvalError::NotFound(
@@ -96,6 +100,7 @@ mod tests {
     use ergotree_ir::mir::property_call::PropertyCall;
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use ergotree_ir::mir::val_use::ValUse;
+    use ergotree_ir::reference::Ref;
     use ergotree_ir::types::scontext;
     use ergotree_ir::types::stype::SType;
     use proptest::prelude::*;
@@ -148,10 +153,12 @@ mod tests {
                          .filter(| b| 1 <= b.value.as_i64())
                          .collect()
                 );
-            assert_eq!(
-                eval_out::<Vec<ErgoBox>>(&expr, &ctx),
-                expected,
-            );
-        }
+
+
+            eval_out::<Vec<Ref<'_, ErgoBox>>>(&expr, &ctx)
+                .into_iter()
+                .zip(expected)
+                .for_each(|(left, right)| assert_eq!(&*left, &right));
+       }
     }
 }

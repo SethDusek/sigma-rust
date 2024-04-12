@@ -14,7 +14,11 @@ fn helper_xor(mut x: Vec<i8>, y: Vec<i8>) -> Vec<i8> {
 }
 
 impl Evaluable for Xor {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let left_v = self.left.eval(env, ctx)?;
         let right_v = self.right.eval(env, ctx)?;
 
@@ -74,7 +78,7 @@ mod tests {
         .into();
 
         let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<Vec<i8>>(&expr, ctx), expected_xor);
+        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
     }
 
     #[test]

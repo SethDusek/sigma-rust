@@ -8,7 +8,11 @@ use super::EvalError;
 use super::Evaluable;
 
 impl Evaluable for MethodCall {
-    fn eval(&self, env: &mut Env, ectx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ectx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let ov = self.obj.eval(env, ectx)?;
         let argsv: Result<Vec<Value>, EvalError> =
             self.args.iter().map(|arg| arg.eval(env, ectx)).collect();

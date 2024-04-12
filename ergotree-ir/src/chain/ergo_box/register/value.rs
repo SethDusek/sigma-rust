@@ -14,7 +14,7 @@ pub enum RegisterValue {
     Parsed(Constant<'static>),
     /// Parsed evaluated Tuple expression
     /// see https://github.com/ergoplatform/sigma-rust/issues/700
-    ParsedTupleExpr(EvaluatedTuple<'static>),
+    ParsedTupleExpr(EvaluatedTuple),
     /// Unparseable bytes
     Invalid {
         /// Bytes that were not parsed (whole register bytes)
@@ -27,14 +27,14 @@ pub enum RegisterValue {
 /// Ensures that tuple only contains Constant values
 /// see https://github.com/ergoplatform/sigma-rust/issues/700
 #[derive(PartialEq, Eq, Debug, Clone, From)]
-pub struct EvaluatedTuple<'ctx> {
+pub struct EvaluatedTuple {
     tuple: Tuple,
-    constant: Constant<'ctx>,
+    constant: Constant<'static>,
 }
 
-impl<'ctx> EvaluatedTuple<'ctx> {
+impl EvaluatedTuple {
     /// Create new EvaluatedTuple from Tuple, returns error if it contains non-Constant values
-    pub fn new(tuple: Tuple) -> Result<EvaluatedTuple<'ctx>, RegisterValueError> {
+    pub fn new(tuple: Tuple) -> Result<EvaluatedTuple, RegisterValueError> {
         match tuple_to_constant(&tuple) {
             Ok(constant) => Ok(EvaluatedTuple { tuple, constant }),
             Err(e) => Err(RegisterValueError::InvalidTupleExpr(format!(
@@ -49,7 +49,7 @@ impl<'ctx> EvaluatedTuple<'ctx> {
     }
 
     /// Convert to Constant
-    pub fn as_constant(&self) -> &Constant {
+    pub fn as_constant(&self) -> &Constant<'static> {
         &self.constant
     }
 }
@@ -70,7 +70,7 @@ pub enum RegisterValueError {
 
 impl RegisterValue {
     /// Return a Constant if it's parsed, otherwise None
-    pub fn as_constant(&self) -> Result<&Constant, RegisterValueError> {
+    pub fn as_constant(&self) -> Result<&Constant<'static>, RegisterValueError> {
         match self {
             RegisterValue::Parsed(c) => Ok(c),
             RegisterValue::ParsedTupleExpr(t) => Ok(t.as_constant()),

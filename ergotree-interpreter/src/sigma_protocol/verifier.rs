@@ -60,16 +60,16 @@ pub trait Verifier {
     /// Step 1: Deserialize context variables
     /// Step 2: Evaluate expression and produce SigmaProp value, which is zero-knowledge statement (see also `SigmaBoolean`).
     /// Step 3: Verify that the proof is presented to satisfy SigmaProp conditions.
-    fn verify(
+    fn verify<'ctx>(
         &self,
         tree: &ErgoTree,
-        env: &Env,
-        ctx: Rc<Context>,
+        env: &Env<'ctx>,
+        ctx: Rc<Context<'ctx>>,
         proof: ProofBytes,
         message: &[u8],
     ) -> Result<VerificationResult, VerifierError> {
         let expr = tree.proposition()?;
-        let reduction_result = reduce_to_crypto(&expr, env, &*ctx)?;
+        let reduction_result = reduce_to_crypto(&expr, &*ctx)?;
         let res: bool = match reduction_result.sigma_prop {
             SigmaBoolean::TrivialProp(b) => b,
             sb => {

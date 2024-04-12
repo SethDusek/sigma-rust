@@ -702,10 +702,10 @@ impl<'ctx> TryExtractFrom<Literal<'ctx>> for SigmaProp {
     }
 }
 
-impl<'ctx> TryExtractFrom<&'ctx Literal<'ctx>> for &'ctx ErgoBox {
-    fn try_extract_from(c: &'ctx Literal<'ctx>) -> Result<Self, TryExtractFromError> {
+impl<'ctx> TryExtractFrom<Literal<'ctx>> for Ref<'ctx, ErgoBox> {
+    fn try_extract_from(c: Literal<'ctx>) -> Result<Self, TryExtractFromError> {
         match c {
-            Literal::CBox(b) => Ok(&*b),
+            Literal::CBox(b) => Ok(b),
             _ => Err(TryExtractFromError(format!(
                 "expected ErgoBox, found {:?}",
                 c

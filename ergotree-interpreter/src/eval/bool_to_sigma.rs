@@ -10,7 +10,11 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for BoolToSigmaProp {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let input_v_bool = input_v.try_extract_into::<bool>()?;
         Ok((SigmaProp::new(SigmaBoolean::TrivialProp(input_v_bool))).into())

@@ -1,6 +1,7 @@
 use crate::eval::Env;
 use ergotree_ir::mir::global_vars::GlobalVars;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::reference::Ref;
 use ergotree_ir::serialization::SigmaSerializable;
 
 use super::EvalContext;
@@ -8,12 +9,28 @@ use super::EvalError;
 use super::Evaluable;
 
 impl Evaluable for GlobalVars {
-    fn eval(&self, _env: &mut Env, ectx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        _env: &mut Env,
+        ectx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         match self {
             GlobalVars::Height => Ok((ectx.ctx.height as i32).into()),
-            GlobalVars::SelfBox => Ok(ectx.ctx.self_box.into()),
-            GlobalVars::Outputs => Ok(ectx.ctx.outputs.clone().into()),
-            GlobalVars::Inputs => Ok(ectx.ctx.inputs.as_vec().clone().into()),
+            GlobalVars::SelfBox => Ok(Value::CBox(Ref::from(ectx.ctx.self_box))),
+            GlobalVars::Outputs => Ok(ectx
+                .ctx
+                .outputs
+                .iter()
+                .map(Ref::Borrowed)
+                .collect::<Vec<_>>()
+                .into()),
+            GlobalVars::Inputs => Ok(ectx
+                .ctx
+                .inputs
+                .iter()
+                .map(Ref::Borrowed)
+                .collect::<Vec<_>>()
+                .into()),
             GlobalVars::MinerPubKey => {
                 Ok(ectx.ctx.pre_header.miner_pk.sigma_serialize_bytes()?.into())
             }
@@ -25,7 +42,6 @@ impl Evaluable for GlobalVars {
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -48,7 +64,7 @@ mod tests {
     fn eval_self_box() {
         let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<&ErgoBox>(&GlobalVars::SelfBox.into(), &ctx),
+            &*eval_out::<Ref<'_, ErgoBox>>(&GlobalVars::SelfBox.into(), &ctx),
             ctx.self_box
         );
     }
@@ -56,26 +72,28 @@ mod tests {
     #[test]
     fn eval_outputs() {
         let ctx = force_any_val::<Context>();
-        assert_eq!(
-            eval_out::<Vec<Arc<ErgoBox>>>(&GlobalVars::Outputs.into(), &ctx),
-            ctx.outputs
-        );
+
+        eval_out::<Vec<Ref<'_, ErgoBox>>>(&GlobalVars::Outputs.into(), &ctx)
+            .iter()
+            .zip(ctx.outputs)
+            .for_each(|(a, b)| assert_eq!(&**a, b));
     }
 
     #[test]
     fn eval_inputs() {
         let ctx = force_any_val::<Context>();
-        assert_eq!(
-            eval_out::<Vec<Arc<ErgoBox>>>(&GlobalVars::Inputs.into(), &ctx),
-            *ctx.inputs.as_vec()
-        );
+
+        eval_out::<Vec<Ref<'_, ErgoBox>>>(&GlobalVars::Inputs.into(), &ctx)
+            .iter()
+            .zip(ctx.inputs)
+            .for_each(|(&a, b)| assert_eq!(&*a, b));
     }
 
     #[test]
     fn eval_group_generator() {
         let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<EcPoint>(&GlobalVars::GroupGenerator.into(), ctx),
+            eval_out::<EcPoint>(&GlobalVars::GroupGenerator.into(), &ctx),
             ergo_chain_types::ec_point::generator()
         );
     }

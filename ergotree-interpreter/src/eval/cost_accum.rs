@@ -2,7 +2,7 @@ use super::costs::{Cost, Costs};
 use ergotree_ir::mir::expr::Expr;
 use thiserror::Error;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)] // TODO
 pub struct CostAccumulator {
     costs: Costs,
     accum: u64,

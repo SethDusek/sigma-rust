@@ -14,7 +14,11 @@ use ergotree_ir::mir::constant::TryExtractInto;
 use sigma_util::AsVecU8;
 
 impl Evaluable for TreeLookup {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let normalized_tree_val = self
             .tree
             .eval(env, ctx)?

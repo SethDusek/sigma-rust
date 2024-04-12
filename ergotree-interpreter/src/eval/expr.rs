@@ -11,8 +11,12 @@ use super::EvalError;
 use super::Evaluable;
 
 impl Evaluable for Expr {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
-        ctx.cost_accum.add_cost_of(self)?;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
+        //ctx.cost_accum.add_cost_of(self)?;
         let res = match self {
             Expr::Const(c) => Ok(Value::from(c.v.clone())),
             Expr::SubstConstants(op) => op.expr().eval(env, ctx),
@@ -90,7 +94,11 @@ impl Evaluable for Expr {
 }
 
 impl<T: Evaluable> Evaluable for Spanned<T> {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         self.expr.eval(env, ctx)
     }
 }

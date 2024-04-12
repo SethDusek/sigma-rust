@@ -14,7 +14,11 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for DeserializeRegister {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let reg_id: RegisterId = self.reg.try_into().map_err(|e| {
             EvalError::RegisterIdOutOfBounds(format!("register index is out of bounds: {:?} ", e))
         })?;
@@ -37,13 +41,13 @@ impl Evaluable for DeserializeRegister {
                 }
             }
             Ok(None) => match &self.default {
-                Some(default_expr) => eval_default(&self.tpe, default_expr, env, ctx),
+                Some(default_expr) => eval_default(&self.tpe, default_expr, env, &ctx),
                 None => Err(EvalError::NotFound(format!(
                     "DeserializeRegister: register {reg_id} is empty"
                 ))),
             },
             Err(e) => match &self.default {
-                Some(default_expr) => eval_default(&self.tpe, default_expr, env, ctx),
+                Some(default_expr) => eval_default(&self.tpe, default_expr, env, &ctx),
                 None => Err(EvalError::NotFound(format!(
                     "DeserializeRegister: failed to get the register id {reg_id} with error: {e:?}"
                 ))),
@@ -55,8 +59,8 @@ impl Evaluable for DeserializeRegister {
 fn eval_default<'ctx>(
     deserialize_reg_tpe: &SType,
     default_expr: &Expr,
-    env: &mut Env,
-    ctx: &'ctx mut EvalContext,
+    env: &mut Env<'ctx>,
+    ctx: &EvalContext<'ctx>,
 ) -> Result<Value<'ctx>, EvalError> {
     if &default_expr.tpe() != deserialize_reg_tpe {
         Err(EvalError::UnexpectedExpr(format!(

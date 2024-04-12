@@ -256,7 +256,7 @@ pub fn generate_commitments(
             .proposition()
             .map_err(ProverError::ErgoTreeError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
-        let reduction_result = reduce_to_crypto(&exp, &Env::empty(), &*ctx)
+        let reduction_result = reduce_to_crypto(&exp, &*ctx)
             .map_err(ProverError::EvalError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
 
@@ -1081,13 +1081,7 @@ mod tests {
         )));
 
         let proof_alice = alice_prover
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                message.as_slice(),
-                &bag_a,
-            )
+            .prove(&tree_expr, ctx.clone(), message.as_slice(), &bag_a)
             .unwrap();
 
         let mut bag_b = bag_for_multi_sig(
@@ -1102,13 +1096,7 @@ mod tests {
         )));
 
         let proof_bob = bob_prover
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                message.as_slice(),
-                &bag_b,
-            )
+            .prove(&tree_expr, ctx.clone(), message.as_slice(), &bag_b)
             .unwrap();
 
         let verifier = TestVerifier;
@@ -1117,7 +1105,6 @@ mod tests {
             !verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     proof_alice.proof,
                     message.as_slice(),
@@ -1129,13 +1116,7 @@ mod tests {
 
         assert!(
             verifier
-                .verify(
-                    &tree_expr,
-                    &Env::empty(),
-                    ctx,
-                    proof_bob.proof,
-                    message.as_slice(),
-                )
+                .verify(&tree_expr, ctx, proof_bob.proof, message.as_slice(),)
                 .unwrap()
                 .result,
             "Compound proof from Bob is correct"
@@ -1188,9 +1169,7 @@ mod tests {
 
         let tree_expr = ErgoTree::try_from(expr.clone()).unwrap();
 
-        let expr_reduced = reduce_to_crypto(&expr, &Env::empty(), ctx.clone())
-            .unwrap()
-            .sigma_prop;
+        let expr_reduced = reduce_to_crypto(&expr, ctx.clone()).unwrap().sigma_prop;
         let message = vec![0u8; 100];
 
         let bob_hints: HintsBag = generate_commitments_for(&expr_reduced, &[bob_pk.into()]);
@@ -1205,13 +1184,7 @@ mod tests {
         };
 
         let proof_alice = alice_prover
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                message.as_slice(),
-                &bag_a,
-            )
+            .prove(&tree_expr, ctx.clone(), message.as_slice(), &bag_a)
             .unwrap();
 
         let mut bag_c = bag_for_multi_sig(
@@ -1232,13 +1205,7 @@ mod tests {
         );
 
         let proof_carol = _carol_prover
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                message.as_slice(),
-                &bag_c,
-            )
+            .prove(&tree_expr, ctx.clone(), message.as_slice(), &bag_c)
             .unwrap();
 
         let bag_b_1 = bag_for_multi_sig(
@@ -1262,13 +1229,7 @@ mod tests {
         bag_b.add_hint(bob_hints.own_commitments().first().unwrap().clone().into());
 
         let proof_bob = bob_prover
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                message.as_slice(),
-                &bag_b,
-            )
+            .prove(&tree_expr, ctx.clone(), message.as_slice(), &bag_b)
             .unwrap();
 
         let verifier = TestVerifier;
@@ -1277,7 +1238,6 @@ mod tests {
             !verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     proof_alice.proof,
                     message.as_slice(),
@@ -1291,7 +1251,6 @@ mod tests {
             !verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     proof_carol.proof,
                     message.as_slice(),
@@ -1303,13 +1262,7 @@ mod tests {
 
         assert!(
             verifier
-                .verify(
-                    &tree_expr,
-                    &Env::empty(),
-                    ctx,
-                    proof_bob.proof,
-                    message.as_slice(),
-                )
+                .verify(&tree_expr, ctx, proof_bob.proof, message.as_slice(),)
                 .unwrap()
                 .result,
             "Compound proof from Bob is correct"
@@ -1399,9 +1352,7 @@ mod tests {
         .into();
         let expr: Expr = Atleast::new(bound, input).unwrap().into();
         let tree_expr = ErgoTree::try_from(expr.clone()).unwrap();
-        let expr_reduced = reduce_to_crypto(&expr, &Env::empty(), ctx.clone())
-            .unwrap()
-            .sigma_prop;
+        let expr_reduced = reduce_to_crypto(&expr, ctx.clone()).unwrap().sigma_prop;
         let message = vec![0u8; 100];
 
         // only actors 1, 2, 3, 4, 5, 6, 7 are signing, others are simulated (see bag_one below)
@@ -1446,7 +1397,7 @@ mod tests {
         };
 
         let proof_7 = prover7
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_7)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_7)
             .unwrap();
 
         let verifier = TestVerifier;
@@ -1455,7 +1406,6 @@ mod tests {
             !verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     proof_7.proof.clone(),
                     message.as_slice(),
@@ -1483,7 +1433,7 @@ mod tests {
         bag_2.add_hint(dl_5_known.clone().into());
         bag_2.add_hint(dl_6_known.clone().into());
         let proof_2 = prover2
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_2)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_2)
             .unwrap();
         let partial_proof_2 =
             bag_for_multi_sig(&expr_reduced, &[pk2.into()], &[], proof_2.proof.as_ref())
@@ -1502,7 +1452,7 @@ mod tests {
         bag_1.add_hint(dl_6_known.clone().into());
 
         let proof_1 = prover1
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_1)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_1)
             .unwrap();
         let partial_proof_1 =
             bag_for_multi_sig(&expr_reduced, &[pk1.into()], &[], proof_1.proof.as_ref())
@@ -1520,7 +1470,7 @@ mod tests {
         bag_3.add_hint(dl_5_known.clone().into());
         bag_3.add_hint(dl_6_known.clone().into());
         let proof_3 = prover3
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_3)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_3)
             .unwrap();
         let partial_proof_3 =
             bag_for_multi_sig(&expr_reduced, &[pk3.into()], &[], proof_3.proof.as_ref())
@@ -1538,7 +1488,7 @@ mod tests {
         bag_4.add_hint(dl_5_known.clone().into());
         bag_4.add_hint(dl_6_known.clone().into());
         let proof_4 = prover4
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_4)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_4)
             .unwrap();
         let partial_proof_4 =
             bag_for_multi_sig(&expr_reduced, &[pk4.into()], &[], proof_4.proof.as_ref())
@@ -1556,7 +1506,7 @@ mod tests {
         bag_5.add_hint(dl_4_known.clone().into());
         bag_5.add_hint(dl_6_known.clone().into());
         let proof_5 = prover5
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_5)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_5)
             .unwrap();
         let partial_proof_5 =
             bag_for_multi_sig(&expr_reduced, &[pk5.into()], &[], proof_5.proof.as_ref())
@@ -1574,7 +1524,7 @@ mod tests {
         bag_6.add_hint(dl_4_known.clone().into());
         bag_6.add_hint(dl_5_known.clone().into());
         let proof_6 = prover6
-            .prove(&tree_expr, &Env::empty(), ctx.clone(), &message, &bag_6)
+            .prove(&tree_expr, ctx.clone(), &message, &bag_6)
             .unwrap();
         let partial_proof_6 =
             bag_for_multi_sig(&expr_reduced, &[pk6.into()], &[], proof_6.proof.as_ref())
@@ -1601,20 +1551,13 @@ mod tests {
         let mut valid_bag_1 = bag.clone();
         valid_bag_1.add_hint(secret_cmt_1.into());
         let valid_proof_1 = prover1
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_1,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_1)
             .unwrap();
 
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     valid_proof_1.proof.clone(),
                     message.as_slice(),
@@ -1626,19 +1569,12 @@ mod tests {
         let mut valid_bag_2 = bag.clone();
         valid_bag_2.add_hint(secret_cmt_2.into());
         let valid_proof_2 = prover2
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_2,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_2)
             .unwrap();
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     valid_proof_2.proof.clone(),
                     message.as_slice(),
@@ -1650,19 +1586,12 @@ mod tests {
         let mut valid_bag_3 = bag.clone();
         valid_bag_3.add_hint(secret_cmt_3.into());
         let valid_proof_3 = prover3
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_3,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_3)
             .unwrap();
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     valid_proof_3.proof.clone(),
                     message.as_slice()
@@ -1674,19 +1603,12 @@ mod tests {
         let mut valid_bag_4 = bag.clone();
         valid_bag_4.add_hint(secret_cmt_4.into());
         let valid_proof_4 = prover4
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_4,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_4)
             .unwrap();
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     valid_proof_4.proof.clone(),
                     message.as_slice()
@@ -1698,19 +1620,12 @@ mod tests {
         let mut valid_bag_5 = bag.clone();
         valid_bag_5.add_hint(secret_cmt_5.into());
         let valid_proof_5 = prover5
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_5,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_5)
             .unwrap();
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     valid_proof_5.proof.clone(),
                     message.as_slice()
@@ -1722,19 +1637,12 @@ mod tests {
         let mut valid_bag_6 = bag.clone();
         valid_bag_6.add_hint(secret_cmt_6.into());
         let valid_proof_6 = prover6
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_6,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_6)
             .unwrap();
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx.clone(),
                     valid_proof_6.proof.clone(),
                     message.as_slice()
@@ -1746,19 +1654,12 @@ mod tests {
         let mut valid_bag_7 = bag.clone();
         valid_bag_7.add_hint(secret_cmt_7.into());
         let valid_proof_7 = prover7
-            .prove(
-                &tree_expr,
-                &Env::empty(),
-                ctx.clone(),
-                &message,
-                &valid_bag_7,
-            )
+            .prove(&tree_expr, ctx.clone(), &message, &valid_bag_7)
             .unwrap();
         assert!(
             verifier
                 .verify(
                     &tree_expr,
-                    &Env::empty(),
                     ctx,
                     valid_proof_7.proof.clone(),
                     message.as_slice()

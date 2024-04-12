@@ -4,6 +4,7 @@ use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::extract_reg_as::ExtractRegisterAs;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::reference::Ref;
 
 use crate::eval::env::Env;
 use crate::eval::EvalContext;
@@ -11,8 +12,15 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for ExtractRegisterAs {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
-        let ir_box = (&self.input.eval(env, ctx)?).try_extract_into::<&ErgoBox>()?;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
+        let ir_box = self
+            .input
+            .eval(env, ctx)?
+            .try_extract_into::<Ref<'_, ErgoBox>>()?;
         let id = self.register_id.try_into().map_err(|e| {
             EvalError::RegisterIdOutOfBounds(format!(
                 "register index {} is out of bounds: {:?} ",

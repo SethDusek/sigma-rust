@@ -11,7 +11,11 @@ use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::serialization::SigmaSerializable;
 
 impl Evaluable for DecodePoint {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let point_bytes = self.input.eval(env, ctx)?.try_extract_into::<Vec<u8>>()?;
         let point: EcPoint = SigmaSerializable::sigma_parse_bytes(&point_bytes).map_err(|_| {
             Misc(format!(

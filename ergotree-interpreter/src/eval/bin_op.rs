@@ -34,7 +34,7 @@ fn arithmetic_err<T: std::fmt::Display>(
     ))
 }
 
-fn eval_plus<'ctx, T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_plus<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
     T: Num + CheckedAdd + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
@@ -45,7 +45,7 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_minus<'ctx, T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_minus<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
     T: Num + CheckedSub + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
@@ -56,7 +56,7 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_mul<'ctx, T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_mul<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
     T: Num + CheckedMul + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
@@ -67,7 +67,7 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_div<'ctx, T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_div<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
     T: Num + CheckedDiv + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
@@ -78,7 +78,7 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_mod<'ctx, T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_mod<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
     T: Num + CheckedRem + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
@@ -89,7 +89,7 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_bit_op<'ctx, T, F>(lv_raw: T, rv: Value, op: F) -> Result<Value, EvalError>
+fn eval_bit_op<'ctx, T, F>(lv_raw: T, rv: Value<'ctx>, op: F) -> Result<Value<'ctx>, EvalError>
 where
     T: Num + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
     F: FnOnce(T, T) -> T,
@@ -171,8 +171,12 @@ where
 }
 
 impl Evaluable for BinOp {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
-        ctx.cost_accum.add(Costs::DEFAULT.eq_const_size)?;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
+        //ctx.cost_accum.add(Costs::DEFAULT.eq_const_size)?;
         let lv = self.left.eval(env, ctx)?;
         // using closure to keep right value from evaluation (for lazy AND, OR, XOR)
         let mut rv = || self.right.eval(env, ctx);
@@ -333,7 +337,7 @@ mod tests {
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
 
-    fn check_eq_neq(left: Constant, right: Constant) -> bool {
+    fn check_eq_neq(left: Constant<'static>, right: Constant<'static>) -> bool {
         let eq_op: Expr = BinOp {
             kind: BinOpKind::Relation(RelationOp::Eq),
             left: Box::new(left.clone().into()),
@@ -440,7 +444,7 @@ mod tests {
         assert!(!eval_out::<bool>(&e, &ctx));
     }
 
-    fn eval_arith_op<'ctx, T: TryExtractFrom<Value<'ctx>> + Into<Constant<'ctx>>>(
+    fn eval_arith_op<T: TryExtractFrom<Value<'static>> + Into<Constant<'static>> + 'static>(
         op: ArithOp,
         left: T,
         right: T,
@@ -455,7 +459,7 @@ mod tests {
         try_eval_out::<T>(&expr, &ctx)
     }
 
-    fn eval_bit_op<'ctx, T: TryExtractFrom<Value<'ctx>> + Into<Constant<'ctx>>>(
+    fn eval_bit_op<T: TryExtractFrom<Value<'static>> + Into<Constant<'static>> + 'static>(
         op: BitOp,
         left: T,
         right: T,
@@ -470,7 +474,7 @@ mod tests {
         try_eval_out::<T>(&expr, &ctx)
     }
 
-    fn eval_relation_op<'ctx, T: Into<Constant<'ctx>>>(op: RelationOp, left: T, right: T) -> bool {
+    fn eval_relation_op<T: Into<Constant<'static>>>(op: RelationOp, left: T, right: T) -> bool {
         let expr: Expr = BinOp {
             kind: BinOpKind::Relation(op),
             left: Box::new(left.into().into()),
@@ -481,7 +485,7 @@ mod tests {
         eval_out::<bool>(&expr, &ctx)
     }
 
-    fn eval_logical_op<'ctx, T: Into<Constant<'ctx>>>(op: LogicalOp, left: T, right: T) -> bool {
+    fn eval_logical_op<T: Into<Constant<'static>>>(op: LogicalOp, left: T, right: T) -> bool {
         let expr: Expr = BinOp {
             kind: BinOpKind::Logical(op),
             left: Box::new(left.into().into()),

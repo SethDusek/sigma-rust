@@ -7,7 +7,11 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for OptionIsDefined {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let v = self.input.eval(env, ctx)?;
         match v {
             Value::Opt(opt_v) => Ok(opt_v.is_some().into()),
@@ -30,7 +34,6 @@ mod tests {
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval() {
@@ -45,8 +48,8 @@ mod tests {
             input: Box::new(get_reg_expr),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        let v = eval_out::<bool>(&option_expr, ctx);
+        let ctx = force_any_val::<Context>();
+        let v = eval_out::<bool>(&option_expr, &ctx);
         // R0 is always defined (box value)
         assert!(v);
     }

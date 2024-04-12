@@ -11,7 +11,11 @@ use sigma_util::AsVecU8;
 use std::convert::TryFrom;
 
 impl Evaluable for CreateAvlTree {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let flags_v = self.flags.eval(env, ctx)?.try_extract_into::<i8>()? as u8;
         let digest_v = self.digest.eval(env, ctx)?.try_extract_into::<Vec<i8>>()?;
         let key_length = self.key_length.eval(env, ctx)?.try_extract_into::<i32>()? as u32;

@@ -75,7 +75,8 @@ pub fn reduce_tx(
         .inputs
         .clone()
         .enumerated()
-        .try_mapped::<_, _, TxSigningError>(|(idx, input)| { // TODO: use Context::with_self_box_index
+        .try_mapped::<_, _, TxSigningError>(|(idx, input)| {
+            // TODO: use Context::with_self_box_index
             let input_box = tx_context
                 .get_input_box(&input.box_id)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))?;
@@ -84,7 +85,7 @@ pub fn reduce_tx(
                 .proposition()
                 .map_err(ProverError::ErgoTreeError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
-            let reduction_result = reduce_to_crypto(&expr, &Env::empty(), &ctx)
+            let reduction_result = reduce_to_crypto(&expr, &ctx)
                 .map_err(ProverError::EvalError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
             Ok(ReducedInput {

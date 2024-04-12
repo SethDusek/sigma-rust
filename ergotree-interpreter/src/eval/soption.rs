@@ -3,9 +3,16 @@ use crate::eval::Evaluable;
 
 use ergotree_ir::mir::value::Value;
 
+use super::env::Env;
+use super::EvalContext;
 use super::EvalFn;
 
-pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
+pub fn map_eval<'ctx>(
+    env: &mut Env<'ctx>,
+    ctx: &EvalContext<'ctx>,
+    obj: Value<'ctx>,
+    args: Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError> {
     let input_v = obj;
     let lambda_v = args
         .get(0)
@@ -19,7 +26,7 @@ pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
             input_v_clone
         ))),
     }?;
-    let mut lambda_call = |arg: Value| {
+    let mut lambda_call = |arg: Value<'ctx>| {
         let func_arg = lambda.args.first().ok_or_else(|| {
             EvalError::NotFound("map: lambda has empty arguments list".to_string())
         })?;
@@ -45,9 +52,56 @@ pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
         Some(t) => Ok(Value::Opt(Box::new(lambda_call(t)?.into()))),
         _ => Ok(Value::Opt(Box::new(None))),
     }
-};
+}
+pub(crate) static MAP_EVAL_FN: EvalFn = map_eval;
+// pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
+//     let input_v = obj;
+//     let lambda_v = args
+//         .get(0)
+//         .cloned()
+//         .ok_or_else(|| EvalError::NotFound("map: eval is missing first arg".to_string()))?;
+//     let input_v_clone = input_v.clone();
+//     let lambda = match &lambda_v {
+//         Value::Lambda(l) => Ok(l),
+//         _ => Err(EvalError::UnexpectedValue(format!(
+//             "expected lambda to be Value::FuncValue got: {0:?}",
+//             input_v_clone
+//         ))),
+//     }?;
+//     let mut lambda_call = |arg: Value| {
+//         let func_arg = lambda.args.first().ok_or_else(|| {
+//             EvalError::NotFound("map: lambda has empty arguments list".to_string())
+//         })?;
+//         let orig_val = env.get(func_arg.idx).cloned();
+//         env.insert(func_arg.idx, arg);
+//         let res = lambda.body.eval(env, ctx);
+//         if let Some(orig_val) = orig_val {
+//             env.insert(func_arg.idx, orig_val);
+//         } else {
+//             env.remove(&func_arg.idx);
+//         }
+//         res
+//     };
+//     let normalized_input_val: Option<Value> = match input_v {
+//         Value::Opt(opt) => Ok(*opt),
+//         _ => Err(EvalError::UnexpectedValue(format!(
+//             "expected map input to be Value::Opt, got: {0:?}",
+//             input_v
+//         ))),
+//     }?;
 
-pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
+//     match normalized_input_val {
+//         Some(t) => Ok(Value::Opt(Box::new(lambda_call(t)?.into()))),
+//         _ => Ok(Value::Opt(Box::new(None))),
+//     }
+// };
+
+pub fn filter_eval<'ctx>(
+    env: &mut Env<'ctx>,
+    ctx: &EvalContext<'ctx>,
+    obj: Value<'ctx>,
+    args: Vec<Value<'ctx>>,
+) -> Result<Value<'ctx>, EvalError> {
     let input_v = obj;
     let lambda_v = args
         .get(0)
@@ -61,7 +115,7 @@ pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
             input_v_clone
         ))),
     }?;
-    let mut predicate_call = |arg: Value| {
+    let mut predicate_call = |arg: Value<'ctx>| {
         let func_arg = lambda.args.first().ok_or_else(|| {
             EvalError::NotFound("filter: lambda has empty arguments list".to_string())
         })?;
@@ -96,8 +150,8 @@ pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
         },
         None => Ok(Value::Opt(Box::new(None))),
     }
-};
-
+}
+pub(crate) static FILTER_EVAL_FN: EvalFn = filter_eval;
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

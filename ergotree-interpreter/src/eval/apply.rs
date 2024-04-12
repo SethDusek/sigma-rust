@@ -9,11 +9,21 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Apply {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
-        let func_v = self.func.eval(env, ctx)?;
-        let args_v_res: Result<Vec<Value>, EvalError> =
-            self.args.iter().map(|arg| arg.eval(env, ctx)).collect();
-        let args_v = args_v_res?;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &EvalContext<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
+        let func_v: Value<'ctx> = self.func.eval(env, ctx)?;
+        let f = self.args[0].eval(env, ctx); // TODO
+        let mut cloned = ctx.clone(); // TODO
+                                      // TODO
+        let args_v_res: Vec<Value<'ctx>> = self
+            .args
+            .iter()
+            .map(|arg| arg.eval(env, &mut cloned).unwrap()) // TODO
+            .collect();
+        let args_v = args_v_res;
         match func_v {
             Value::Lambda(fv) => {
                 let arg_ids: Vec<ValId> = fv.args.iter().map(|a| a.idx).collect();
