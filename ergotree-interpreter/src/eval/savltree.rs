@@ -1068,7 +1068,7 @@ mod tests {
         prover
     }
 
-    fn mk_pair(x: u8, y: u64) -> [Literal<'static>; 2] {
+    fn mk_pair(x: u8, y: u64) -> [Literal; 2] {
         [
             Literal::try_from(vec![x]).unwrap(),
             Literal::try_from(y.to_be_bytes().to_vec()).unwrap(),

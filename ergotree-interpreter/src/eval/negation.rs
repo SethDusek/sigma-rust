@@ -52,7 +52,7 @@ mod tests {
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use num_traits::{Bounded, Num};
 
-    fn try_run_eval<T: Num + Into<Constant<'static>> + TryExtractFrom<Value<'static>> + 'static>(
+    fn try_run_eval<T: Num + Into<Constant> + TryExtractFrom<Value<'static>> + 'static>(
         input: T,
     ) -> Result<T, EvalError> {
         let expr: Expr = Negation::try_build(Expr::Const(input.into()))
@@ -60,9 +60,7 @@ mod tests {
             .into();
         try_eval_out_wo_ctx::<T>(&expr)
     }
-    fn run_eval<T: Num + Into<Constant<'static>> + TryExtractFrom<Value<'static>> + 'static>(
-        input: T,
-    ) -> T {
+    fn run_eval<T: Num + Into<Constant> + TryExtractFrom<Value<'static>> + 'static>(input: T) -> T {
         try_run_eval(input).unwrap()
     }
 

@@ -151,10 +151,7 @@ impl ErgoBox {
     }
 
     /// Get register value, or None if register is empty or cannot be parsed
-    pub fn get_register(
-        &self,
-        id: RegisterId,
-    ) -> Result<Option<Constant<'static>>, RegisterValueError> {
+    pub fn get_register(&self, id: RegisterId) -> Result<Option<Constant>, RegisterValueError> {
         Ok(match id {
             RegisterId::MandatoryRegisterId(id) => match id {
                 MandatoryRegisterId::R0 => Some(self.value.into()),

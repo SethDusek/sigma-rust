@@ -29,18 +29,14 @@ pub use tree_header::*;
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ParsedErgoTree {
     header: ErgoTreeHeader,
-    constants: Vec<Constant<'static>>,
+    constants: Vec<Constant>,
     root: Expr,
 }
 
 impl ParsedErgoTree {
     /// Returns new ParsedTree with a new constant value for a given index in constants list
     /// (as stored in serialized ErgoTree), or an error
-    fn with_constant(
-        self,
-        index: usize,
-        constant: Constant<'static>,
-    ) -> Result<Self, SetConstantError> {
+    fn with_constant(self, index: usize, constant: Constant) -> Result<Self, SetConstantError> {
         let mut new_constants = self.constants.clone();
         if let Some(old_constant) = self.constants.get(index) {
             if constant.tpe == old_constant.tpe {
@@ -159,7 +155,7 @@ impl ErgoTree {
 
     fn sigma_parse_constants<R: SigmaByteRead>(
         r: &mut R,
-    ) -> Result<Vec<Constant<'static>>, SigmaParsingError> {
+    ) -> Result<Vec<Constant>, SigmaParsingError> {
         let constants_len = r.get_u32()?;
         if constants_len as usize > ErgoTree::MAX_CONSTANTS_COUNT {
             return Err(SigmaParsingError::ValueOutOfBounds(
@@ -273,11 +269,7 @@ impl ErgoTree {
     /// Returns new ErgoTree with a new constant value for a given index in constants list (as
     /// stored in serialized ErgoTree), or an error. Note that the type of the new constant must
     /// coincide with that of the constant being replaced, or an error is returned too.
-    pub fn with_constant(
-        self,
-        index: usize,
-        constant: Constant<'static>,
-    ) -> Result<Self, ErgoTreeError> {
+    pub fn with_constant(self, index: usize, constant: Constant) -> Result<Self, ErgoTreeError> {
         let parsed_tree = self.parsed_tree()?.clone();
         Ok(Self::Parsed(
             parsed_tree

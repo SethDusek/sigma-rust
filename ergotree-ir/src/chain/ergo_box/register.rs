@@ -42,7 +42,7 @@ impl NonMandatoryRegisters {
 
     /// Create new from map
     pub fn new(
-        regs: HashMap<NonMandatoryRegisterId, Constant<'static>>,
+        regs: HashMap<NonMandatoryRegisterId, Constant>,
     ) -> Result<NonMandatoryRegisters, NonMandatoryRegistersError> {
         NonMandatoryRegisters::try_from(
             regs.into_iter()
@@ -71,7 +71,7 @@ impl NonMandatoryRegisters {
     pub fn get_constant(
         &self,
         reg_id: NonMandatoryRegisterId,
-    ) -> Result<Option<Constant<'static>>, RegisterValueError> {
+    ) -> Result<Option<Constant>, RegisterValueError> {
         match self
             .0
             .get(reg_id as usize - NonMandatoryRegisterId::START_INDEX)
@@ -98,10 +98,10 @@ impl TryFrom<Vec<RegisterValue>> for NonMandatoryRegisters {
     }
 }
 
-impl TryFrom<Vec<Constant<'static>>> for NonMandatoryRegisters {
+impl TryFrom<Vec<Constant>> for NonMandatoryRegisters {
     type Error = NonMandatoryRegistersError;
 
-    fn try_from(values: Vec<Constant<'static>>) -> Result<Self, Self::Error> {
+    fn try_from(values: Vec<Constant>) -> Result<Self, Self::Error> {
         NonMandatoryRegisters::try_from(
             values
                 .into_iter()

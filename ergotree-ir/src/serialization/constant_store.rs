@@ -4,7 +4,7 @@ use crate::mir::constant::{Constant, ConstantPlaceholder};
 
 /// Storage for constants used in ErgoTree constant segregation
 pub struct ConstantStore {
-    constants: Vec<Constant<'static>>,
+    constants: Vec<Constant>,
 }
 
 impl ConstantStore {
@@ -14,17 +14,17 @@ impl ConstantStore {
     }
 
     /// Make a store with constants provided
-    pub fn new(constants: Vec<Constant<'static>>) -> Self {
+    pub fn new(constants: Vec<Constant>) -> Self {
         ConstantStore { constants }
     }
 
     /// Get a constant by it's index in serialized constants list (stored in ConstantPlaceholder)
-    pub fn get(&self, index: u32) -> Option<&Constant<'static>> {
+    pub fn get(&self, index: u32) -> Option<&Constant> {
         self.constants.get(index as usize)
     }
 
     /// Save a Constant and get ConstantPlaceholder(with stored index) back
-    pub fn put(&mut self, c: Constant<'static>) -> ConstantPlaceholder {
+    pub fn put(&mut self, c: Constant) -> ConstantPlaceholder {
         self.constants.push(c.clone());
         assert!(self.constants.len() <= u32::MAX as usize);
         ConstantPlaceholder {
@@ -34,7 +34,7 @@ impl ConstantStore {
     }
 
     /// Get all stored constants (order preserved)
-    pub fn get_all(&self) -> Vec<Constant<'static>> {
+    pub fn get_all(&self) -> Vec<Constant> {
         self.constants.clone()
     }
 }

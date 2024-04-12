@@ -40,9 +40,7 @@ mod tests {
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use num_traits::Num;
 
-    fn run_eval<T: Num + Into<Constant<'static>> + TryExtractFrom<Value<'static>> + 'static>(
-        input: T,
-    ) -> T {
+    fn run_eval<T: Num + Into<Constant> + TryExtractFrom<Value<'static>> + 'static>(input: T) -> T {
         let expr: Expr = BitInversion::try_build(Expr::Const(input.into()))
             .unwrap()
             .into();

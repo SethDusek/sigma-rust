@@ -14,7 +14,7 @@ use thiserror::Error;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ContextExtension {
     /// key-value pairs of variable id and it's value
-    pub values: IndexMap<u8, Constant<'static>>,
+    pub values: IndexMap<u8, Constant>,
 }
 
 impl ContextExtension {

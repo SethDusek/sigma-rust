@@ -11,7 +11,7 @@ use serde::{ser::SerializeMap, Deserialize, Serialize};
 )]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct ContextExtensionSerde {
-    values: IndexMap<u8, Constant<'static>>,
+    values: IndexMap<u8, Constant>,
 }
 
 #[cfg(feature = "json")]

@@ -154,7 +154,7 @@ impl From<BoxValue> for i64 {
     }
 }
 
-impl From<BoxValue> for Constant<'_> {
+impl From<BoxValue> for Constant {
     fn from(v: BoxValue) -> Self {
         v.as_i64().into()
     }

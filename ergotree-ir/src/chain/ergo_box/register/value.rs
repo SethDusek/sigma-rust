@@ -11,7 +11,7 @@ use crate::serialization::SigmaSerializable;
 #[derive(PartialEq, Eq, Debug, Clone, From)]
 pub enum RegisterValue {
     /// Constant value
-    Parsed(Constant<'static>),
+    Parsed(Constant),
     /// Parsed evaluated Tuple expression
     /// see https://github.com/ergoplatform/sigma-rust/issues/700
     ParsedTupleExpr(EvaluatedTuple),
@@ -29,7 +29,7 @@ pub enum RegisterValue {
 #[derive(PartialEq, Eq, Debug, Clone, From)]
 pub struct EvaluatedTuple {
     tuple: Tuple,
-    constant: Constant<'static>,
+    constant: Constant,
 }
 
 impl EvaluatedTuple {
@@ -49,7 +49,7 @@ impl EvaluatedTuple {
     }
 
     /// Convert to Constant
-    pub fn as_constant(&self) -> &Constant<'static> {
+    pub fn as_constant(&self) -> &Constant {
         &self.constant
     }
 }
@@ -70,7 +70,7 @@ pub enum RegisterValueError {
 
 impl RegisterValue {
     /// Return a Constant if it's parsed, otherwise None
-    pub fn as_constant(&self) -> Result<&Constant<'static>, RegisterValueError> {
+    pub fn as_constant(&self) -> Result<&Constant, RegisterValueError> {
         match self {
             RegisterValue::Parsed(c) => Ok(c),
             RegisterValue::ParsedTupleExpr(t) => Ok(t.as_constant()),
@@ -125,7 +125,7 @@ impl RegisterValue {
 
 /// Convert evaluated Tuple expression to Constant
 /// see https://github.com/ergoplatform/sigma-rust/issues/700
-fn tuple_to_constant(t: &Tuple) -> Result<Constant<'static>, String> {
+fn tuple_to_constant(t: &Tuple) -> Result<Constant, String> {
     let values = t.items.try_mapped_ref(|tuple_item| match tuple_item {
         Expr::Const(c) => Ok(c.v.clone()),
         Expr::Tuple(t) => Ok(tuple_to_constant(t)?.v),

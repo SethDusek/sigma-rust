@@ -337,7 +337,7 @@ mod tests {
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
 
-    fn check_eq_neq(left: Constant<'static>, right: Constant<'static>) -> bool {
+    fn check_eq_neq(left: Constant, right: Constant) -> bool {
         let eq_op: Expr = BinOp {
             kind: BinOpKind::Relation(RelationOp::Eq),
             left: Box::new(left.clone().into()),
@@ -444,7 +444,7 @@ mod tests {
         assert!(!eval_out::<bool>(&e, &ctx));
     }
 
-    fn eval_arith_op<T: TryExtractFrom<Value<'static>> + Into<Constant<'static>> + 'static>(
+    fn eval_arith_op<T: TryExtractFrom<Value<'static>> + Into<Constant> + 'static>(
         op: ArithOp,
         left: T,
         right: T,
@@ -459,7 +459,7 @@ mod tests {
         try_eval_out::<T>(&expr, &ctx)
     }
 
-    fn eval_bit_op<T: TryExtractFrom<Value<'static>> + Into<Constant<'static>> + 'static>(
+    fn eval_bit_op<T: TryExtractFrom<Value<'static>> + Into<Constant> + 'static>(
         op: BitOp,
         left: T,
         right: T,
@@ -474,7 +474,7 @@ mod tests {
         try_eval_out::<T>(&expr, &ctx)
     }
 
-    fn eval_relation_op<T: Into<Constant<'static>>>(op: RelationOp, left: T, right: T) -> bool {
+    fn eval_relation_op<T: Into<Constant>>(op: RelationOp, left: T, right: T) -> bool {
         let expr: Expr = BinOp {
             kind: BinOpKind::Relation(op),
             left: Box::new(left.into().into()),
@@ -485,7 +485,7 @@ mod tests {
         eval_out::<bool>(&expr, &ctx)
     }
 
-    fn eval_logical_op<T: Into<Constant<'static>>>(op: LogicalOp, left: T, right: T) -> bool {
+    fn eval_logical_op<T: Into<Constant>>(op: LogicalOp, left: T, right: T) -> bool {
         let expr: Expr = BinOp {
             kind: BinOpKind::Logical(op),
             left: Box::new(left.into().into()),

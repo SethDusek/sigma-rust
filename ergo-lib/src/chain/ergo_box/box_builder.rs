@@ -75,7 +75,7 @@ pub struct ErgoBoxCandidateBuilder {
     value: BoxValue,
     ergo_tree: ErgoTree,
     tokens: Vec<Token>,
-    additional_registers: HashMap<NonMandatoryRegisterId, Constant<'static>>,
+    additional_registers: HashMap<NonMandatoryRegisterId, Constant>,
     creation_height: u32,
     minting_token: Option<MintingToken>,
 }
@@ -133,11 +133,7 @@ impl ErgoBoxCandidateBuilder {
     }
 
     /// Set register with a given id (R4-R9) to the given value
-    pub fn set_register_value(
-        &mut self,
-        register_id: NonMandatoryRegisterId,
-        value: Constant<'static>,
-    ) {
+    pub fn set_register_value(&mut self, register_id: NonMandatoryRegisterId, value: Constant) {
         self.additional_registers.insert(register_id, value);
     }
 

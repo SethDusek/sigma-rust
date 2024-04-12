@@ -258,8 +258,8 @@ impl<'ctx, T: Into<Value<'ctx>>> From<Option<T>> for Value<'ctx> {
     }
 }
 
-impl<'ctx> From<Literal<'ctx>> for Value<'ctx> {
-    fn from(lit: Literal<'ctx>) -> Self {
+impl From<Literal> for Value<'static> {
+    fn from(lit: Literal) -> Self {
         match lit {
             Literal::Boolean(b) => Value::Boolean(b),
             Literal::Byte(b) => Value::Byte(b),
@@ -366,7 +366,7 @@ impl StoreWrapped for SigmaProp {}
 impl<T: StoreWrapped> StoreWrapped for Option<T> {}
 impl<T> StoreWrapped for Vec<T> {}
 impl StoreWrapped for Value<'_> {}
-impl StoreWrapped for Literal<'_> {}
+impl StoreWrapped for Literal {}
 
 #[impl_for_tuples(2, 4)]
 impl StoreWrapped for Tuple {}
