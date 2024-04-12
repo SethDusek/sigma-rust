@@ -89,11 +89,10 @@ impl<T: ErgoTransaction> TransactionContext<T> {
     }
 
     /// Returns box with given id, if it exists.
-    pub fn get_input_box(&self, box_id: &BoxId) -> Option<ErgoBox> {
+    pub fn get_input_box(&self, box_id: &BoxId) -> Option<&ErgoBox> {
         self.box_index
             .get(box_id)
             .and_then(|&idx| self.boxes_to_spend.get(idx as usize))
-            .cloned()
     }
 }
 

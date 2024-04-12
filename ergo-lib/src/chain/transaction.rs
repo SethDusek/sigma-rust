@@ -371,8 +371,7 @@ pub fn verify_tx_input_proof(
         None => verifier
             .verify(
                 &input_box.ergo_tree,
-                &Env::empty(),
-                ctx,
+                &*ctx, // TODO
                 input.spending_proof.proof.clone(),
                 bytes_to_sign,
             )

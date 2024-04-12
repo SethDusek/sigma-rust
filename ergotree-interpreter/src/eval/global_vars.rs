@@ -28,7 +28,7 @@ impl Evaluable for GlobalVars {
                 .ctx
                 .inputs
                 .iter()
-                .map(Ref::Borrowed)
+                .map(|&i| Ref::Borrowed(i))
                 .collect::<Vec<_>>()
                 .into()),
             GlobalVars::MinerPubKey => {
@@ -86,7 +86,7 @@ mod tests {
         eval_out::<Vec<Ref<'_, ErgoBox>>>(&GlobalVars::Inputs.into(), &ctx)
             .iter()
             .zip(ctx.inputs)
-            .for_each(|(&a, b)| assert_eq!(&*a, b));
+            .for_each(|(a, b)| assert_eq!(&**a, b));
     }
 
     #[test]

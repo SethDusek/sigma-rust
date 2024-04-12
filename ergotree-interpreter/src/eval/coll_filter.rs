@@ -158,7 +158,7 @@ mod tests {
             eval_out::<Vec<Ref<'_, ErgoBox>>>(&expr, &ctx)
                 .into_iter()
                 .zip(expected)
-                .for_each(|(left, right)| assert_eq!(&*left, &right));
+                .for_each(|(left, right)| assert_eq!(&*left, right));
        }
     }
 }

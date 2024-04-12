@@ -11,7 +11,7 @@ use serde::{ser::SerializeMap, Deserialize, Serialize};
 )]
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub(crate) struct ContextExtensionSerde {
-    values: IndexMap<u8, Constant>,
+    values: IndexMap<u8, Constant<'static>>,
 }
 
 #[cfg(feature = "json")]
@@ -103,7 +103,7 @@ mod tests {
             ],
             "creationHeight" : 693475,
             "additionalRegisters" : {
-              
+
             },
             "transactionId" : "c8520befd345ff40fcf244b44ffe8cea29c8b116b174cfaf4f2a521604d531a4",
             "index" : 0
@@ -116,7 +116,7 @@ mod tests {
             ],
             "creationHeight" : 693475,
             "additionalRegisters" : {
-              
+
             },
             "transactionId" : "c8520befd345ff40fcf244b44ffe8cea29c8b116b174cfaf4f2a521604d531a4",
             "index" : 1
@@ -129,7 +129,7 @@ mod tests {
             ],
             "creationHeight" : 693475,
             "additionalRegisters" : {
-              
+
             },
             "transactionId" : "c8520befd345ff40fcf244b44ffe8cea29c8b116b174cfaf4f2a521604d531a4",
             "index" : 2

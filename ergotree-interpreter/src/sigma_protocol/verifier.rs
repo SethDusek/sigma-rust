@@ -63,13 +63,12 @@ pub trait Verifier {
     fn verify<'ctx>(
         &self,
         tree: &ErgoTree,
-        env: &Env<'ctx>,
-        ctx: Rc<Context<'ctx>>,
+        ctx: &Context<'ctx>,
         proof: ProofBytes,
         message: &[u8],
     ) -> Result<VerificationResult, VerifierError> {
         let expr = tree.proposition()?;
-        let reduction_result = reduce_to_crypto(&expr, &*ctx)?;
+        let reduction_result = reduce_to_crypto(&expr, ctx)?;
         let res: bool = match reduction_result.sigma_prop {
             SigmaBoolean::TrivialProp(b) => b,
             sb => {

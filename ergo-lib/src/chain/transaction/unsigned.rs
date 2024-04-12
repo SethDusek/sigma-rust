@@ -9,6 +9,7 @@ use super::{distinct_token_ids, TransactionError};
 use bounded_vec::BoundedVec;
 use ergo_chain_types::blake2b256_hash;
 
+use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::chain::ergo_box::ErgoBoxCandidate;
 use ergotree_ir::chain::token::TokenId;
 use ergotree_ir::chain::tx_id::TxId;
@@ -36,6 +37,7 @@ pub struct UnsignedTransaction {
     pub data_inputs: Option<TxIoVec<DataInput>>,
     /// box candidates to be created by this transaction
     pub output_candidates: TxIoVec<ErgoBoxCandidate>,
+    pub(crate) outputs: TxIoVec<ErgoBox>,
 }
 
 impl UnsignedTransaction {
@@ -63,15 +65,33 @@ impl UnsignedTransaction {
         data_inputs: Option<TxIoVec<DataInput>>,
         output_candidates: TxIoVec<ErgoBoxCandidate>,
     ) -> Result<UnsignedTransaction, SigmaSerializationError> {
+        #[allow(clippy::unwrap_used)] // box serialization cannot fail
+        let outputs = output_candidates
+            .iter()
+            .enumerate()
+            .map(|(idx, b)| ErgoBox::from_box_candidate(&b, TxId::zero(), idx as u16).unwrap())
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
+
         let tx_to_sign = UnsignedTransaction {
             tx_id: TxId::zero(),
             inputs,
             data_inputs,
             output_candidates,
+            outputs,
         };
         let tx_id = tx_to_sign.calc_tx_id()?;
+
+        let outputs = tx_to_sign
+            .output_candidates
+            .clone()
+            .enumerated()
+            .try_mapped_ref(|(idx, bc)| ErgoBox::from_box_candidate(bc, tx_id, *idx as u16))?;
+
         Ok(UnsignedTransaction {
             tx_id,
+            outputs,
             ..tx_to_sign
         })
     }

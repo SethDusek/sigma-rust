@@ -43,8 +43,7 @@ fn sig_test_vector_provedlog() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -81,8 +80,7 @@ fn sig_test_vector_prove_dht() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -138,8 +136,7 @@ fn sig_test_vector_conj_and() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -195,8 +192,7 @@ fn sig_test_vector_conj_or() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -246,8 +242,7 @@ fn sig_test_vector_conj_or_prove_dht() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -317,8 +312,7 @@ fn sig_test_vector_conj_and_or() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -388,8 +382,7 @@ fn sig_test_vector_conj_or_and() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &tree,
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );
@@ -457,8 +450,7 @@ fn sig_test_vector_threshold() {
     let verifier = TestVerifier;
     let ver_res = verifier.verify(
         &expr.try_into().unwrap(),
-        &Env::empty(),
-        Rc::new(force_any_val::<Context>()),
+        &force_any_val::<Context>(),
         signature.into(),
         msg.as_slice(),
     );

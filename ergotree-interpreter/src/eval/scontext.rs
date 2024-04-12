@@ -18,7 +18,7 @@ pub(crate) static DATA_INPUTS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
     }
     Ok(Value::Coll(CollKind::WrappedColl {
         items: ctx.ctx.data_inputs.clone().map_or(vec![], |d| {
-            d.iter().map(Ref::from).map(Value::CBox).collect()
+            d.iter().map(|&di| Ref::from(di)).map(Value::CBox).collect()
         }),
         elem_tpe: SType::SBox,
     }))
@@ -34,9 +34,8 @@ pub(crate) static SELF_BOX_INDEX_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
     let box_index = ctx
         .ctx
         .inputs
-        .clone()
         .iter()
-        .position(|it| it == ctx.ctx.self_box)
+        .position(|it| *it == ctx.ctx.self_box)
         .ok_or_else(|| EvalError::NotFound("Context.selfBoxIndex: box not found".to_string()))?;
     Ok(Value::Int(box_index as i32))
 };
@@ -120,11 +119,13 @@ mod tests {
 
     fn make_ctx_inputs_includes_self_box() -> Context<'static> {
         let ctx = force_any_val::<Context>();
-        let self_box = Box::leak(Box::new(force_any_val::<ErgoBox>()));
-        let inputs = Vec::leak(vec![
-            force_any_val::<ErgoBox>().into(),
-            self_box.clone().into(),
-        ]);
+        let self_box = &*Box::leak(Box::new(force_any_val::<ErgoBox>()));
+        let inputs = vec![
+            &*Box::leak(Box::new(force_any_val::<ErgoBox>().into())),
+            self_box,
+        ]
+        .try_into()
+        .unwrap();
         Context {
             height: 0u32,
             self_box: &*self_box,

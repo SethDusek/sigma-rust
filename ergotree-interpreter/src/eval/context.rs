@@ -1,7 +1,7 @@
 use crate::sigma_protocol::prover::ContextExtension;
 use bounded_vec::BoundedVec;
 use ergo_chain_types::{Header, PreHeader};
-use ergotree_ir::chain::ergo_box::ErgoBox;
+use ergotree_ir::{chain::ergo_box::ErgoBox, reference::Ref};
 
 /// BoundedVec type for Tx inputs, output_candidates and outputs
 pub type TxIoVec<T> = BoundedVec<T, 1, { i16::MAX as usize }>;
@@ -16,9 +16,9 @@ pub struct Context<'ctx> {
     /// Spending transaction outputs
     pub outputs: &'ctx [ErgoBox],
     /// Spending transaction data inputs
-    pub data_inputs: Option<&'ctx [ErgoBox]>,
+    pub data_inputs: Option<TxIoVec<&'ctx ErgoBox>>,
     /// Spending transaction inputs
-    pub inputs: &'ctx [ErgoBox],
+    pub inputs: TxIoVec<&'ctx ErgoBox>,
     /// Pre header of current block
     pub pre_header: PreHeader,
     /// Fixed number of last block headers in descending order (first header is the newest one)
@@ -73,8 +73,19 @@ mod arbitrary {
                             height,
                             self_box: Box::leak(Box::new(self_box)),
                             outputs: Vec::leak(outputs),
-                            data_inputs: data_inputs.map(|v| &*Vec::leak(v)),
-                            inputs: Vec::leak(inputs),
+                            data_inputs: data_inputs.map(|v| {
+                                v.into_iter()
+                                    .map(|i| &*Box::leak(Box::new(i)))
+                                    .collect::<Vec<_>>()
+                                    .try_into()
+                                    .unwrap()
+                            }),
+                            inputs: inputs
+                                .into_iter()
+                                .map(|i| &*Box::leak(Box::new(i)))
+                                .collect::<Vec<_>>()
+                                .try_into()
+                                .unwrap(),
                             pre_header,
                             extension,
                             headers,

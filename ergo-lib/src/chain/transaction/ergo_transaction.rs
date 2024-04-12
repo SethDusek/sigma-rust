@@ -89,9 +89,9 @@ pub trait ErgoTransaction {
     /// input boxes ids
     fn inputs_ids(&self) -> TxIoVec<BoxId>;
     /// data input boxes
-    fn data_inputs(&self) -> Option<TxIoVec<DataInput>>;
+    fn data_inputs(&self) -> Option<&[DataInput]>;
     /// output boxes
-    fn outputs(&self) -> TxIoVec<ErgoBox>;
+    fn outputs(&self) -> &[ErgoBox];
     /// ContextExtension for the given input index
     fn context_extension(&self, input_index: usize) -> Option<ContextExtension>;
 
@@ -121,17 +121,12 @@ impl ErgoTransaction for UnsignedTransaction {
         self.inputs.clone().mapped(|input| input.box_id)
     }
 
-    fn data_inputs(&self) -> Option<TxIoVec<DataInput>> {
-        self.data_inputs.clone()
+    fn data_inputs(&self) -> Option<&[DataInput]> {
+        self.data_inputs.as_ref().map(|di| di.as_slice())
     }
 
-    fn outputs(&self) -> TxIoVec<ErgoBox> {
-        #[allow(clippy::unwrap_used)] // box serialization cannot fail?
-        self.output_candidates
-            .clone()
-            .enumerated()
-            .try_mapped(|(idx, b)| ErgoBox::from_box_candidate(&b, self.id(), idx as u16))
-            .unwrap()
+    fn outputs(&self) -> &[ErgoBox] {
+        self.outputs.as_slice()
     }
 
     fn context_extension(&self, input_index: usize) -> Option<ContextExtension> {
@@ -146,12 +141,12 @@ impl ErgoTransaction for Transaction {
         self.inputs.clone().mapped(|input| input.box_id)
     }
 
-    fn data_inputs(&self) -> Option<TxIoVec<DataInput>> {
-        self.data_inputs.clone()
+    fn data_inputs(&self) -> Option<&[DataInput]> {
+        self.data_inputs.as_ref().map(|di| di.as_slice())
     }
 
-    fn outputs(&self) -> TxIoVec<ErgoBox> {
-        self.outputs.clone()
+    fn outputs(&self) -> &[ErgoBox] {
+        self.outputs.as_slice()
     }
 
     fn context_extension(&self, input_index: usize) -> Option<ContextExtension> {
