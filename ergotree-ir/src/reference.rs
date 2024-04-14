@@ -13,9 +13,13 @@ pub enum Ref<'ctx, T> {
 impl<'ctx, T: Clone> Ref<'ctx, T> {
     /// TODO
     pub fn to_static(&'ctx self) -> Ref<'static, T> {
+        Ref::Rc(self.to_rc())
+    }
+    /// TODO
+    pub fn to_rc(&'ctx self) -> Rc<T> {
         match self {
-            Ref::Borrowed(b) => Ref::Rc(Rc::new((*b).clone())),
-            Ref::Rc(r) => Ref::Rc(r.clone()),
+            Ref::Rc(r) => r.clone(),
+            Ref::Borrowed(b) => Rc::new((*b).clone()),
         }
     }
 }

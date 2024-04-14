@@ -70,7 +70,7 @@ pub enum Literal {
     /// Sigma property
     SigmaProp(Box<SigmaProp>),
     /// GroupElement
-    GroupElement(Box<EcPoint>),
+    GroupElement(Rc<EcPoint>),
     /// AVL tree
     AvlTree(Box<AvlTreeData>),
     /// Ergo box
@@ -226,7 +226,13 @@ impl<'ctx> From<SigmaProp> for Literal {
 
 impl<'ctx> From<EcPoint> for Literal {
     fn from(v: EcPoint) -> Literal {
-        Literal::GroupElement(Box::new(v))
+        Literal::GroupElement(Rc::new(v))
+    }
+}
+
+impl From<Ref<'_, EcPoint>> for Literal {
+    fn from(value: Ref<'_, EcPoint>) -> Self {
+        Literal::GroupElement(value.to_rc())
     }
 }
 
@@ -300,7 +306,7 @@ impl<'ctx> TryFrom<Value<'ctx>> for Constant {
                 v: Literal::Unit,
             }),
             Value::SigmaProp(s) => Ok(Constant::from(*s)),
-            Value::GroupElement(e) => Ok(Constant::from(*e)),
+            Value::GroupElement(e) => Ok(Constant::from(e)),
             Value::CBox(i) => Ok(Constant::from(i.to_static())),
             Value::Coll(coll) => {
                 let (v, tpe) = match coll {
@@ -427,6 +433,15 @@ impl From<SigmaProp> for Constant {
 
 impl From<EcPoint> for Constant {
     fn from(v: EcPoint) -> Constant {
+        Constant {
+            tpe: SType::SGroupElement,
+            v: v.into(),
+        }
+    }
+}
+
+impl From<Ref<'_, EcPoint>> for Constant {
+    fn from(v: Ref<'_, EcPoint>) -> Self {
         Constant {
             tpe: SType::SGroupElement,
             v: v.into(),
@@ -681,7 +696,7 @@ impl TryExtractFrom<Literal> for i64 {
 impl TryExtractFrom<Literal> for EcPoint {
     fn try_extract_from(cv: Literal) -> Result<EcPoint, TryExtractFromError> {
         match cv {
-            Literal::GroupElement(v) => Ok(*v),
+            Literal::GroupElement(v) => Ok((&*v).clone()),
             _ => Err(TryExtractFromError(format!(
                 "expected EcPoint, found {:?}",
                 cv

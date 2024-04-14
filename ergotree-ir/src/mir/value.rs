@@ -156,7 +156,7 @@ pub enum Value<'ctx> {
     /// Big integer
     BigInt(BigInt256),
     /// GroupElement
-    GroupElement(Box<EcPoint>),
+    GroupElement(Ref<'ctx, EcPoint>),
     /// Sigma property
     SigmaProp(Box<SigmaProp>),
     /// Ergo box
@@ -193,7 +193,7 @@ impl<'ctx> Value<'ctx> {
             Value::Long(b) => Value::Long(*b),
             Value::Unit => Value::Unit,
             Value::BigInt(b) => Value::BigInt(b.clone()),
-            Value::GroupElement(b) => Value::GroupElement(b.clone()),
+            Value::GroupElement(b) => Value::GroupElement(b.to_static()),
             Value::SigmaProp(p) => Value::SigmaProp(p.clone()),
             Value::AvlTree(t) => Value::AvlTree(t.clone()),
             Value::Coll(coll) => match coll {
@@ -236,7 +236,7 @@ impl<'ctx, T: Into<SigmaProp>> From<T> for Value<'ctx> {
 
 impl<'ctx> From<EcPoint> for Value<'ctx> {
     fn from(v: EcPoint) -> Self {
-        Value::GroupElement(Box::new(v))
+        Value::GroupElement(Ref::from(v))
     }
 }
 
@@ -269,7 +269,7 @@ impl From<Literal> for Value<'static> {
             Literal::BigInt(b) => Value::BigInt(b),
             Literal::Unit => Value::Unit,
             Literal::SigmaProp(s) => Value::SigmaProp(s),
-            Literal::GroupElement(e) => Value::GroupElement(e),
+            Literal::GroupElement(e) => Value::GroupElement(e.into()),
             Literal::CBox(b) => Value::CBox(b),
             Literal::Coll(coll) => {
                 let converted_coll = match coll {
@@ -450,7 +450,7 @@ impl TryExtractFrom<Value<'_>> for i64 {
 impl TryExtractFrom<Value<'_>> for EcPoint {
     fn try_extract_from(cv: Value) -> Result<EcPoint, TryExtractFromError> {
         match cv {
-            Value::GroupElement(v) => Ok(*v),
+            Value::GroupElement(v) => Ok((&*v).clone()),
             _ => Err(TryExtractFromError(format!(
                 "expected EcPoint, found {:?}",
                 cv

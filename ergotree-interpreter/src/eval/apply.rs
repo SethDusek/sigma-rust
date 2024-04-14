@@ -15,13 +15,10 @@ impl Evaluable for Apply {
         ctx: &EvalContext<'ctx>,
     ) -> Result<Value<'ctx>, EvalError> {
         let func_v: Value<'ctx> = self.func.eval(env, ctx)?;
-        let f = self.args[0].eval(env, ctx); // TODO
-        let mut cloned = ctx.clone(); // TODO
-                                      // TODO
         let args_v_res: Vec<Value<'ctx>> = self
             .args
             .iter()
-            .map(|arg| arg.eval(env, &mut cloned).unwrap()) // TODO
+            .map(|arg| arg.eval(env, ctx).unwrap()) // TODO
             .collect();
         let args_v = args_v_res;
         match func_v {

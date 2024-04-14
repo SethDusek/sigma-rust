@@ -110,7 +110,7 @@ impl DataSerializer {
                 }
             }
             SUnit => Literal::Unit,
-            SGroupElement => Literal::GroupElement(Box::new(EcPoint::sigma_parse(r)?)),
+            SGroupElement => Literal::GroupElement(Rc::new(EcPoint::sigma_parse(r)?)),
             SSigmaProp => {
                 Literal::SigmaProp(Box::new(SigmaProp::new(SigmaBoolean::sigma_parse(r)?)))
             }
