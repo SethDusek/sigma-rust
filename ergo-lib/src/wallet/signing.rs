@@ -356,7 +356,7 @@ mod tests {
             // boxes_to_spend are in the different order to test inputs <-> boxes_to_spend association in the
             // prover (it should not depend on both of them to be in the same order)
             boxes_to_spend.shuffle(&mut thread_rng());
-            let ergo_tree = ErgoTree::try_from(Expr::Const(secrets.get(0).unwrap().public_image().into())).unwrap();
+            let ergo_tree = ErgoTree::try_from(Expr::Const(secrets.first().unwrap().public_image().into())).unwrap();
             let candidate = ErgoBoxCandidateBuilder::new(BoxValue::SAFE_USER_MIN, ergo_tree, 0)
                 .build().unwrap();
             let output_candidates = vec![candidate];

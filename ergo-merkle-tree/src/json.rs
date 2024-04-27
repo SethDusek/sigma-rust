@@ -28,7 +28,7 @@ impl From<LevelNode> for LevelNodeJson {
         Self(
             node.hash
                 .map(|hash| base16::encode_lower(&hash))
-                .unwrap_or_else(String::new),
+                .unwrap_or_default(),
             node.side,
         )
     }
@@ -136,7 +136,7 @@ impl From<LevelNode> for BatchLevelNodeJson {
             digest: node
                 .hash
                 .map(|hash| base16::encode_lower(&hash))
-                .unwrap_or_else(String::new),
+                .unwrap_or_default(),
             side: node.side,
         }
     }

@@ -29,7 +29,7 @@ pub(crate) static XOR_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
         )));
     }
     let right_v = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("xor: missing right arg".to_string()))?;
     let left_v = args

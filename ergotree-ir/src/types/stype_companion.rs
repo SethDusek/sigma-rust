@@ -43,7 +43,7 @@ pub enum STypeCompanion {
 }
 
 impl STypeCompanion {
-    fn method_desc<'a>(&'a self) -> &'a Vec<&'static SMethodDesc> {
+    fn method_desc(&self) -> &Vec<&'static SMethodDesc> {
         match self {
             STypeCompanion::Context => &scontext::METHOD_DESC,
             STypeCompanion::Box => &sbox::METHOD_DESC,

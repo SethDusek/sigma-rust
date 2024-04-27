@@ -354,7 +354,7 @@ mod tests {
         fn test_select_change_value_is_too_small(inputs in
                                                  vec(any_with::<ErgoBoxAssetsData>(
                                                  (BoxValue::MIN_RAW * 1000 .. BoxValue::MIN_RAW * 10000).into()), 2..10)) {
-            let first_input_box = inputs.get(0).unwrap().clone();
+            let first_input_box = inputs.first().unwrap().clone();
             let s = SimpleBoxSelector::new();
             let target_balance = BoxValue::try_from(first_input_box.value().as_u64() - 1).unwrap();
             let selection = s.select(inputs, target_balance, vec![].as_slice()).unwrap();
@@ -376,7 +376,7 @@ mod tests {
                       (BoxValue::MIN_RAW * 1000 .. BoxValue::MIN_RAW * 10000).into()), 2..10),
                         target_balance in
                         any_with::<BoxValue>((BoxValue::MIN_RAW * 100 .. BoxValue::MIN_RAW * 1500).into())) {
-            let first_input_box = inputs.get(0).unwrap().clone();
+            let first_input_box = inputs.first().unwrap().clone();
             prop_assume!(first_input_box.tokens.is_some());
             let first_input_box_token = first_input_box.tokens.as_ref().unwrap().first();
             let first_input_box_token_amount = u64::from(first_input_box_token.amount);
@@ -535,7 +535,7 @@ mod tests {
             let s = SimpleBoxSelector::new();
             let all_input_tokens = sum_tokens_from_boxes(inputs.as_slice()).unwrap();
             prop_assume!(!all_input_tokens.is_empty());
-            let target_token_id = all_input_tokens.keys().collect::<Vec<&TokenId>>().get(0).cloned().unwrap();
+            let target_token_id = all_input_tokens.keys().collect::<Vec<&TokenId>>().first().cloned().unwrap();
             let input_token_amount = u64::from(*all_input_tokens.get(target_token_id).unwrap()) / 2;
             let target_token_amount = TokenAmount::MAX_RAW;
             prop_assume!(input_token_amount < target_token_amount);

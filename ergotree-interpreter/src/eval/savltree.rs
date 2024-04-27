@@ -64,7 +64,7 @@ pub(crate) static IS_REMOVE_ALLOWED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 pub(crate) static UPDATE_OPERATIONS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let new_operations = {
-        let v = args.get(0).cloned().ok_or_else(|| {
+        let v = args.first().cloned().ok_or_else(|| {
             EvalError::AvlTree("eval is missing first arg (new_operations)".to_string())
         })?;
         v.try_extract_into::<i8>()? as u8
@@ -76,7 +76,7 @@ pub(crate) static UPDATE_OPERATIONS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 pub(crate) static UPDATE_DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let new_digest = {
-        let v = args.get(0).cloned().ok_or_else(|| {
+        let v = args.first().cloned().ok_or_else(|| {
             EvalError::AvlTree("eval is missing first arg (new_digest)".to_string())
         })?;
         let bytes_vec = v.try_extract_into::<Vec<u8>>()?;
@@ -91,7 +91,7 @@ pub(crate) static GET_EVAL_FN: EvalFn =
         let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
         let key = {
-            let v = args.get(0).cloned().ok_or_else(|| {
+            let v = args.first().cloned().ok_or_else(|| {
                 EvalError::AvlTree("eval is missing first arg (entries)".to_string())
             })?;
             v.try_extract_into::<Vec<u8>>()?
@@ -139,7 +139,7 @@ pub(crate) static GET_MANY_EVAL_FN: EvalFn =
         let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
         let keys = {
-            let v = args.get(0).cloned().ok_or_else(|| {
+            let v = args.first().cloned().ok_or_else(|| {
                 EvalError::AvlTree("eval is missing first arg (entries)".to_string())
             })?;
             v.try_extract_into::<Vec<Vec<u8>>>()?
@@ -201,7 +201,7 @@ pub(crate) static INSERT_EVAL_FN: EvalFn =
         }
 
         let entries = {
-            let v = args.get(0).cloned().ok_or_else(|| {
+            let v = args.first().cloned().ok_or_else(|| {
                 EvalError::AvlTree("eval is missing first arg (entries)".to_string())
             })?;
             v.try_extract_into::<Vec<(Vec<u8>, Vec<u8>)>>()?
@@ -264,7 +264,7 @@ pub(crate) static REMOVE_EVAL_FN: EvalFn =
         }
 
         let keys = {
-            let v = args.get(0).cloned().ok_or_else(|| {
+            let v = args.first().cloned().ok_or_else(|| {
                 EvalError::AvlTree("eval is missing first arg (keys)".to_string())
             })?;
             v.try_extract_into::<Vec<Vec<u8>>>()?
@@ -319,7 +319,7 @@ pub(crate) static CONTAINS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let key = {
         let v = args
-            .get(0)
+            .first()
             .cloned()
             .ok_or_else(|| EvalError::AvlTree("eval is missing first arg (key)".to_string()))?;
         Bytes::from(v.try_extract_into::<Vec<u8>>()?)
@@ -371,7 +371,7 @@ pub(crate) static UPDATE_EVAL_FN: EvalFn =
         }
 
         let entries = {
-            let v = args.get(0).cloned().ok_or_else(|| {
+            let v = args.first().cloned().ok_or_else(|| {
                 EvalError::AvlTree("eval is missing first arg (entries)".to_string())
             })?;
             v.try_extract_into::<Vec<(Vec<u8>, Vec<u8>)>>()?
@@ -433,8 +433,6 @@ fn map_eval_err<T: std::fmt::Debug>(e: T) -> EvalError {
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
-    use std::convert::TryFrom;
-
     use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
     use ergotree_ir::{
         mir::{
@@ -560,9 +558,9 @@ mod tests {
             .into(),
         );
 
-        let search_key_1 = Literal::try_from(vec![1u8]).unwrap();
-        let search_key_2 = Literal::try_from(vec![2u8]).unwrap();
-        let search_key_3 = Literal::try_from(vec![3u8]).unwrap();
+        let search_key_1 = Literal::from(vec![1u8]);
+        let search_key_2 = Literal::from(vec![2u8]);
+        let search_key_3 = Literal::from(vec![3u8]);
 
         let keys = Constant {
             tpe: SType::SColl(Box::new(SType::SColl(Box::new(SType::SByte)))),
@@ -941,7 +939,7 @@ mod tests {
             .into(),
         );
 
-        let key1 = Literal::try_from(vec![1u8]).unwrap();
+        let key1 = Literal::from(vec![1u8]);
         let keys = Constant {
             tpe: SType::SColl(Box::new(SType::SColl(Box::new(SType::SByte)))),
             v: Literal::Coll(CollKind::WrappedColl {
@@ -1070,8 +1068,8 @@ mod tests {
 
     fn mk_pair(x: u8, y: u64) -> [Literal; 2] {
         [
-            Literal::try_from(vec![x]).unwrap(),
-            Literal::try_from(y.to_be_bytes().to_vec()).unwrap(),
+            Literal::from(vec![x]),
+            Literal::from(y.to_be_bytes().to_vec()),
         ]
     }
 }

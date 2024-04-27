@@ -17,7 +17,7 @@ pub(crate) static VALUE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 
 pub(crate) static GET_REG_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     let reg_id = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("register index is missing".to_string()))?
         .try_extract_into::<i8>()?;

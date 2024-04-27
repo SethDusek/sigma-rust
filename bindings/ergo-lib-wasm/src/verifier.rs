@@ -1,7 +1,5 @@
 //! Verifier
 
-use std::convert::TryFrom;
-
 use ergo_lib::ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 use wasm_bindgen::{prelude::*, JsValue};
 
@@ -15,7 +13,7 @@ pub fn verify_signature(
     signature: &[u8],
 ) -> Result<bool, JsValue> {
     if let Address(ergo_lib::ergotree_ir::chain::address::Address::P2Pk(d)) = address.clone() {
-        let sb = SigmaBoolean::try_from(d).map_err(|e| JsValue::from_str(&format!("{:?}", e)))?;
+        let sb = SigmaBoolean::from(d);
         ergo_lib::ergotree_interpreter::sigma_protocol::verifier::verify_signature(
             sb, message, signature,
         )

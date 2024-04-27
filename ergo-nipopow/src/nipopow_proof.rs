@@ -225,7 +225,7 @@ impl PoPowHeader {
                     .map(|(k, v)| -> Vec<u8> {
                         std::iter::once(2u8)
                             .chain(k.iter().copied())
-                            .chain(v.into_iter())
+                            .chain(v)
                             .collect()
                     })
                     .map(ergo_merkle_tree::MerkleNode::from_bytes)
