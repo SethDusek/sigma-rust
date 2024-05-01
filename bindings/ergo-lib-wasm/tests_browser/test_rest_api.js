@@ -16,7 +16,7 @@ it('node REST API: peer_discovery endpoint', async () => {
     // there's an unavoidable waiting time of 80 seconds, to give Chrome time to relinquish failed
     // preflight requests)
     let is_chrome = true;
-    let active_peers = await ergo_wasm.peer_discovery(seeds, 150, 140, is_chrome);
+    let active_peers = await ergo_wasm.peer_discovery(seeds, 20, 200, is_chrome);
     assert(active_peers.len() > 0);
     console.log("Number active peers:", active_peers.len(), ". First active peer: ", active_peers.get(0).href);
 });
@@ -25,10 +25,10 @@ it('node REST API: peer_discovery endpoint (INCREMENTAL VERSION)', async () => {
     const seeds = get_ergo_node_seeds();
     let scan = new ergo_wasm.ChromePeerDiscoveryScan(seeds);
 
-    scan = await ergo_wasm.incremental_peer_discovery_chrome(scan, 150, 90);
+    scan = await ergo_wasm.incremental_peer_discovery_chrome(scan, 20, 200);
     let scan_1_len = scan.active_peers().len();
     console.log("# active peers from first scan:", scan_1_len);
-    scan = await ergo_wasm.incremental_peer_discovery_chrome(scan, 150, 480);
+    scan = await ergo_wasm.incremental_peer_discovery_chrome(scan, 20, 480);
     let scan_2_len = scan.active_peers().len();
     console.log("# active peers from second scan:", scan_2_len);
 
