@@ -40,5 +40,6 @@ pub mod wallet;
 pub use crate::error::*;
 pub mod derivation_path;
 mod error;
+pub mod ext_pub_key;
 #[cfg(feature = "rest")]
 pub mod rest;

@@ -39,6 +39,7 @@ mod reduced;
 mod rest;
 
 mod derivation_path;
+mod ext_pub_key;
 mod secret_key;
 mod token;
 mod transaction;
