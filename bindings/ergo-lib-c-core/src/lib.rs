@@ -38,6 +38,7 @@ pub mod tx_builder;
 pub mod util;
 pub mod wallet;
 pub use crate::error::*;
+pub mod derivation_path;
 mod error;
 #[cfg(feature = "rest")]
 pub mod rest;

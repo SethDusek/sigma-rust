@@ -38,6 +38,7 @@ mod reduced;
 #[cfg(feature = "rest")]
 mod rest;
 
+mod derivation_path;
 mod secret_key;
 mod token;
 mod transaction;
