@@ -5,12 +5,9 @@ class ExtSecretKey {
     internal var pointer: ExtSecretKeyPtr
 
     /// Create ExtSecretKey from secret key bytes, chain code and derivation path
-    /// Derivation path should be a string in the form of: m/44/429/acc'/0/addr
-    init(secretKeyBytes: [UInt8], chainCodeBytes: [UInt8], derivationPathStr: String) throws {
+    init(secretKeyBytes: [UInt8], chainCodeBytes: [UInt8], derivationPath: DerivationPath) throws {
         var ptr: ExtSecretKeyPtr?
-        let error = derivationPathStr.withCString { cs in
-            ergo_lib_ext_secret_key_new(secretKeyBytes, chainCodeBytes, cs, &ptr)
-        }
+        let error = ergo_lib_ext_secret_key_new(secretKeyBytes, chainCodeBytes, derivationPath.pointer, &ptr)
         try checkError(error)
         self.pointer = ptr!
     }
