@@ -21,7 +21,7 @@ pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
             ))),
         }?;
         let target_element = args
-            .get(0)
+            .first()
             .cloned()
             .ok_or_else(|| EvalError::NotFound("indexOf: missing first arg".to_string()))?;
         let fallback_index = args
@@ -39,7 +39,7 @@ pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 pub(crate) static FLATMAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
     let input_v = obj;
     let lambda_v = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("flatmap: eval is missing first arg".to_string()))?;
     let input_v_clone = input_v.clone();
@@ -131,7 +131,7 @@ pub(crate) static ZIP_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
         ))),
     }?;
     let arg_1 = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("zip: missing first arg".to_string()))?;
     let (type_2, coll_2) = match arg_1 {
@@ -143,7 +143,7 @@ pub(crate) static ZIP_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     }?;
     let zip = coll_1
         .into_iter()
-        .zip(coll_2.into_iter())
+        .zip(coll_2)
         .map(|(a, b)| Value::Tup([a, b].into()))
         .collect::<Vec<Value>>();
     let coll_zip = CollKind::from_vec(STuple::pair(type_1, type_2).into(), zip);
@@ -189,7 +189,7 @@ pub(crate) static PATCH_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
         ))),
     }?;
     let from_index_val = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("patch: missing first arg (from)".to_string()))?;
     let patch_val = args
@@ -231,7 +231,7 @@ pub(crate) static UPDATED_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     }?;
 
     let target_index_val = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("updated: missing first arg (index)".to_string()))?;
     let update_val = args
@@ -264,7 +264,7 @@ pub(crate) static UPDATE_MANY_EVAL_FN: EvalFn =
             ))),
         }?;
 
-        let indexes_arg = args.get(0).cloned().ok_or_else(|| {
+        let indexes_arg = args.first().cloned().ok_or_else(|| {
             EvalError::NotFound("updated: missing first arg (indexes)".to_string())
         })?;
         let updates_arg = args.get(1).cloned().ok_or_else(|| {

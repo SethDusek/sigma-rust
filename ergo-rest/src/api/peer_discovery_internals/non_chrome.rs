@@ -46,8 +46,8 @@ use url::Url;
 //
 //#[cfg(target_arch = "wasm32")]
 //macro_rules! console_log {
-//// Note that this is using the `log` function imported above during
-//// `bare_bones`
+/// Note that this is using the `log` function imported above during
+/// `bare_bones`
 //($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 //}
 
@@ -237,7 +237,6 @@ async fn peer_discovery_impl<
     drop(tx_url);
     let coll: Vec<_> = visited_active_peers
         .difference(&seeds_set)
-        .into_iter()
         .cloned()
         .collect();
 

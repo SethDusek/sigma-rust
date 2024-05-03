@@ -179,15 +179,15 @@ impl EvalError {
 }
 
 pub trait ExtResultEvalError<T> {
-    fn enrich_err(self, span: SourceSpan, env: Env) -> Result<T, EvalError>;
+    fn enrich_err(self, span: SourceSpan, env: &Env) -> Result<T, EvalError>;
 }
 
 impl<T> ExtResultEvalError<T> for Result<T, EvalError> {
-    fn enrich_err(self, span: SourceSpan, env: Env) -> Result<T, EvalError> {
+    fn enrich_err(self, span: SourceSpan, env: &Env) -> Result<T, EvalError> {
         self.map_err(|e| match e {
             // skip already wrapped errors
             w @ EvalError::Spanned { .. } => w,
-            e => e.wrap(span, env),
+            e => e.wrap(span, env.clone()),
         })
     }
 }

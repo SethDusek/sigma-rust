@@ -144,9 +144,7 @@ mod tests {
                      vec![],
                      |d| d
                          .as_vec()
-                         .iter()
-                         .cloned()
-                         .filter(| b| 1 <= b.value.as_i64())
+                         .iter().filter(|& b| 1 <= b.value.as_i64()).cloned()
                          .collect()
                 );
             assert_eq!(

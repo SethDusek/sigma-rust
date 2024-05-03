@@ -8,7 +8,7 @@ use super::EvalFn;
 pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
     let input_v = obj;
     let lambda_v = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("map: eval is missing first arg".to_string()))?;
     let input_v_clone = input_v.clone();
@@ -50,7 +50,7 @@ pub(crate) static MAP_EVAL_FN: EvalFn = |env, ctx, obj, args| {
 pub(crate) static FILTER_EVAL_FN: EvalFn = |env, ctx, obj, args| {
     let input_v = obj;
     let lambda_v = args
-        .get(0)
+        .first()
         .cloned()
         .ok_or_else(|| EvalError::NotFound("filter: eval is missing first arg".to_string()))?;
     let input_v_clone = input_v.clone();

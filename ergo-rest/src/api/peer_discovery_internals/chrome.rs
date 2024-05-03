@@ -65,13 +65,13 @@ pub(crate) async fn peer_discovery_inner_chrome(
     max_parallel_tasks: BoundedU16<1, { u16::MAX }>,
     timeout: Duration,
 ) -> Result<ChromePeerDiscoveryScan, PeerDiscoveryError> {
-    if timeout.as_secs() < 90 {
+    if timeout.as_secs() < 180 {
         return Err(PeerDiscoveryError::TimeoutTooShort);
     }
 
     // Note that 80 seconds is allocated to waiting for preflight requests to naturally timeout by
     // Chrome. The remaining time is spent looking for peers.
-    let global_timeout = timeout.checked_sub(Duration::from_secs(80)).unwrap();
+    let global_timeout = timeout.checked_sub(Duration::from_secs(180)).unwrap();
     let settings = PeerDiscoverySettings {
         max_parallel_tasks,
         task_2_buffer_length: 50,
@@ -340,10 +340,11 @@ async fn peer_discovery_impl_chrome(
                 while let Some(req) = pending_requests.pop() {
                     pending_requests_after_timeout.push(req);
                 }
-                //console_log!(
-                //    "GLOBAL TIMEOUT, {} incomplete requests-------------------------",
-                //    pending_requests_after_timeout.len()
-                //);
+                // console_log!(
+                //     "GLOBAL TIMEOUT, {} incomplete requests-------------------------",
+                //     pending_requests_after_timeout.len()
+                // );
+                break;
             }
         }
     }
@@ -355,15 +356,15 @@ async fn peer_discovery_impl_chrome(
         .cloned()
         .collect();
     // Uncomment for debugging
-    //console_log!("Active_peers: {:?}", active_peers);
-    //console_log!(
-    //    "Total # nodes visited: {}, # peers found: {}, # incomplete requests: {}",
-    //    visited_peers.len(),
-    //    active_peers.len(),
-    //    pending_requests_after_timeout.len(),
-    //);
-    //console_log!("Waiting 80sec for Chrome to relinquish pending HTTP requests");
-    crate::wasm_timer::Delay::new(Duration::from_secs(80)).await?;
+    // console_log!("Active_peers: {:?}", active_peers);
+    // console_log!(
+    //     "Total # nodes visited: {}, # peers found: {}, # incomplete requests: {}",
+    //     visited_peers.len(),
+    //     active_peers.len(),
+    //     pending_requests_after_timeout.len(),
+    // );
+    //console_log!("Waiting 180sec for Chrome to relinquish pending HTTP requests");
+    crate::wasm_timer::Delay::new(Duration::from_secs(180)).await?;
     Ok(ChromePeerDiscoveryScan {
         active_peers,
         visited_peers,

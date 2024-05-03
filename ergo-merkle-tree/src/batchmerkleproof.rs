@@ -92,7 +92,7 @@ impl BatchMerkleProof {
                 let e: Vec<BatchMerkleProofIndex> = a_new
                     .iter()
                     .copied()
-                    .zip(e_new.into_iter())
+                    .zip(e_new)
                     .map(|(index, hash)| BatchMerkleProofIndex { index, hash })
                     .collect();
                 e_new = validate(&a_new, &e, &m_new)?;

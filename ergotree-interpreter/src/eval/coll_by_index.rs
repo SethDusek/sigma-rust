@@ -63,7 +63,7 @@ mod tests {
         let ctx = Rc::new(force_any_val::<Context>());
         assert_eq!(
             eval_out::<Arc<ErgoBox>>(&expr, ctx.clone()).box_id(),
-            ctx.outputs.get(0).unwrap().box_id()
+            ctx.outputs.first().unwrap().box_id()
         );
     }
 

@@ -1,7 +1,5 @@
 //! JSON serialization according to EIP-12 (using strings for BoxValue and TokenAmount)
 
-use std::convert::TryInto;
-
 use derive_more::FromStr;
 use ergo_lib::chain::transaction::unsigned::UnsignedTransaction;
 use ergo_lib::chain::transaction::DataInput;
@@ -43,7 +41,7 @@ impl From<Transaction> for TransactionJsonEip12 {
             data_inputs: t
                 .data_inputs
                 .map(|di| di.as_vec().clone())
-                .unwrap_or_else(Vec::new),
+                .unwrap_or_default(),
             outputs: t.outputs.into_iter().map(|b| b.into()).collect(),
         }
     }
@@ -69,11 +67,8 @@ impl From<UnsignedTransaction> for UnsignedTransactionJsonEip12 {
         // Following unwraps are fine since we're converting from BoundedVec to Vec.
         #[allow(clippy::unwrap_used)]
         UnsignedTransactionJsonEip12 {
-            inputs: t.inputs.try_into().unwrap(),
-            data_inputs: t
-                .data_inputs
-                .map(|di| di.try_into().unwrap())
-                .unwrap_or_else(Vec::new),
+            inputs: t.inputs.into(),
+            data_inputs: t.data_inputs.map(|di| di.into()).unwrap_or_default(),
             outputs: t.output_candidates.into_iter().map(|b| b.into()).collect(),
         }
     }
