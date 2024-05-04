@@ -18,6 +18,8 @@ pub type ExtPubKeyPtr = *mut ExtPubKey;
 pub type ConstExtPubKeyPtr = *const ExtPubKey;
 
 /// Create ExtPubKey from public key bytes, chain code and derivation path
+/// public_key_bytes needs to be the length of PubKeyBytes::LEN (33 bytes)
+/// chain_code needs to be the length of ChainCode::LEN (32 bytes)
 pub unsafe fn ext_pub_key_new(
     public_key_bytes: *const u8,
     chain_code: *const u8,

@@ -23,6 +23,8 @@ pub type ExtSecretKeyPtr = *mut ExtSecretKey;
 pub type ConstExtSecretKeyPtr = *const ExtSecretKey;
 
 /// Create ExtSecretKey from secret key bytes, chain code and derivation path
+/// secret_key_bytes needs to be the length of SecretKeyBytes::LEN (32 bytes)
+/// chain_code needs to be the length of ChainCode::LEN (32 bytes)
 pub unsafe fn ext_secret_key_new(
     secret_key_bytes: *const u8,
     chain_code: *const u8,

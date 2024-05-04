@@ -20,6 +20,8 @@ use ergo_lib_c_core::{
 use crate::{delete_ptr, ErrorPtr};
 
 /// Create ExtSecretKey from secret key bytes, chain code and derivation path
+/// secret_key_bytes_ptr needs to be the length of SecretKeyBytes::LEN (32 bytes)
+/// chain_code_ptr needs to be the length of ChainCode::LEN (32 bytes)
 #[no_mangle]
 pub unsafe extern "C" fn ergo_lib_ext_secret_key_new(
     secret_key_bytes_ptr: *const u8,

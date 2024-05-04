@@ -10,6 +10,8 @@ use ergo_lib_c_core::ext_pub_key::{
 use ergo_lib_c_core::Error;
 
 /// Create ExtPubKey from public key bytes, chain code and derivation path
+/// public_key_bytes needs to be the length of PubKeyBytes::LEN (33 bytes)
+/// chain_code_ptr needs to be the length of ChainCode::LEN (32 bytes)
 #[no_mangle]
 pub unsafe extern "C" fn ergo_lib_ext_pub_key_new(
     public_key_bytes: *const u8,
