@@ -31,13 +31,12 @@ pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
             .try_extract_into::<i32>()?
             .max(0);
 
-        let index_of = normalized_input_vals
+        normalized_input_vals
             .into_iter()
             .skip(from as usize)
             .position(|it| it == target_element)
             .map(|idx| idx as i32 + from)
-            .unwrap_or(-1);
-        index_of
+            .unwrap_or(-1)
     }))
 };
 

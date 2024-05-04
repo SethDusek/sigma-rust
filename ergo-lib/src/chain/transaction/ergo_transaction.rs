@@ -65,7 +65,7 @@ pub enum TxValidationError {
     /// When using sigma-rust where heights are always unsigned, this error may be because creation height was set to be >= 2147483648
     NegativeHeight,
     #[error("Output box size {0} > maximum {}", ErgoBox::MAX_BOX_SIZE)]
-    /// Box size is > [ErgoBox::MAX_SCRIPT_SIZE]
+    /// Box size is > [ErgoBox::MAX_BOX_SIZE]
     BoxSizeExceeded(usize),
     #[error("Output box size {0} > maximum {}", ErgoBox::MAX_SCRIPT_SIZE)]
     /// Script size is > [ErgoBox::MAX_SCRIPT_SIZE]

@@ -59,7 +59,7 @@ impl<T: ErgoTransaction> TransactionContext<T> {
             .map(|(i, b)| (b.box_id(), i as u16))
             .collect();
         for (i, unsigned_input) in spending_tx.inputs_ids().iter().enumerate() {
-            if !box_index.contains_key(&unsigned_input) {
+            if !box_index.contains_key(unsigned_input) {
                 return Err(TransactionContextError::InputBoxNotFound(i));
             }
         }
