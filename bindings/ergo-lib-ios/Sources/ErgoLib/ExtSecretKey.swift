@@ -1,11 +1,22 @@
 import Foundation
 import ErgoLibC
 
+enum ExtSecretKeyError: Error {
+    case SecretKeyLengthError
+    case ChainCodeLengthError
+    case SeedLengthError
+}
 class ExtSecretKey {
     internal var pointer: ExtSecretKeyPtr
 
     /// Create ExtSecretKey from secret key bytes, chain code and derivation path
     init(secretKeyBytes: [UInt8], chainCodeBytes: [UInt8], derivationPath: DerivationPath) throws {
+        if secretKeyBytes.count != 32 {
+            throw ExtSecretKeyError.SecretKeyLengthError
+        }
+        if chainCodeBytes.count != 32 {
+            throw ExtSecretKeyError.ChainCodeLengthError
+        }
         var ptr: ExtSecretKeyPtr?
         let error = ergo_lib_ext_secret_key_new(secretKeyBytes, chainCodeBytes, derivationPath.pointer, &ptr)
         try checkError(error)
@@ -14,6 +25,9 @@ class ExtSecretKey {
 
     /// Derive root extended secret key from seed bytes
     init(seedBytes: [UInt8]) throws {
+        if seedBytes.count != 32 {
+            throw ExtSecretKeyError.SeedLengthError
+        }
         var ptr: ExtSecretKeyPtr?
         let error = ergo_lib_ext_secret_key_derive_master(seedBytes, &ptr)
         try checkError(error)
