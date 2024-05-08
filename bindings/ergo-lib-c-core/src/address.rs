@@ -1,8 +1,13 @@
+use crate::ergo_tree::{ErgoTree, ErgoTreePtr};
 use crate::{
     error::*,
     util::{const_ptr_as_ref, mut_ptr_as_mut},
 };
+use ergo_lib::ergo_chain_types::EcPoint;
 use ergo_lib::ergotree_ir::chain::address as addr;
+use ergo_lib::ergotree_ir::ergo_tree::ErgoTree as InternalErgoTree;
+use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
+use ergo_lib::ergotree_ir::sigma_protocol::sigma_boolean::ProveDlog;
 
 /// Address wrapper
 pub struct Address(pub(crate) ergo_lib::ergotree_ir::chain::address::Address);
@@ -95,6 +100,33 @@ pub unsafe fn address_from_ergo_tree(
         }
         Err(err) => Err(Error::misc(err)),
     }
+}
+
+/// Get ergo tree for address
+pub unsafe fn address_to_ergo_tree(
+    address_ptr: ConstAddressPtr,
+    ergo_tree_out: *mut ErgoTreePtr,
+) -> Result<(), Error> {
+    let address = const_ptr_as_ref(address_ptr, "address_ptr")?;
+    let ergo_tree_out = mut_ptr_as_mut(ergo_tree_out, "ergo_tree_out")?;
+    let ergo_tree: InternalErgoTree = address.0.script().map_err(Error::misc)?;
+    *ergo_tree_out = Box::into_raw(Box::new(ErgoTree(ergo_tree)));
+    Ok(())
+}
+
+/// Create address from public key bytes
+pub unsafe fn address_from_public_key(
+    bytes_ptr: *const u8,
+    len: usize,
+    address_out: *mut AddressPtr,
+) -> Result<(), Error> {
+    let address_out = mut_ptr_as_mut(address_out, "address_out")?;
+    let bytes = std::slice::from_raw_parts(bytes_ptr, len);
+    let address = EcPoint::sigma_parse_bytes(bytes)
+        .map(|point| ergo_lib::ergotree_ir::chain::address::Address::P2Pk(ProveDlog::new(point)))
+        .map_err(Error::misc)?;
+    *address_out = Box::into_raw(Box::new(Address(address)));
+    Ok(())
 }
 
 /// Drop the `Address`
