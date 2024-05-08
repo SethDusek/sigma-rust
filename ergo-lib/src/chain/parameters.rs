@@ -27,9 +27,15 @@ pub enum Parameter {
 }
 
 /// System parameters which can be adjusted via soft-fork
+#[cfg_attr(feature = "json", derive(serde::Deserialize))]
+#[cfg_attr(
+    feature = "json",
+    serde(try_from = "crate::chain::json::parameters::ParametersJson")
+)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Parameters {
-    parameters_table: HashMap<Parameter, i32>,
+    /// table of adjustable system parameters
+    pub parameters_table: HashMap<Parameter, i32>,
 }
 
 impl Parameters {
