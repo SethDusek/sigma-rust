@@ -6,6 +6,7 @@ use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
 
 pub(crate) mod context_extension;
 pub(crate) mod hint;
+pub(crate) mod parameters;
 pub(crate) mod transaction;
 
 /// Serde remote type

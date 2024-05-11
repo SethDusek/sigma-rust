@@ -27,9 +27,15 @@ pub enum Parameter {
 }
 
 /// System parameters which can be adjusted via soft-fork
+#[cfg_attr(feature = "json", derive(serde::Deserialize))]
+#[cfg_attr(
+    feature = "json",
+    serde(try_from = "crate::chain::json::parameters::ParametersJson")
+)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Parameters {
-    parameters_table: HashMap<Parameter, i32>,
+    /// table of adjustable system parameters
+    pub parameters_table: HashMap<Parameter, i32>,
 }
 
 impl Parameters {
@@ -68,6 +74,32 @@ impl Parameters {
     /// Validation cost per one output
     pub fn output_cost(&self) -> i32 {
         self.parameters_table[&Parameter::OutputCost]
+    }
+
+    /// Create new parameters from provided blockchain parameters
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        block_version: i32,
+        storage_fee_factor: i32,
+        min_value_per_byte: i32,
+        max_block_size: i32,
+        max_block_cost: i32,
+        token_access_cost: i32,
+        input_cost: i32,
+        data_input_cost: i32,
+        output_cost: i32,
+    ) -> Self {
+        let mut parameters_table = HashMap::new();
+        parameters_table.insert(Parameter::BlockVersion, block_version);
+        parameters_table.insert(Parameter::StorageFeeFactor, storage_fee_factor);
+        parameters_table.insert(Parameter::MinValuePerByte, min_value_per_byte);
+        parameters_table.insert(Parameter::MaxBlockSize, max_block_size);
+        parameters_table.insert(Parameter::MaxBlockCost, max_block_cost);
+        parameters_table.insert(Parameter::TokenAccessCost, token_access_cost);
+        parameters_table.insert(Parameter::InputCost, input_cost);
+        parameters_table.insert(Parameter::DataInputCost, data_input_cost);
+        parameters_table.insert(Parameter::OutputCost, output_cost);
+        Self { parameters_table }
     }
 }
 
