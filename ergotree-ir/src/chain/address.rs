@@ -29,6 +29,7 @@ use ergo_chain_types::EcPoint;
 use sigma_util::hash::blake2b256_hash;
 use sigma_util::AsVecU8;
 use std::convert::{TryFrom, TryInto};
+use std::sync::Arc;
 use thiserror::Error;
 
 /**
@@ -213,7 +214,7 @@ impl Address {
                 let get_var_expr = Expr::GetVar(
                     GetVar {
                         var_id: 1,
-                        var_tpe: SType::SColl(Box::new(SType::SByte)),
+                        var_tpe: SType::SColl(Arc::new(SType::SByte)),
                     }
                     .into(),
                 );

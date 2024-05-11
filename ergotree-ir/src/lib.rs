@@ -1,7 +1,7 @@
 //! ErgoTree, MIR (Middle-level Internal Representation)
 
 // Coding conventions
-#![forbid(unsafe_code)]
+// TODO #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]

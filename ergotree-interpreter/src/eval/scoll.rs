@@ -151,7 +151,7 @@ pub(crate) static ZIP_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
         .zip(coll_2.into_iter())
         .map(|(a, b)| Value::Tup([a, b].into()))
         .collect::<Vec<Value>>();
-    let coll_zip = CollKind::from_vec(STuple::pair(type_1, type_2).into(), zip);
+    let coll_zip = CollKind::from_slice(STuple::pair(type_1, type_2).into(), &zip);
     match coll_zip {
         Ok(coll) => Ok(Value::Coll(coll)),
         Err(e) => Err(EvalError::TryExtractFrom(e)),
@@ -173,8 +173,9 @@ pub(crate) static INDICES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
         .collect::<Result<Vec<i32>, _>>();
     let indices_val =
         indices_i32.map(|vec_i32| vec_i32.into_iter().map(Value::Int).collect::<Vec<Value>>());
+    // TODO: optimize
     match indices_val {
-        Ok(vec_val) => match CollKind::from_vec(SInt, vec_val) {
+        Ok(vec_val) => match CollKind::from_slice(SInt, &vec_val) {
             Ok(coll) => Ok(Value::Coll(coll)),
             Err(e) => Err(EvalError::TryExtractFrom(e)),
         },
@@ -222,8 +223,8 @@ pub(crate) static PATCH_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
         .chain(patch.iter())
         .chain(normalized_input_vals.iter().skip(from + replaced))
         .cloned()
-        .collect();
-    Ok(Value::Coll(CollKind::from_vec(input_tpe, res)?))
+        .collect::<Vec<_>>(); // TODO: optimize
+    Ok(Value::Coll(CollKind::from_slice(input_tpe, &res)?))
 };
 
 pub(crate) static UPDATED_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
@@ -250,7 +251,7 @@ pub(crate) static UPDATED_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     match res.get_mut(target_index_usize) {
         Some(elem) => {
             *elem = update_val;
-            Ok(Value::Coll(CollKind::from_vec(input_tpe, res)?))
+            Ok(Value::Coll(CollKind::from_slice(input_tpe, &res)?))
         }
         None => Err(EvalError::UnexpectedValue(format!(
             "updated: target index out of bounds, got: {:?}",
@@ -332,13 +333,17 @@ pub(crate) static UPDATE_MANY_EVAL_FN: EvalFn =
             }
             i += 1;
         }
-        Ok(Value::Coll(CollKind::from_vec(input_tpe, res)?))
+        // TODO: optimize
+        Ok(Value::Coll(CollKind::from_slice(input_tpe, &res)?))
     };
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
+    use std::rc::Rc;
+    use std::sync::Arc;
+
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::constant::Literal;
     use ergotree_ir::mir::expr::Expr;
@@ -402,16 +407,16 @@ mod tests {
     #[test]
     fn eval_flatmap() {
         let coll_const = Constant {
-            tpe: SType::SColl(Box::new(SType::SColl(Box::new(SType::SLong)))),
+            tpe: SType::SColl(Arc::new(SType::SColl(Arc::new(SType::SLong)))),
             v: Literal::Coll(CollKind::WrappedColl {
-                items: vec![vec![4i64, 5i64].into(), vec![3i64].into()],
-                elem_tpe: SType::SColl(Box::new(SType::SLong)),
+                items: Rc::new([vec![4i64, 5i64].into(), vec![3i64].into()]),
+                elem_tpe: SType::SColl(Arc::new(SType::SLong)),
             }),
         };
         let body: Expr = MethodCall::new(
             ValUse {
                 val_id: 1.into(),
-                tpe: SType::SColl(Box::new(SType::SLong)),
+                tpe: SType::SColl(Arc::new(SType::SLong)),
             }
             .into(),
             scoll::INDICES_METHOD
@@ -425,7 +430,7 @@ mod tests {
             coll_const.into(),
             scoll::FLATMAP_METHOD.clone().with_concrete_types(
                 &[
-                    (STypeVar::iv(), SType::SColl(Box::new(SType::SLong))),
+                    (STypeVar::iv(), SType::SColl(Arc::new(SType::SLong))),
                     (STypeVar::ov(), SType::SInt),
                 ]
                 .iter()
@@ -435,7 +440,7 @@ mod tests {
             vec![FuncValue::new(
                 vec![FuncArg {
                     idx: 1.into(),
-                    tpe: SType::SColl(Box::new(SType::SLong)),
+                    tpe: SType::SColl(Arc::new(SType::SLong)),
                 }],
                 body,
             )

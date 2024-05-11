@@ -8,6 +8,7 @@ use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
 use crate::types::stype::SType;
+use std::sync::Arc;
 
 /// Returns the Option's value or error if no value
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -17,7 +18,7 @@ pub struct OptionGetOrElse {
     /// Default value if option is empty
     pub default: Box<Expr>,
     /// Option element type
-    elem_tpe: SType,
+    elem_tpe: Arc<SType>,
 }
 
 impl OptionGetOrElse {
@@ -29,7 +30,7 @@ impl OptionGetOrElse {
                 Ok(OptionGetOrElse {
                     input: Box::new(input),
                     default: Box::new(default),
-                    elem_tpe: *elem_tpe,
+                    elem_tpe,
                 })
             }
             _ => Err(InvalidArgumentError(format!(
@@ -41,7 +42,7 @@ impl OptionGetOrElse {
 
     /// Type
     pub fn tpe(&self) -> SType {
-        self.elem_tpe.clone()
+        (*self.elem_tpe).clone()
     }
 }
 

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
@@ -20,7 +22,7 @@ pub struct ByIndex {
     /// Default value, returned if index is out of bounds in "Coll.getOrElse()" op
     pub default: Option<Box<Expr>>,
     /// Input collection element type
-    input_elem_tpe: SType,
+    input_elem_tpe: Arc<SType>,
 }
 
 impl ByIndex {
@@ -30,8 +32,8 @@ impl ByIndex {
         index: Expr,
         default: Option<Box<Expr>>,
     ) -> Result<Self, InvalidArgumentError> {
-        let input_elem_type: SType = match input.post_eval_tpe() {
-            SType::SColl(elem_type) => Ok(*elem_type),
+        let input_elem_type = match input.post_eval_tpe() {
+            SType::SColl(elem_type) => Ok(elem_type),
             _ => Err(InvalidArgumentError(format!(
                 "Expected ByIndex input to be SColl, got {0:?}",
                 input.tpe()
@@ -44,8 +46,8 @@ impl ByIndex {
             )));
         }
         if !default
-            .clone()
-            .map(|expr| expr.post_eval_tpe() == input_elem_type)
+            .as_ref()
+            .map(|expr| &expr.post_eval_tpe() == &*input_elem_type)
             .unwrap_or(true)
         {
             return Err(InvalidArgumentError(format!(
@@ -63,7 +65,7 @@ impl ByIndex {
 
     /// Type
     pub fn tpe(&self) -> SType {
-        self.input_elem_tpe.clone()
+        (*self.input_elem_tpe).clone()
     }
 }
 

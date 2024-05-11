@@ -41,7 +41,7 @@ impl Evaluable for Filter {
         };
         let normalized_input_vals: Vec<Value> = match input_v {
             Value::Coll(coll) => {
-                if *coll.elem_tpe() != self.elem_tpe {
+                if coll.elem_tpe() != &*self.elem_tpe {
                     return Err(EvalError::UnexpectedValue(format!(
                         "expected Filter input element type to be {0:?}, got: {1:?}",
                         self.elem_tpe,
@@ -71,10 +71,10 @@ impl Evaluable for Filter {
             .zip(items_conditions)
             .filter(|(_, condition)| *condition)
             .map(|(item, _)| item)
-            .collect();
-        Ok(Value::Coll(CollKind::from_vec(
-            self.elem_tpe.clone(),
-            filtered_items,
+            .collect::<Vec<_>>(); // TODO: optimize
+        Ok(Value::Coll(CollKind::from_slice(
+            (*self.elem_tpe).clone(),
+            &filtered_items,
         )?))
     }
 }

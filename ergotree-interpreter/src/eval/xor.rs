@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::NativeColl;
 use ergotree_ir::mir::value::Value;
@@ -8,9 +10,8 @@ use crate::eval::EvalContext;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
-fn helper_xor(mut x: Vec<i8>, y: Vec<i8>) -> Vec<i8> {
-    x.iter_mut().zip(y.iter()).for_each(|(x1, x2)| *x1 ^= *x2);
-    x
+fn helper_xor(x: &[i8], y: &[i8]) -> Rc<[i8]> {
+    x.iter().zip(y.iter()).map(|(x1, x2)| *x1 ^ *x2).collect()
 }
 
 impl Evaluable for Xor {
@@ -27,8 +28,8 @@ impl Evaluable for Xor {
                 Value::Coll(CollKind::NativeColl(NativeColl::CollByte(l_byte))),
                 Value::Coll(CollKind::NativeColl(NativeColl::CollByte(r_byte))),
             ) => {
-                let xor = helper_xor(l_byte, r_byte);
-                Ok(xor.into())
+                let xor = helper_xor(&l_byte, &r_byte);
+                Ok(CollKind::NativeColl(NativeColl::CollByte(xor)).into())
             }
             _ => Err(EvalError::UnexpectedValue(format!(
                 "expected Xor input to be byte array, got: {0:?}",
@@ -134,7 +135,7 @@ mod tests {
         #[test]
         fn eval_any(left_bytes in any::<Vec<i8>>(), right_bytes in any::<Vec<i8>>()) {
 
-            let expected_xor = helper_xor(left_bytes.clone(), right_bytes.clone());
+            let expected_xor = helper_xor(&left_bytes, &right_bytes);
 
             let expr: Expr = Xor {
                 left: Box::new(Expr::Const(left_bytes.into())),
@@ -143,7 +144,7 @@ mod tests {
             .into();
 
             let ctx = force_any_val::<Context>();
-            assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
+            assert_eq!(&eval_out::<Vec<i8>>(&expr, &ctx)[..], &expected_xor[..]);
         }
     }
 }

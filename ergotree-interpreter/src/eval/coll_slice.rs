@@ -31,9 +31,9 @@ impl Evaluable for Slice {
         // see https://github.com/ergoplatform/sigma-rust/issues/724
         let range = from.max(0) as usize..until.min(input_vec.len() as i32) as usize;
         match input_vec.get(range) {
-            Some(slice) => Ok(Value::Coll(CollKind::from_vec(elem_tpe, slice.to_vec())?)),
+            Some(slice) => Ok(Value::Coll(CollKind::from_slice(elem_tpe, &slice)?)),
             // Scala version returns empty collection if the range is out of bounds
-            None => Ok(Value::Coll(CollKind::from_vec(elem_tpe, vec![])?)),
+            None => Ok(Value::Coll(CollKind::from_slice(elem_tpe, &[])?)),
         }
     }
 }

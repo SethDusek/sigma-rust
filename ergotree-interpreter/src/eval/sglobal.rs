@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::eval::EvalError;
 
 use ergotree_ir::mir::value::{CollKind, NativeColl, Value};
@@ -6,9 +8,8 @@ use ergo_chain_types::ec_point::generator;
 
 use super::EvalFn;
 
-fn helper_xor(mut x: Vec<i8>, y: Vec<i8>) -> Vec<i8> {
-    x.iter_mut().zip(y.iter()).for_each(|(x1, x2)| *x1 ^= *x2);
-    x
+fn helper_xor(x: &[i8], y: &[i8]) -> Rc<[i8]> {
+    x.iter().zip(y.iter()).map(|(x1, x2)| *x1 ^ *x2).collect()
 }
 
 pub(crate) static GROUP_GENERATOR_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
@@ -42,8 +43,8 @@ pub(crate) static XOR_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
             Value::Coll(CollKind::NativeColl(NativeColl::CollByte(l_byte))),
             Value::Coll(CollKind::NativeColl(NativeColl::CollByte(r_byte))),
         ) => {
-            let xor = helper_xor(l_byte, r_byte);
-            Ok(xor.into())
+            let xor = helper_xor(&l_byte, &r_byte);
+            Ok(CollKind::NativeColl(NativeColl::CollByte(xor)).into())
         }
         _ => Err(EvalError::UnexpectedValue(format!(
             "expected Xor input to be byte array, got: {0:?}",
@@ -92,6 +93,9 @@ mod tests {
         .unwrap()
         .into();
         let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
+        assert_eq!(
+            eval_out::<Vec<i8>>(&expr, &ctx).as_slice(),
+            expected_xor.as_slice()
+        );
     }
 }

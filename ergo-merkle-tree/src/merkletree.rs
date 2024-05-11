@@ -210,7 +210,7 @@ impl MerkleTree {
     /// Returns the root hash for MerkleTree. If the tree is empty, then returns [0; 32]
     pub fn root_hash(&self) -> Digest32 {
         self.nodes
-            .get(0)
+            .first()
             .and_then(MerkleNode::get_hash)
             .cloned()
             .unwrap_or_else(Digest32::zero)
@@ -219,7 +219,7 @@ impl MerkleTree {
     /// See: <https://github.com/ergoplatform/ergo/issues/1077>
     pub fn root_hash_special(&self) -> Digest32 {
         self.nodes
-            .get(0)
+            .first()
             .and_then(MerkleNode::get_hash)
             .cloned()
             .unwrap_or_else(|| {

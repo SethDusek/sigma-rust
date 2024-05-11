@@ -15,8 +15,11 @@ impl Evaluable for MultiplyGroup {
         let left_v = self.left.eval(env, ctx)?;
         let right_v = self.right.eval(env, ctx)?;
 
+        // TODO
         match (left_v.clone(), right_v.clone()) {
-            (Value::GroupElement(left), Value::GroupElement(right)) => Ok((*left * &*right).into()),
+            (Value::GroupElement(left), Value::GroupElement(right)) => {
+                Ok(((&*left).clone() * &*right).into())
+            }
             _ => Err(EvalError::UnexpectedValue(format!(
                 "Expected MultiplyGroup input to be GroupElement, got: {0:?}",
                 (left_v, right_v)

@@ -16,7 +16,8 @@ impl Evaluable for CreateProveDlog {
         let value_v = self.input.eval(env, ctx)?;
         match value_v {
             Value::GroupElement(ecpoint) => {
-                let prove_dlog = ProveDlog::new(*ecpoint);
+                // TODO
+                let prove_dlog = ProveDlog::new((&*ecpoint).clone());
                 Ok(prove_dlog.into())
             }
             _ => Err(EvalError::UnexpectedValue(format!(

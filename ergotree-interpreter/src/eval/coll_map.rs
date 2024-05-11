@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ergotree_ir::mir::coll_map::Map;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
@@ -69,7 +71,8 @@ impl Evaluable for Map {
             .map(|item| mapper_call(item.clone()))
             .collect::<Result<Vec<Value>, EvalError>>()
             .map(|values| {
-                CollKind::from_vec(self.out_elem_tpe(), values).map_err(EvalError::TryExtractFrom)
+                CollKind::from_slice(self.out_elem_tpe(), &values)
+                    .map_err(EvalError::TryExtractFrom)
             })
             .and_then(|v| v) // flatten <Result<Result<Value, _>, _>
             .map(Value::Coll)

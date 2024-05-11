@@ -13,14 +13,13 @@ impl Evaluable for SizeOf {
         ctx: &EvalContext<'ctx>,
     ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
-        let normalized_input_vals: Vec<Value> = match input_v {
-            Value::Coll(coll) => Ok(coll.as_vec()),
+        match input_v {
+            Value::Coll(coll) => Ok((coll.len() as i32).into()),
             _ => Err(EvalError::UnexpectedValue(format!(
                 "SizeOf: expected input to be Value::Coll, got: {0:?}",
                 input_v
             ))),
-        }?;
-        Ok((normalized_input_vals.len() as i32).into())
+        }
     }
 }
 

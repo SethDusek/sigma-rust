@@ -32,7 +32,7 @@ impl Evaluable for SubstConstants {
 
         let new_constants = if let Value::Coll(CollKind::WrappedColl { items, .. }) = new_values_v {
             let mut items_const = vec![];
-            for v in items {
+            for v in &*items {
                 let c = Constant::try_from(v.to_static()).map_err(EvalError::Misc)?;
                 items_const.push(c);
             }
@@ -71,7 +71,7 @@ impl Evaluable for SubstConstants {
                 }
             }
             Ok(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(
-                ergo_tree.sigma_serialize_bytes()?.as_vec_i8(),
+                ergo_tree.sigma_serialize_bytes()?.as_vec_i8().into(), // TODO: optimize
             ))))
         } else {
             Err(EvalError::Misc(format!(

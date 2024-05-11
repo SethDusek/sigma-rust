@@ -1,6 +1,7 @@
 //! Global variables
 
 use std::fmt::Display;
+use std::sync::Arc;
 
 use crate::has_opcode::HasOpCode;
 use crate::serialization::op_code::OpCode;
@@ -27,11 +28,11 @@ impl GlobalVars {
     /// Type
     pub fn tpe(&self) -> SType {
         match self {
-            GlobalVars::Inputs => SType::SColl(Box::new(SType::SBox)),
-            GlobalVars::Outputs => SType::SColl(Box::new(SType::SBox)),
+            GlobalVars::Inputs => SType::SColl(Arc::new(SType::SBox)),
+            GlobalVars::Outputs => SType::SColl(Arc::new(SType::SBox)),
             GlobalVars::Height => SType::SInt,
             GlobalVars::SelfBox => SType::SBox,
-            GlobalVars::MinerPubKey => SType::SColl(Box::new(SType::SByte)),
+            GlobalVars::MinerPubKey => SType::SColl(Arc::new(SType::SByte)),
             GlobalVars::GroupGenerator => SType::SGroupElement,
         }
     }

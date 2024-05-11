@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::sync::Arc;
 
 use bytes::Bytes;
 use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
@@ -23,7 +24,8 @@ use sigma_util::AsVecI8;
 pub(crate) static DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(
-        avl_tree_data.digest.into(),
+        // TODO: From<ADDigest> for Rc<[i8]>
+        avl_tree_data.digest.0.iter().map(|&b| b as i8).collect(),
     ))))
 };
 
@@ -86,53 +88,54 @@ pub(crate) static UPDATE_DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     Ok(Value::AvlTree(Box::new(avl_tree_data)))
 };
 
-pub(crate) static GET_EVAL_FN: EvalFn =
-    |_env, _ctx, obj, args| {
-        let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
+pub(crate) static GET_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+    let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
-        let key = {
-            let v = args.get(0).cloned().ok_or_else(|| {
-                EvalError::AvlTree("eval is missing first arg (entries)".to_string())
-            })?;
-            v.try_extract_into::<Vec<u8>>()?
-        };
-        let proof = {
-            let v = args.get(1).cloned().ok_or_else(|| {
-                EvalError::AvlTree("eval is missing second arg (proof)".to_string())
-            })?;
-            Bytes::from(v.try_extract_into::<Vec<u8>>()?)
-        };
-
-        let starting_digest = Bytes::from(avl_tree_data.digest.0.to_vec());
-        let mut bv = BatchAVLVerifier::new(
-            &starting_digest,
-            &proof,
-            AVLTree::new(
-                |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
-                avl_tree_data.key_length as usize,
-                avl_tree_data
-                    .value_length_opt
-                    .as_ref()
-                    .map(|v| **v as usize),
-            ),
-            None,
-            None,
-        )
-        .map_err(map_eval_err)?;
-
-        match bv.perform_one_operation(&Operation::Lookup(Bytes::from(key))) {
-            Ok(opt) => match opt {
-                Some(v) => Ok(Value::Opt(Box::new(Some(Value::Coll(
-                    CollKind::NativeColl(NativeColl::CollByte(v.to_vec().as_vec_i8())),
-                ))))),
-                _ => Ok(Value::Opt(Box::new(None))),
-            },
-            Err(_) => Err(EvalError::AvlTree(format!(
-                "Tree proof is incorrect {:?}",
-                avl_tree_data
-            ))),
-        }
+    let key = {
+        let v = args
+            .get(0)
+            .cloned()
+            .ok_or_else(|| EvalError::AvlTree("eval is missing first arg (entries)".to_string()))?;
+        v.try_extract_into::<Vec<u8>>()?
     };
+    let proof = {
+        let v = args
+            .get(1)
+            .cloned()
+            .ok_or_else(|| EvalError::AvlTree("eval is missing second arg (proof)".to_string()))?;
+        Bytes::from(v.try_extract_into::<Vec<u8>>()?)
+    };
+
+    let starting_digest = Bytes::from(avl_tree_data.digest.0.to_vec());
+    let mut bv = BatchAVLVerifier::new(
+        &starting_digest,
+        &proof,
+        AVLTree::new(
+            |digest| Node::LabelOnly(NodeHeader::new(Some(*digest), None)),
+            avl_tree_data.key_length as usize,
+            avl_tree_data
+                .value_length_opt
+                .as_ref()
+                .map(|v| **v as usize),
+        ),
+        None,
+        None,
+    )
+    .map_err(map_eval_err)?;
+
+    match bv.perform_one_operation(&Operation::Lookup(Bytes::from(key))) {
+        Ok(opt) => match opt {
+            Some(v) => Ok(Value::Opt(Box::new(Some(Value::Coll(
+                CollKind::NativeColl(NativeColl::CollByte(v.iter().map(|&b| b as i8).collect())),
+            ))))),
+            _ => Ok(Value::Opt(Box::new(None))),
+        },
+        Err(_) => Err(EvalError::AvlTree(format!(
+            "Tree proof is incorrect {:?}",
+            avl_tree_data
+        ))),
+    }
+};
 
 pub(crate) static GET_MANY_EVAL_FN: EvalFn =
     |_env, _ctx, obj, args| {
@@ -173,7 +176,9 @@ pub(crate) static GET_MANY_EVAL_FN: EvalFn =
             if let Ok(r) = bv.perform_one_operation(&Operation::Lookup(Bytes::from(key))) {
                 if let Some(v) = r {
                     res.push(Value::Opt(Box::new(Some(Value::Coll(
-                        CollKind::NativeColl(NativeColl::CollByte(v.to_vec().as_vec_i8())),
+                        CollKind::NativeColl(NativeColl::CollByte(
+                            v.iter().map(|&b| b as i8).collect(),
+                        )),
                     )))))
                 } else {
                     res.push(Value::Opt(Box::new(None)))
@@ -187,8 +192,8 @@ pub(crate) static GET_MANY_EVAL_FN: EvalFn =
         }
 
         Ok(Value::Coll(CollKind::WrappedColl {
-            elem_tpe: SType::SOption(Box::new(SType::SColl(Box::new(SType::SByte)))),
-            items: res,
+            elem_tpe: SType::SOption(Arc::new(SType::SColl(Arc::new(SType::SByte)))),
+            items: res.into(), // TODO: optimize
         }))
     };
 
@@ -433,7 +438,7 @@ fn map_eval_err<T: std::fmt::Debug>(e: T) -> EvalError {
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
-    use std::convert::TryFrom;
+    use std::{convert::TryFrom, rc::Rc, sync::Arc};
 
     use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
     use ergotree_ir::{
@@ -565,10 +570,10 @@ mod tests {
         let search_key_3 = Literal::try_from(vec![3u8]).unwrap();
 
         let keys = Constant {
-            tpe: SType::SColl(Box::new(SType::SColl(Box::new(SType::SByte)))),
+            tpe: SType::SColl(Arc::new(SType::SColl(Arc::new(SType::SByte)))),
             v: Literal::Coll(CollKind::WrappedColl {
-                items: vec![search_key_1, search_key_2, search_key_3],
-                elem_tpe: SType::SColl(Box::new(SType::SByte)),
+                items: Rc::new([search_key_1, search_key_2, search_key_3]),
+                elem_tpe: SType::SColl(Arc::new(SType::SByte)),
             }),
         };
 
@@ -588,7 +593,7 @@ mod tests {
                     match *opt {
                         None => assert!(expected.is_none()),
                         Some(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(b)))) => {
-                            assert_eq!(b, expected.unwrap().to_vec().as_vec_i8());
+                            assert_eq!(&b[..], &expected.unwrap().to_vec().as_vec_i8()[..]);
                         }
                         Some(_) => unreachable!(),
                     }
@@ -656,15 +661,15 @@ mod tests {
         let pair2 = Literal::Tup(mk_pair(2u8, 20u64).into());
         let pair3 = Literal::Tup(mk_pair(3u8, 30u64).into());
         let entries = Constant {
-            tpe: SType::SColl(Box::new(SType::STuple(STuple::pair(
-                SType::SColl(Box::new(SType::SByte)),
-                SType::SColl(Box::new(SType::SByte)),
+            tpe: SType::SColl(Arc::new(SType::STuple(STuple::pair(
+                SType::SColl(Arc::new(SType::SByte)),
+                SType::SColl(Arc::new(SType::SByte)),
             )))),
             v: Literal::Coll(CollKind::WrappedColl {
-                items: vec![pair1, pair2, pair3],
+                items: Rc::new([pair1, pair2, pair3]),
                 elem_tpe: SType::STuple(STuple::pair(
-                    SType::SColl(Box::new(SType::SByte)),
-                    SType::SColl(Box::new(SType::SByte)),
+                    SType::SColl(Arc::new(SType::SByte)),
+                    SType::SColl(Arc::new(SType::SByte)),
                 )),
             }),
         };
@@ -703,7 +708,7 @@ mod tests {
 
             let res = eval_out_wo_ctx::<Value>(&expr);
             if let Value::Coll(CollKind::NativeColl(NativeColl::CollByte(b))) = res {
-                assert_eq!(b, digest);
+                assert_eq!(&b[..], digest.as_slice());
             } else {
                 unreachable!();
             }
@@ -943,10 +948,10 @@ mod tests {
 
         let key1 = Literal::try_from(vec![1u8]).unwrap();
         let keys = Constant {
-            tpe: SType::SColl(Box::new(SType::SColl(Box::new(SType::SByte)))),
+            tpe: SType::SColl(Arc::new(SType::SColl(Arc::new(SType::SByte)))),
             v: Literal::Coll(CollKind::WrappedColl {
-                items: vec![key1],
-                elem_tpe: SType::SColl(Box::new(SType::SByte)),
+                items: Rc::new([key1]),
+                elem_tpe: SType::SColl(Arc::new(SType::SByte)),
             }),
         };
         let expr: Expr = MethodCall::new(
@@ -1014,15 +1019,15 @@ mod tests {
         let pair1 = Literal::Tup(mk_pair(2u8, 40u64).into());
         let pair2 = Literal::Tup(mk_pair(3u8, 50u64).into());
         let entries = Constant {
-            tpe: SType::SColl(Box::new(SType::STuple(STuple::pair(
-                SType::SColl(Box::new(SType::SByte)),
-                SType::SColl(Box::new(SType::SByte)),
+            tpe: SType::SColl(Arc::new(SType::STuple(STuple::pair(
+                SType::SColl(Arc::new(SType::SByte)),
+                SType::SColl(Arc::new(SType::SByte)),
             )))),
             v: Literal::Coll(CollKind::WrappedColl {
-                items: vec![pair1, pair2],
+                items: Rc::new([pair1, pair2]),
                 elem_tpe: SType::STuple(STuple::pair(
-                    SType::SColl(Box::new(SType::SByte)),
-                    SType::SColl(Box::new(SType::SByte)),
+                    SType::SColl(Arc::new(SType::SByte)),
+                    SType::SColl(Arc::new(SType::SByte)),
                 )),
             }),
         };

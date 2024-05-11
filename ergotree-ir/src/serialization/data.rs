@@ -56,6 +56,7 @@ impl DataSerializer {
                     let maybe_bools: Result<Vec<bool>, TryExtractFromError> = v
                         .clone()
                         .into_iter()
+                        .cloned()
                         .map(|i| i.try_extract_into::<bool>())
                         .collect();
                     w.put_bits(maybe_bools?.as_slice())?
@@ -126,18 +127,17 @@ impl DataSerializer {
                 let len = r.get_u16()? as usize;
                 let bools = r.get_bits(len)?;
                 Literal::Coll(CollKind::WrappedColl {
-                    elem_tpe: *elem_type.clone(),
+                    elem_tpe: (**elem_type).clone(),
                     items: bools.into_iter().map(|b| b.into()).collect(),
                 })
             }
             SColl(elem_type) => {
                 let len = r.get_u16()? as usize;
-                let mut elems = Vec::with_capacity(len);
-                for _ in 0..len {
-                    elems.push(DataSerializer::sigma_parse(elem_type, r)?);
-                }
+                let elems = (0..len)
+                    .map(|_| Ok(DataSerializer::sigma_parse(elem_type, r)?))
+                    .collect::<Result<Rc<[_]>, SigmaParsingError>>()?;
                 Literal::Coll(CollKind::WrappedColl {
-                    elem_tpe: *elem_type.clone(),
+                    elem_tpe: (**elem_type).clone(),
                     items: elems,
                 })
             }

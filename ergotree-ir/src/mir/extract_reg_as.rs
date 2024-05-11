@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
@@ -18,7 +20,7 @@ pub struct ExtractRegisterAs {
     /// Register id to extract value from (0 is R0 .. 9 for R9)
     pub register_id: i8,
     /// Result type, to be wrapped in SOption
-    pub elem_tpe: SType,
+    pub elem_tpe: Arc<SType>,
 }
 
 impl ExtractRegisterAs {
@@ -31,7 +33,7 @@ impl ExtractRegisterAs {
             )));
         }
         let elem_tpe = match tpe {
-            SType::SOption(t) => Ok(*t),
+            SType::SOption(t) => Ok(t),
             _ => Err(InvalidArgumentError(format!(
                 "expected tpe to be SOption, got {0:?}",
                 tpe

@@ -40,7 +40,7 @@ impl Evaluable for Exists {
         };
         let normalized_input_vals: Vec<Value> = match input_v {
             Value::Coll(coll) => {
-                if *coll.elem_tpe() != self.elem_tpe {
+                if coll.elem_tpe() != &*self.elem_tpe {
                     return Err(EvalError::UnexpectedValue(format!(
                         "expected Exists input element type to be {0:?}, got: {1:?}",
                         self.elem_tpe,

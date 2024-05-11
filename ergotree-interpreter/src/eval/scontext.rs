@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ergotree_ir::mir::avl_tree_data::AvlTreeData;
 use ergotree_ir::mir::avl_tree_data::AvlTreeFlags;
 use ergotree_ir::mir::value::CollKind;
@@ -17,7 +19,7 @@ pub(crate) static DATA_INPUTS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
         )));
     }
     Ok(Value::Coll(CollKind::WrappedColl {
-        items: ctx.ctx.data_inputs.clone().map_or(vec![], |d| {
+        items: ctx.ctx.data_inputs.clone().map_or(Rc::new([]), |d| {
             d.iter().map(|&di| Ref::from(di)).map(Value::CBox).collect()
         }),
         elem_tpe: SType::SBox,
@@ -48,13 +50,7 @@ pub(crate) static HEADERS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
         )));
     }
     Ok(Value::Coll(CollKind::WrappedColl {
-        items: ctx
-            .ctx
-            .headers
-            .clone()
-            .map(Box::new)
-            .map(Value::Header)
-            .to_vec(),
+        items: Rc::new(ctx.ctx.headers.clone().map(Box::new).map(Value::Header)),
         elem_tpe: SType::SHeader,
     }))
 };

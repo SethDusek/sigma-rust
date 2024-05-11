@@ -53,9 +53,9 @@ impl Evaluable for Append {
         let input_vecval: Vec<Value> = extract_vecval(input_v)?;
         let col_2_vecval: Vec<Value> = extract_vecval(col2_v)?;
         let concat_vecval: Vec<Value> = concat(input_vecval, col_2_vecval);
-        Ok(Value::Coll(CollKind::from_vec(
+        Ok(Value::Coll(CollKind::from_slice(
             input_elem_tpe,
-            concat_vecval,
+            &concat_vecval,
         )?))
     }
 }

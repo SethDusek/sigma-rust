@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
@@ -17,7 +19,7 @@ pub struct CalcBlake2b256 {
 impl CalcBlake2b256 {
     /// Type
     pub fn tpe(&self) -> SType {
-        SType::SColl(Box::new(SType::SByte))
+        SType::SColl(Arc::new(SType::SByte))
     }
 }
 
@@ -33,7 +35,7 @@ impl OneArgOp for CalcBlake2b256 {
 
 impl OneArgOpTryBuild for CalcBlake2b256 {
     fn try_build(input: Expr) -> Result<Self, InvalidArgumentError> {
-        input.check_post_eval_tpe(&SType::SColl(Box::new(SType::SByte)))?;
+        input.check_post_eval_tpe(&SType::SColl(Arc::new(SType::SByte)))?;
         Ok(CalcBlake2b256 {
             input: Box::new(input),
         })
@@ -54,7 +56,7 @@ mod arbitrary {
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
             any_with::<Expr>(ArbExprParams {
-                tpe: SType::SColl(Box::new(SType::SByte)),
+                tpe: SType::SColl(Arc::new(SType::SByte)),
                 depth: 0,
             })
             .prop_map(|input| Self {

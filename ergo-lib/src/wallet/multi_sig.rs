@@ -975,9 +975,9 @@ mod tests {
 
         let bound = Expr::Const(2i32.into());
         let inputs = Literal::Coll(
-            CollKind::from_vec(
+            CollKind::from_slice(
                 SType::SSigmaProp,
-                vec![
+                &[
                     SigmaProp::from(alice_pk.clone()).into(),
                     SigmaProp::from(bob_pk.clone()).into(),
                     SigmaProp::from(carol_pk.clone()).into(),
@@ -1070,9 +1070,9 @@ mod tests {
 
         let bound = Expr::Const(3i32.into());
         let inputs = Literal::Coll(
-            CollKind::from_vec(
+            CollKind::from_slice(
                 SType::SSigmaProp,
-                vec![
+                &[
                     SigmaProp::from(alice_pk.clone()).into(),
                     SigmaProp::from(bob_pk.clone()).into(),
                     SigmaProp::from(carol_pk.clone()).into(),
@@ -1242,9 +1242,9 @@ mod tests {
         let input = Constant {
             tpe: SType::SColl(SType::SSigmaProp.into()),
             v: Literal::Coll(
-                CollKind::from_vec(
+                CollKind::from_slice(
                     SType::SSigmaProp,
-                    vec![
+                    &[
                         SigmaProp::from(pk1.clone()).into(),
                         SigmaProp::from(pk2.clone()).into(),
                         SigmaProp::from(pk3.clone()).into(),

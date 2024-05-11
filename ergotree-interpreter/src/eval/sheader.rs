@@ -1,6 +1,6 @@
 //! Evaluating predefined `Header` (or SHeader) type properties
 
-use std::convert::TryInto;
+use std::{convert::TryInto, rc::Rc};
 
 use ergo_chain_types::Header;
 use ergotree_ir::{bigint256::BigInt256, mir::constant::TryExtractInto};
@@ -59,16 +59,13 @@ pub(crate) static HEIGHT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 
 pub(crate) static MINER_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
-    Ok(header.autolykos_solution.miner_pk.into())
+    // TODO: pass by reference instead
+    Ok(Rc::new(*header.autolykos_solution.miner_pk).into())
 };
 
 pub(crate) static POW_ONETIME_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
-    Ok(header
-        .autolykos_solution
-        .pow_onetime_pk
-        .unwrap_or_default()
-        .into())
+    Ok((*header.autolykos_solution.pow_onetime_pk.unwrap_or_default()).into())
 };
 
 pub(crate) static POW_NONCE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {

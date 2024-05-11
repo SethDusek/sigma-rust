@@ -83,8 +83,8 @@ mod tests {
 
         #[test]
         fn eval(sigmaprops in collection::vec(any::<SigmaProp>(), 4..8)) {
-            let items = Literal::Coll(CollKind::from_vec(SType::SSigmaProp,
-                sigmaprops.into_iter().map(|s| s.into()).collect::<Vec<Literal>>()).unwrap());
+            let items = Literal::Coll(CollKind::from_slice(SType::SSigmaProp,
+                &sigmaprops.into_iter().map(|s| s.into()).collect::<Vec<Literal>>()).unwrap());
             let expr: Expr = Atleast::new(2i32.into(),
                 Constant {tpe: SType::SColl(SType::SSigmaProp.into()), v: items}.into()).unwrap().into();
             let ctx = force_any_val::<Context>();
@@ -98,9 +98,9 @@ mod tests {
     fn bound_error() {
         let sigmaprops = vec![force_any_val::<SigmaProp>(), force_any_val::<SigmaProp>()];
         let items = Literal::Coll(
-            CollKind::from_vec(
+            CollKind::from_slice(
                 SType::SSigmaProp,
-                sigmaprops
+                &sigmaprops
                     .into_iter()
                     .map(|s| s.into())
                     .collect::<Vec<Literal>>(),

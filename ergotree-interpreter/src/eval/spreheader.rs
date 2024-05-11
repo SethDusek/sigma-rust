@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use ergo_chain_types::PreHeader;
 use ergotree_ir::mir::constant::TryExtractInto;
 
@@ -30,7 +32,7 @@ pub(crate) static HEIGHT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 
 pub(crate) static MINER_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let preheader = obj.try_extract_into::<PreHeader>()?;
-    Ok(preheader.miner_pk.into())
+    Ok(Rc::new(*preheader.miner_pk).into())
 };
 
 pub(crate) static VOTES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {

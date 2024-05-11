@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
 use crate::has_opcode::HasStaticOpCode;
@@ -17,14 +19,14 @@ pub struct ForAll {
     /// Function (lambda) to test each element
     pub condition: Box<Expr>,
     /// Collection element type
-    pub elem_tpe: SType,
+    pub elem_tpe: Arc<SType>,
 }
 
 impl ForAll {
     /// Create new object, returns an error if any of the requirements failed
     pub fn new(input: Expr, condition: Expr) -> Result<Self, InvalidArgumentError> {
-        let input_elem_type: SType = match input.post_eval_tpe() {
-            SType::SColl(elem_type) => Ok(*elem_type),
+        let input_elem_type = match input.post_eval_tpe() {
+            SType::SColl(elem_type) => Ok(elem_type),
             _ => Err(InvalidArgumentError(format!(
                 "Expected ForAll input to be SColl, got {0:?}",
                 input.tpe()
@@ -32,7 +34,8 @@ impl ForAll {
         }?;
         match condition.tpe() {
             SType::SFunc(sfunc)
-                if sfunc.t_dom == vec![input_elem_type.clone()]
+                if sfunc.t_dom.len() == 1
+                    && &sfunc.t_dom[0] == &*input_elem_type.clone()
                     && *sfunc.t_range == SType::SBoolean =>
             {
                 Ok(ForAll {

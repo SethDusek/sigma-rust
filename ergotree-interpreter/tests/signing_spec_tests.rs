@@ -429,9 +429,9 @@ fn sig_test_vector_threshold() {
     let bound = Expr::Const(2i32.into());
 
     let inputs = Literal::Coll(
-        CollKind::from_vec(
+        CollKind::from_slice(
             SType::SSigmaProp,
-            vec![
+            &[
                 SigmaProp::from(sk1.public_image()).into(),
                 SigmaProp::from(sk2.public_image()).into(),
                 SigmaProp::from(sk3.public_image()).into(),
