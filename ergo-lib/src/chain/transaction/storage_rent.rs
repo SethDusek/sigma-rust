@@ -35,7 +35,7 @@ pub(crate) fn try_spend_storage_rent(
             .ok()?;
         let output_candidate = context.outputs.get(output_idx as usize)?;
 
-        let storage_fee = output_candidate.sigma_serialize_bytes().ok()?.len() as u64
+        let storage_fee = input_box.sigma_serialize_bytes().ok()?.len() as u64
             * state_context.parameters.storage_fee_factor() as u64;
         // If the box's value is less than the required storage fee, the box can be spent without any further restrictions
         if context.self_box.value.as_u64() <= &storage_fee {
