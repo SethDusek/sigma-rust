@@ -1,6 +1,7 @@
 import Foundation
 import ErgoLibC
 
+struct SecretKeyError: Error {}
 /// Secret key for the prover
 class SecretKey {
     internal var pointer: SecretKeyPtr
@@ -15,6 +16,9 @@ class SecretKey {
     /// Parse dlog secret key from bytes (SEC-1-encoded scalar)
     init(fromBytes : [UInt8]) throws {
         var ptr: SecretKeyPtr?
+        if fromBytes.count != 32 {
+            throw SecretKeyError()
+        }
         let error = ergo_lib_secret_key_from_bytes(fromBytes, &ptr)
         try checkError(error)
         self.pointer = ptr!
