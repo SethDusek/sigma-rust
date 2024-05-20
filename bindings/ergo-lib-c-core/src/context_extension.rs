@@ -1,3 +1,4 @@
+use crate::constant::{ConstConstantPtr, Constant, ConstantPtr};
 use crate::{
     util::{const_ptr_as_ref, mut_ptr_as_mut},
     Error,
@@ -40,4 +41,36 @@ pub unsafe fn context_extension_keys(
     Ok(())
 }
 
-// TODO: get method (needs Constant)
+/// Get value for key or fail if key is missing
+pub unsafe fn context_extension_get(
+    context_extension_ptr: ConstContextExtensionPtr,
+    key: u8,
+    constant_out: *mut ConstantPtr,
+) -> Result<bool, Error> {
+    let context_extension = const_ptr_as_ref(context_extension_ptr, "context_extension_ptr")?;
+    let constant_out = mut_ptr_as_mut(constant_out, "constant_out")?;
+    let constant = context_extension
+        .0
+        .values
+        .get(&key)
+        .map(|c| Constant(c.clone()));
+
+    if let Some(constant) = constant {
+        *constant_out = Box::into_raw(Box::new(constant));
+        Ok(true)
+    } else {
+        Ok(false)
+    }
+}
+
+/// Set the supplied pair in the ContextExtension
+pub unsafe fn context_extension_set_pair(
+    constant_ptr: ConstConstantPtr,
+    key: u8,
+    context_extension_ptr: ContextExtensionPtr,
+) -> Result<(), Error> {
+    let constant = const_ptr_as_ref(constant_ptr, "constant_ptr")?;
+    let context_extension = mut_ptr_as_mut(context_extension_ptr, "context_extension_ptr")?;
+    context_extension.0.values.insert(key, constant.0.clone());
+    Ok(())
+}
