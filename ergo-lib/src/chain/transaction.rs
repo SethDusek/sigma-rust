@@ -359,7 +359,7 @@ pub fn verify_tx_input_proof(
     let ctx = Rc::new(make_context(state_context, tx_context, input_idx)?);
     let verifier = TestVerifier;
     // Try spending in storage rent, if any condition is not satisfied fallback to normal script validation
-    match try_spend_storage_rent(input, state_context, &ctx) {
+    match try_spend_storage_rent(input, &input_box, state_context, &ctx) {
         Some(()) => Ok(VerificationResult {
             result: true,
             cost: 0,

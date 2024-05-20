@@ -1,4 +1,5 @@
 use ergotree_interpreter::{eval::context::Context, sigma_protocol::prover::ProofBytes};
+use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::{
     chain::ergo_box::RegisterId, mir::constant::TryExtractInto, serialization::SigmaSerializable,
 };
@@ -14,7 +15,20 @@ pub const STORAGE_EXTENSION_INDEX: u8 = i8::MAX as u8;
 
 // Attempt to spend a box with storage rent. Returns None if any of the required conditions is not met
 pub(crate) fn try_spend_storage_rent(
-    input_box: &Input,
+    input: &Input,
+    input_box: &ErgoBox,
+    state_context: &ErgoStateContext,
+    context: &Context,
+) -> Option<()> {
+    if matches!(input.spending_proof.proof, ProofBytes::Empty) {
+        return check_storage_rent_conditions(input_box, state_context, context);
+    }
+    None
+}
+
+// Checks if storage rent conditions are met. Returns None if any of the required conditions is not met
+pub(crate) fn check_storage_rent_conditions(
+    input_box: &ErgoBox,
     state_context: &ErgoStateContext,
     context: &Context,
 ) -> Option<()> {
@@ -23,7 +37,6 @@ pub(crate) fn try_spend_storage_rent(
         .height
         .checked_sub(context.self_box.creation_height)?
         >= STORAGE_PERIOD
-        && matches!(input_box.spending_proof.proof, ProofBytes::Empty)
     {
         let output_idx: i16 = context
             .extension
@@ -33,8 +46,8 @@ pub(crate) fn try_spend_storage_rent(
             .clone()
             .try_extract_into()
             .ok()?;
-        let output_candidate = context.outputs.get(output_idx as usize)?;
 
+        let output_candidate = context.outputs.get(output_idx as usize)?;
         let storage_fee = input_box.sigma_serialize_bytes().ok()?.len() as u64
             * state_context.parameters.storage_fee_factor() as u64;
         // If the box's value is less than the required storage fee, the box can be spent without any further restrictions
@@ -42,7 +55,7 @@ pub(crate) fn try_spend_storage_rent(
             return Some(());
         }
         if output_candidate.creation_height != state_context.pre_header.height
-            || *output_candidate.value.as_u64() < context.self_box.value.as_u64() - storage_fee
+            || *output_candidate.value.as_u64() < (context.self_box.value.as_u64() - storage_fee)
         {
             return None;
         }

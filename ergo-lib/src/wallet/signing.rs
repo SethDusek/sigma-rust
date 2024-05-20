@@ -14,12 +14,13 @@ use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use crate::chain::transaction::storage_rent::check_storage_rent_conditions;
 use crate::wallet::multi_sig::TransactionHintsBag;
 use ergotree_interpreter::eval::context::Context;
 use ergotree_interpreter::eval::env::Env;
-use ergotree_interpreter::sigma_protocol::prover::Prover;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
 use ergotree_interpreter::sigma_protocol::prover::ProverResult;
+use ergotree_interpreter::sigma_protocol::prover::{ProofBytes, Prover};
 use thiserror::Error;
 
 pub use super::tx_context::TransactionContext;
@@ -202,16 +203,29 @@ pub fn sign_tx_input(
     if let Some(bag) = tx_hints {
         hints_bag = bag.all_hints_for_input(input_idx);
     }
-    prover
-        .prove(
-            &input_box.ergo_tree,
-            &Env::empty(),
-            ctx,
-            message_to_sign,
-            &hints_bag,
-        )
-        .map(|proof| Input::new(unsigned_input.box_id, proof.into()))
-        .map_err(|e| TxSigningError::ProverError(e, input_idx))
+
+    match check_storage_rent_conditions(&input_box, state_context, &ctx.clone()) {
+        // if input is storage rent set ProofBytes to empty because no proof is needed
+        Some(()) => Ok(Input::new(
+            unsigned_input.box_id,
+            ProverResult {
+                proof: ProofBytes::Empty,
+                extension: ctx.extension.clone(),
+            }
+            .into(),
+        )),
+        // if input is not storage rent use prover
+        None => prover
+            .prove(
+                &input_box.ergo_tree,
+                &Env::empty(),
+                ctx.clone(),
+                message_to_sign,
+                &hints_bag,
+            )
+            .map(|proof| Input::new(unsigned_input.box_id, proof.into()))
+            .map_err(|e| TxSigningError::ProverError(e, input_idx)),
+    }
 }
 
 #[cfg(test)]
