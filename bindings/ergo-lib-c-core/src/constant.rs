@@ -58,6 +58,20 @@ pub unsafe fn constant_value_to_dbg_str(constant_ptr: ConstConstantPtr) -> Resul
     Ok(s)
 }
 
+/// Create from i16 value
+pub unsafe fn constant_from_i16(value: i16, constant_out: *mut ConstantPtr) -> Result<(), Error> {
+    let constant_out = mut_ptr_as_mut(constant_out, "constant_out")?;
+    *constant_out = Box::into_raw(Box::new(Constant(value.into())));
+    Ok(())
+}
+
+/// Extract i16 value, returning error if wrong type
+pub unsafe fn constant_to_i16(constant_ptr: ConstConstantPtr) -> Result<i16, Error> {
+    let constant = const_ptr_as_ref(constant_ptr, "constant_ptr")?;
+    let i = i16::try_extract_from(constant.0.clone())?;
+    Ok(i)
+}
+
 /// Create from i32 value
 pub unsafe fn constant_from_i32(value: i32, constant_out: *mut ConstantPtr) -> Result<(), Error> {
     let constant_out = mut_ptr_as_mut(constant_out, "constant_out")?;

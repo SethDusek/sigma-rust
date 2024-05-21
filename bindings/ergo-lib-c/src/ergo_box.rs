@@ -341,6 +341,13 @@ pub unsafe extern "C" fn ergo_lib_ergo_box_to_json_eip12(
     Error::c_api_from(res)
 }
 
+/// Calculate serialized box size(in bytes)
+#[no_mangle]
+pub unsafe extern "C" fn ergo_lib_ergo_box_bytes_size(ergo_box_ptr: ConstErgoBoxPtr) -> usize {
+    #[allow(clippy::unwrap_used)]
+    ergo_box_bytes_size(ergo_box_ptr).unwrap()
+}
+
 /// Drop `ErgoBox`
 #[no_mangle]
 pub unsafe extern "C" fn ergo_lib_ergo_box_delete(ptr: ErgoBoxPtr) {

@@ -77,6 +77,30 @@ pub unsafe extern "C" fn ergo_lib_constant_value_to_dbg_str(
     Error::c_api_from(res)
 }
 
+/// Create from i16 value
+#[no_mangle]
+pub unsafe extern "C" fn ergo_lib_constant_from_i16(value: i16, constant_out: *mut ConstantPtr) {
+    #[allow(clippy::unwrap_used)]
+    constant_from_i16(value, constant_out).unwrap();
+}
+
+/// Extract i16 value, returning error if wrong type
+#[no_mangle]
+pub unsafe extern "C" fn ergo_lib_constant_to_i16(
+    constant_ptr: ConstConstantPtr,
+) -> ReturnNum<i16> {
+    match constant_to_i16(constant_ptr) {
+        Ok(value) => ReturnNum {
+            value,
+            error: std::ptr::null_mut(),
+        },
+        Err(e) => ReturnNum {
+            value: 0, // Just a dummy value
+            error: Error::c_api_from(Err(e)),
+        },
+    }
+}
+
 /// Create from i32 value
 #[no_mangle]
 pub unsafe extern "C" fn ergo_lib_constant_from_i32(value: i32, constant_out: *mut ConstantPtr) {

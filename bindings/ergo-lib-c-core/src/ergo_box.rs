@@ -19,6 +19,7 @@
 use std::convert::{TryFrom, TryInto};
 
 use ergo_lib::ergotree_ir::chain::{self, ergo_box::NonMandatoryRegisters};
+use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
 
 use crate::{
     collections::{CollectionPtr, ConstCollectionPtr},
@@ -324,6 +325,13 @@ pub unsafe fn ergo_box_to_json_eip12(ergo_box_ptr: ConstErgoBoxPtr) -> Result<St
     let box_dapp: ErgoBoxJsonEip12 = ergo_box.0.clone().into();
     let s = serde_json::to_string(&box_dapp)?;
     Ok(s)
+}
+
+/// Calculate serialized box size(in bytes)
+pub unsafe fn ergo_box_bytes_size(ergo_box_ptr: ConstErgoBoxPtr) -> Result<usize, Error> {
+    let ergo_box = const_ptr_as_ref(ergo_box_ptr, "ergo_box_ptr")?;
+    let b = ergo_box.0.sigma_serialize_bytes()?.len();
+    Ok(b)
 }
 
 /// Pair of <value, tokens> for a box
