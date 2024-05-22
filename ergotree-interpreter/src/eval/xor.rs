@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::NativeColl;
@@ -10,7 +10,7 @@ use crate::eval::EvalContext;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
-fn helper_xor(x: &[i8], y: &[i8]) -> Rc<[i8]> {
+fn helper_xor(x: &[i8], y: &[i8]) -> Arc<[i8]> {
     x.iter().zip(y.iter()).map(|(x1, x2)| *x1 ^ *x2).collect()
 }
 

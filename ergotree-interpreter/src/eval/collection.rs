@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use ergotree_ir::mir::collection::Collection;
 use ergotree_ir::mir::constant::TryExtractFromError;
@@ -22,11 +22,11 @@ impl Evaluable for Collection {
         Ok(match self {
             Collection::BoolConstants(bools) => bools.clone().into(),
             Collection::Exprs { elem_tpe, items } => {
-                let items_v: Result<Rc<[Value]>, EvalError> =
+                let items_v: Result<Arc<[Value]>, EvalError> =
                     items.iter().map(|i| i.eval(env, ctx)).collect();
                 match elem_tpe {
                     SType::SByte => {
-                        let bytes: Result<Rc<[i8]>, TryExtractFromError> = items_v?
+                        let bytes: Result<Arc<[i8]>, TryExtractFromError> = items_v?
                             .into_iter()
                             .cloned()
                             .map(|i| i.try_extract_into::<i8>())

@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::eval::EvalError;
 
@@ -8,7 +8,7 @@ use ergo_chain_types::ec_point::generator;
 
 use super::EvalFn;
 
-fn helper_xor(x: &[i8], y: &[i8]) -> Rc<[i8]> {
+fn helper_xor(x: &[i8], y: &[i8]) -> Arc<[i8]> {
     x.iter().zip(y.iter()).map(|(x1, x2)| *x1 ^ *x2).collect()
 }
 

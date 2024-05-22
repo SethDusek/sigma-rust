@@ -2,7 +2,7 @@
 
 use std::convert::TryInto;
 use std::fmt::Formatter;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use impl_trait_for_tuples::impl_for_tuples;
 use sigma_util::AsVecI8;
@@ -32,7 +32,7 @@ use derive_more::From;
 /// Collection for primitive values (i.e byte array)
 pub enum NativeColl {
     /// Collection of bytes
-    CollByte(Rc<[i8]>),
+    CollByte(Arc<[i8]>),
 }
 
 impl NativeColl {
@@ -54,25 +54,18 @@ pub enum CollKind<T> {
         /// Collection element type
         elem_tpe: SType,
         /// Collection elements
-        items: Rc<[T]>,
+        items: Arc<[T]>,
     },
 }
 
 // TODO
 impl<T: Clone> Clone for CollKind<T> {
     fn clone(&self) -> Self {
-        //use std::io::Write as _;
-        static mut TOTAL: u32 = 0; //std::time::Duration::new(0, 0);
-                                   //let mut stdout = std::io::stdout().lock();
         let res = match self {
             CollKind::NativeColl(c) => CollKind::NativeColl(c.clone()),
             CollKind::WrappedColl { elem_tpe, items } => {
-                let now = std::time::Instant::now();
                 let elem_tpe = elem_tpe.clone();
-                unsafe {
-                    TOTAL += 1; //std::time::Instant::now() - now;
-                                //writeln!(&mut stdout, "{:?}", TOTAL).unwrap();
-                };
+
                 CollKind::WrappedColl {
                     elem_tpe,
                     items: items.clone(),
@@ -98,7 +91,7 @@ where
                 .into_iter()
                 .cloned()
                 .map(|v| v.try_extract_into::<i8>())
-                .collect::<Result<Rc<[_]>, _>>()
+                .collect::<Result<Arc<[_]>, _>>()
                 .map(|bytes| CollKind::NativeColl(NativeColl::CollByte(bytes))),
             _ => Ok(CollKind::WrappedColl {
                 elem_tpe,
@@ -120,7 +113,7 @@ where
                         .into_iter()
                         .map(|v| v.try_extract_into::<Vec<i8>>())
                         .flat_map(|v| v.unwrap().into_iter()) // TODO
-                        .collect::<Rc<[_]>>(),
+                        .collect::<Arc<[_]>>(),
                 )))
             }
             SType::SColl(flat_type) => items
@@ -179,11 +172,11 @@ where
         match elem_tpe {
             SType::SByte => iter
                 .map(|v| v.try_extract_into::<i8>())
-                .collect::<Result<Rc<[_]>, _>>()
+                .collect::<Result<Arc<[_]>, _>>()
                 .map(|bytes| CollKind::NativeColl(NativeColl::CollByte(bytes))),
             _ => Ok(CollKind::WrappedColl {
                 elem_tpe,
-                items: iter.collect::<Rc<[_]>>(),
+                items: iter.collect::<Arc<[_]>>(),
             }),
         }
     }
@@ -310,8 +303,8 @@ impl From<EcPoint> for Value<'static> {
     }
 }
 
-impl From<Rc<EcPoint>> for Value<'static> {
-    fn from(v: Rc<EcPoint>) -> Self {
+impl From<Arc<EcPoint>> for Value<'static> {
+    fn from(v: Arc<EcPoint>) -> Self {
         Value::GroupElement(Ref::from(v))
     }
 }

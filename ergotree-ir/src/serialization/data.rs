@@ -19,7 +19,7 @@ use ergo_chain_types::EcPoint;
 
 use super::sigma_byte_writer::SigmaByteWrite;
 use std::convert::TryInto;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Used to serialize and parse `Literal` and `Value`.
 pub struct DataSerializer {}
@@ -111,7 +111,7 @@ impl DataSerializer {
                 }
             }
             SUnit => Literal::Unit,
-            SGroupElement => Literal::GroupElement(Rc::new(EcPoint::sigma_parse(r)?)),
+            SGroupElement => Literal::GroupElement(Arc::new(EcPoint::sigma_parse(r)?)),
             SSigmaProp => {
                 Literal::SigmaProp(Box::new(SigmaProp::new(SigmaBoolean::sigma_parse(r)?)))
             }
@@ -135,7 +135,7 @@ impl DataSerializer {
                 let len = r.get_u16()? as usize;
                 let elems = (0..len)
                     .map(|_| Ok(DataSerializer::sigma_parse(elem_type, r)?))
-                    .collect::<Result<Rc<[_]>, SigmaParsingError>>()?;
+                    .collect::<Result<Arc<[_]>, SigmaParsingError>>()?;
                 Literal::Coll(CollKind::WrappedColl {
                     elem_tpe: (**elem_type).clone(),
                     items: elems,
@@ -151,7 +151,7 @@ impl DataSerializer {
                 // is correct
                 Literal::Tup(items.try_into()?)
             }
-            SBox => Literal::CBox(Rc::new(ErgoBox::sigma_parse(r)?).into()),
+            SBox => Literal::CBox(Arc::new(ErgoBox::sigma_parse(r)?).into()),
             SAvlTree => Literal::AvlTree(Box::new(AvlTreeData::sigma_parse(r)?)),
             STypeVar(_) => return Err(SigmaParsingError::NotSupported("TypeVar data")),
             SAny => return Err(SigmaParsingError::NotSupported("SAny data")),

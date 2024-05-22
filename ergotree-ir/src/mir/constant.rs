@@ -27,7 +27,6 @@ use sigma_util::AsVecU8;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::fmt::Formatter;
-use std::rc::Rc;
 use std::sync::Arc;
 
 mod constant_placeholder;
@@ -71,7 +70,7 @@ pub enum Literal {
     /// Sigma property
     SigmaProp(Box<SigmaProp>),
     /// GroupElement
-    GroupElement(Rc<EcPoint>),
+    GroupElement(Arc<EcPoint>),
     /// AVL tree
     AvlTree(Box<AvlTreeData>),
     /// Ergo box
@@ -227,13 +226,13 @@ impl<'ctx> From<SigmaProp> for Literal {
 
 impl<'ctx> From<EcPoint> for Literal {
     fn from(v: EcPoint) -> Literal {
-        Literal::GroupElement(Rc::new(v))
+        Literal::GroupElement(Arc::new(v))
     }
 }
 
 impl From<Ref<'_, EcPoint>> for Literal {
     fn from(value: Ref<'_, EcPoint>) -> Self {
-        Literal::GroupElement(value.to_rc())
+        Literal::GroupElement(value.to_arc())
     }
 }
 
@@ -245,7 +244,7 @@ impl From<Ref<'static, ErgoBox>> for Literal {
 
 impl From<ErgoBox> for Literal {
     fn from(b: ErgoBox) -> Self {
-        Literal::CBox(Rc::new(b).into())
+        Literal::CBox(Arc::new(b).into())
     }
 }
 
@@ -321,7 +320,7 @@ impl<'ctx> TryFrom<Value<'ctx>> for Constant {
                         let new_items = items
                             .into_iter()
                             .map(|v| Ok(Constant::try_from(v.clone())?.v))
-                            .collect::<Result<Rc<[_]>, String>>()?;
+                            .collect::<Result<Arc<[_]>, String>>()?;
 
                         (
                             Literal::Coll(CollKind::WrappedColl {
@@ -465,7 +464,7 @@ impl From<ErgoBox> for Constant {
     fn from(b: ErgoBox) -> Self {
         Constant {
             tpe: SType::SBox,
-            v: Literal::CBox(Rc::new(b).into()),
+            v: Literal::CBox(Arc::new(b).into()),
         }
     }
 }

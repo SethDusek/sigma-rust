@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 // TODO: consider passing through impl of Debug, PartialEq, Eq
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -7,19 +7,19 @@ pub enum Ref<'ctx, T> {
     /// TODO
     Borrowed(&'ctx T),
     /// TODO
-    Rc(Rc<T>),
+    Rc(Arc<T>),
 }
 
 impl<'ctx, T: Clone> Ref<'ctx, T> {
-    /// TODO
+    /// Convert borrowed data to 'static lifetime
     pub fn to_static(&'ctx self) -> Ref<'static, T> {
-        Ref::Rc(self.to_rc())
+        Ref::Rc(self.to_arc())
     }
     /// TODO
-    pub fn to_rc(&'ctx self) -> Rc<T> {
+    pub fn to_arc(&'ctx self) -> Arc<T> {
         match self {
             Ref::Rc(r) => r.clone(),
-            Ref::Borrowed(b) => Rc::new((*b).clone()),
+            Ref::Borrowed(b) => Arc::new((*b).clone()),
         }
     }
 }
@@ -30,15 +30,15 @@ impl<'ctx, T> From<&'ctx T> for Ref<'ctx, T> {
     }
 }
 
-impl<'ctx, T> From<Rc<T>> for Ref<'ctx, T> {
-    fn from(val: Rc<T>) -> Self {
+impl<'ctx, T> From<Arc<T>> for Ref<'ctx, T> {
+    fn from(val: Arc<T>) -> Self {
         Ref::Rc(val)
     }
 }
 
 impl<'ctx, T> From<T> for Ref<'ctx, T> {
     fn from(val: T) -> Self {
-        Ref::Rc(Rc::new(val))
+        Ref::Rc(Arc::new(val))
     }
 }
 
