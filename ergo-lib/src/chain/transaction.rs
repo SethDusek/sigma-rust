@@ -38,7 +38,6 @@ use ergotree_ir::serialization::SigmaSerializationError;
 use ergotree_ir::serialization::SigmaSerializeResult;
 pub use input::*;
 
-use crate::wallet::signing::make_context;
 use crate::wallet::signing::update_context;
 use crate::wallet::signing::TransactionContext;
 use crate::wallet::tx_context::TransactionContextError;
@@ -52,7 +51,6 @@ use indexmap::IndexSet;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::iter::FromIterator;
-use std::rc::Rc;
 
 use super::ergo_state_context::ErgoStateContext;
 

@@ -167,12 +167,12 @@ impl Wallet {
         let message_to_sign = tx.bytes_to_sign().map_err(TxSigningError::from)?;
         // TODO: re-use, disable unwrap
         #[allow(clippy::unwrap_used)]
-        let context = make_context(state_context, &tx_context, input_idx).unwrap();
+        let mut context = make_context(state_context, &tx_context, input_idx).unwrap();
         Ok(sign_tx_input(
             self.prover.as_ref(),
             &tx_context,
             state_context,
-            &context,
+            &mut context,
             tx_hints,
             input_idx,
             message_to_sign.as_slice(),

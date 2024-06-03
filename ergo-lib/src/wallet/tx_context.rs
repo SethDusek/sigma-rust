@@ -60,8 +60,8 @@ impl<T: ErgoTransaction> TransactionContext<T> {
             .enumerate()
             .map(|(i, b)| (b.box_id(), i as u16))
             .collect();
-        for (i, unsigned_input) in spending_tx.inputs_ids().iter().enumerate() {
-            if !box_index.contains_key(unsigned_input) {
+        for (i, unsigned_input) in spending_tx.inputs_ids().enumerate() {
+            if !box_index.contains_key(&unsigned_input) {
                 return Err(TransactionContextError::InputBoxNotFound(i));
             }
         }
@@ -143,11 +143,7 @@ impl TransactionContext<Transaction> {
 
         let in_assets = extract_assets(self.boxes_to_spend.iter().map(|b| &b.tokens))?;
         let out_assets = extract_assets(self.spending_tx.outputs.iter().map(|b| &b.tokens))?;
-        verify_assets(
-            self.spending_tx.inputs_ids().as_slice(),
-            in_assets,
-            out_assets,
-        )?;
+        verify_assets(self.spending_tx.inputs_ids(), in_assets, out_assets)?;
         // Verify input proofs. This is usually the most expensive check so it's done last
         let bytes_to_sign = self.spending_tx.bytes_to_sign()?;
         let mut context = make_context(state_context, self, 0)?;
@@ -232,12 +228,14 @@ fn extract_assets<'a, I: Iterator<Item = &'a Option<BoxTokens>>>(
 }
 
 fn verify_assets(
-    inputs: &[BoxId],
+    mut inputs: impl Iterator<Item = BoxId>,
     in_assets: HashMap<TokenId, TokenAmount>,
     out_assets: HashMap<TokenId, TokenAmount>,
 ) -> Result<(), TxValidationError> {
     // If this transaction mints a new token, it's token ID must be the ID of the first box being spent
-    let new_token_id: TokenId = inputs[0].into();
+    #[allow(clippy::unwrap_used)]
+    // Inputs size is already validated so it must be of size atleast 1
+    let new_token_id: TokenId = inputs.nth(0).unwrap().into();
     for (&out_token_id, &out_amount) in &out_assets {
         if let Some(&in_amount) = in_assets.get(&out_token_id) {
             // Check that Transaction is not creating tokens out of thin air

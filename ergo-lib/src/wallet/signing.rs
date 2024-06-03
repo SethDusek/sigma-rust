@@ -52,10 +52,10 @@ pub fn make_context<'ctx, T: ErgoTransaction>(
     // Find self_box by matching BoxIDs
     let self_box = tx_ctx
         .get_input_box(
-            tx_ctx
+            &tx_ctx
                 .spending_tx
                 .inputs_ids()
-                .get(self_index)
+                .nth(self_index)
                 .ok_or(TransactionError::InputNofFound(self_index))?,
         )
         .ok_or(TransactionContextError::InputBoxNotFound(self_index))?;
@@ -86,11 +86,16 @@ pub fn make_context<'ctx, T: ErgoTransaction>(
     let inputs_ir = tx_ctx
         .spending_tx
         .inputs_ids()
-        .enumerated()
-        .try_mapped(|(idx, u)| {
+        .enumerate()
+        .map(|(idx, u)| {
             tx_ctx
                 .get_input_box(&u)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .try_into()
+        .map_err(|_| {
+            TransactionContextError::TooManyInputBoxes(tx_ctx.spending_tx.inputs_ids().len())
         })?;
     let extension = tx_ctx
         .spending_tx
@@ -116,10 +121,10 @@ pub(crate) fn update_context<'ctx, T: ErgoTransaction>(
     // Find self_box by matching BoxIDs
     let self_box = tx_ctx
         .get_input_box(
-            tx_ctx
+            &tx_ctx
                 .spending_tx
                 .inputs_ids()
-                .get(self_index)
+                .nth(self_index)
                 .ok_or(TransactionError::InputNofFound(self_index))?,
         )
         .ok_or(TransactionContextError::InputBoxNotFound(self_index))?;
@@ -141,13 +146,13 @@ pub fn sign_transaction(
 ) -> Result<Transaction, TxSigningError> {
     let tx = tx_context.spending_tx.clone();
     let message_to_sign = tx.bytes_to_sign()?;
-    let ctx = make_context(state_context, &tx_context, 0)?;
+    let mut ctx = make_context(state_context, &tx_context, 0)?;
     let signed_inputs = tx.inputs.enumerated().try_mapped(|(idx, _)| {
         sign_tx_input(
             prover,
             &tx_context,
             state_context,
-            &ctx, // TODO: use with_self_box_index
+            &mut ctx, // TODO: use with_self_box_index
             tx_hints,
             idx,
             message_to_sign.as_slice(),
@@ -211,15 +216,16 @@ pub fn sign_message(
 }
 
 /// Sign a transaction input
-pub fn sign_tx_input(
+pub fn sign_tx_input<'ctx>(
     prover: &dyn Prover,
-    tx_context: &TransactionContext<UnsignedTransaction>,
+    tx_context: &'ctx TransactionContext<UnsignedTransaction>,
     state_context: &ErgoStateContext,
-    context: &Context,
+    context: &mut Context<'ctx>,
     tx_hints: Option<&TransactionHintsBag>,
     input_idx: usize,
     message_to_sign: &[u8],
 ) -> Result<Input, TxSigningError> {
+    update_context(context, tx_context, input_idx)?;
     let unsigned_input = tx_context
         .spending_tx
         .inputs

@@ -87,7 +87,7 @@ pub enum TxValidationError {
 /// Exposes common properties for signed and unsigned transactions
 pub trait ErgoTransaction {
     /// input boxes ids
-    fn inputs_ids(&self) -> TxIoVec<BoxId>;
+    fn inputs_ids(&self) -> impl Iterator<Item = BoxId> + ExactSizeIterator; //TxIoVec<BoxId>;
     /// data input boxes
     fn data_inputs(&self) -> Option<&[DataInput]>;
     /// output boxes
@@ -108,17 +108,18 @@ pub trait ErgoTransaction {
             .ok_or(TxValidationError::OutputSumOverflow)?;
 
         // Check if there are no double-spends in input (one BoxId being spent more than once)
-        let unique_count = inputs.iter().unique().count();
-        if unique_count != inputs.len() {
-            return Err(TxValidationError::DoubleSpend(unique_count, inputs.len()));
+        let len = inputs.len();
+        let unique_count = inputs.unique().count();
+        if unique_count != len {
+            return Err(TxValidationError::DoubleSpend(unique_count, len));
         }
         Ok(())
     }
 }
 
 impl ErgoTransaction for UnsignedTransaction {
-    fn inputs_ids(&self) -> TxIoVec<BoxId> {
-        self.inputs.clone().mapped(|input| input.box_id)
+    fn inputs_ids(&self) -> impl Iterator<Item = BoxId> + ExactSizeIterator {
+        self.inputs.iter().map(|input| input.box_id)
     }
 
     fn data_inputs(&self) -> Option<&[DataInput]> {
@@ -137,8 +138,8 @@ impl ErgoTransaction for UnsignedTransaction {
 }
 
 impl ErgoTransaction for Transaction {
-    fn inputs_ids(&self) -> TxIoVec<BoxId> {
-        self.inputs.clone().mapped(|input| input.box_id)
+    fn inputs_ids(&self) -> impl Iterator<Item = BoxId> + ExactSizeIterator {
+        self.inputs.iter().map(|input| input.box_id)
     }
 
     fn data_inputs(&self) -> Option<&[DataInput]> {
