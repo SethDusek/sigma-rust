@@ -2,7 +2,7 @@
 
 // Coding conventions
 #![forbid(unsafe_code)]
-#![allow(clippy::needless_lifetimes)] // Leads to better code clarity
+#![allow(clippy::needless_lifetimes)]
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]

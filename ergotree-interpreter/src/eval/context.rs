@@ -69,6 +69,7 @@ mod arbitrary {
                         extension,
                         headers,
                     )| {
+                        // Leak variables. Since this is only used for testing this is acceptable and avoids introducing a new type (ContextOwned)
                         Self {
                             height,
                             self_box: Box::leak(Box::new(self_box)),

@@ -23,7 +23,6 @@ use ergotree_ir::types::stype::SType;
 pub(crate) static DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(
-        // TODO: From<ADDigest> for Rc<[i8]>
         avl_tree_data.digest.0.iter().map(|&b| b as i8).collect(),
     ))))
 };

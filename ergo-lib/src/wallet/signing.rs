@@ -63,7 +63,6 @@ pub fn make_context<'ctx, T: ErgoTransaction>(
     let outputs = tx_ctx.spending_tx.outputs();
     let data_inputs_ir = if let Some(data_inputs) = tx_ctx.spending_tx.data_inputs() {
         Some(
-            #[allow(clippy::unwrap_used)]
             data_inputs
                 .iter()
                 .enumerate()
@@ -78,7 +77,7 @@ pub fn make_context<'ctx, T: ErgoTransaction>(
                 })
                 .collect::<Result<Vec<_>, _>>()?
                 .try_into()
-                .unwrap(),
+                .map_err(|_| TransactionContextError::TooManyDataInputBoxes(data_inputs.len()))?,
         )
     } else {
         None
@@ -152,7 +151,7 @@ pub fn sign_transaction(
             prover,
             &tx_context,
             state_context,
-            &mut ctx, // TODO: use with_self_box_index
+            &mut ctx,
             tx_hints,
             idx,
             message_to_sign.as_slice(),

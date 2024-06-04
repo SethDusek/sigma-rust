@@ -24,6 +24,7 @@ use ergotree_interpreter::sigma_protocol::unchecked_tree::UncheckedTree;
 use ergotree_interpreter::sigma_protocol::verifier::compute_commitments;
 use std::collections::HashMap;
 
+use super::signing::update_context;
 use super::tx_context::TransactionContextError;
 
 /// TransactionHintsBag
@@ -244,11 +245,12 @@ pub fn generate_commitments(
 ) -> Result<TransactionHintsBag, TxSigningError> {
     let tx = tx_context.spending_tx.clone();
     let mut hints_bag = TransactionHintsBag::empty();
+    let mut ctx = make_context(state_context, &tx_context, 0)?;
     for (i, input) in tx.inputs.iter().enumerate() {
+        update_context(&mut ctx, &tx_context, i)?;
         let input_box = tx_context
             .get_input_box(&input.box_id)
             .ok_or(TransactionContextError::InputBoxNotFound(i))?;
-        let ctx = make_context(state_context, &tx_context, i)?; // TODO: Remove Rc, use Context::with_self_box_index
         let tree = input_box.ergo_tree.clone();
         let exp = tree
             .proposition()
@@ -266,17 +268,18 @@ pub fn generate_commitments(
 
 /// Extracting hints from a transaction and outputs it's corresponding TransactionHintsBag
 pub fn extract_hints(
-    tx_ctx: &TransactionContext<Transaction>,
+    tx_context: &TransactionContext<Transaction>,
     state_context: &ErgoStateContext,
     real_secrets_to_extract: Vec<SigmaBoolean>,
     simulated_secrets_to_extract: Vec<SigmaBoolean>,
 ) -> Result<TransactionHintsBag, TxSigningError> {
     let mut hints_bag = TransactionHintsBag::empty();
-    for (i, input) in tx_ctx.spending_tx.inputs.iter().enumerate() {
-        let input_box = tx_ctx
+    let mut ctx = make_context(state_context, tx_context, 0)?;
+    for (i, input) in tx_context.spending_tx.inputs.iter().enumerate() {
+        update_context(&mut ctx, tx_context, i)?;
+        let input_box = tx_context
             .get_input_box(&input.box_id)
             .ok_or(TransactionContextError::InputBoxNotFound(i))?;
-        let ctx = make_context(state_context, tx_ctx, i)?; // TODO: remove Rc, use with_self_box
         let tree = input_box.ergo_tree.clone();
         let exp = tree
             .proposition()

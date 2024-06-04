@@ -608,7 +608,7 @@ impl TryExtractFrom<Value<'_>> for Vec<i8> {
     fn try_extract_from(v: Value) -> Result<Self, TryExtractFromError> {
         match v {
             Value::Coll(v) => match v {
-                CollKind::NativeColl(NativeColl::CollByte(bs)) => Ok(bs.iter().copied().collect()), // TODO
+                CollKind::NativeColl(NativeColl::CollByte(bs)) => Ok(bs.iter().copied().collect()),
                 _ => Err(TryExtractFromError(format!(
                     "expected {:?}, found {:?}",
                     std::any::type_name::<Self>(),

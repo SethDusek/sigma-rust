@@ -13,6 +13,7 @@ use crate::json::UnsignedTransactionJsonEip12;
 use ergo_lib::chain;
 use ergo_lib::chain::transaction::{distinct_token_ids, TxIoVec};
 use ergo_lib::ergotree_ir::serialization::SigmaSerializable;
+use ergo_lib::wallet::signing::make_context;
 use gloo_utils::format::JsValueSerdeExt;
 use js_sys::Uint8Array;
 use std::convert::{TryFrom, TryInto};
@@ -425,8 +426,10 @@ pub fn verify_tx_input_proof(
     )
     .map_err(to_js)?;
     let state_context_inner = state_context.clone().into();
+    let mut context = make_context(&state_context_inner, &tx_context, input_idx).map_err(to_js)?;
     Ok(ergo_lib::chain::transaction::verify_tx_input_proof(
         &tx_context,
+        &mut context,
         &state_context_inner,
         input_idx,
         &tx_context.spending_tx.bytes_to_sign().map_err(to_js)?,

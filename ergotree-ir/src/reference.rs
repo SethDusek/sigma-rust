@@ -1,3 +1,4 @@
+//! Reference type used extensively throughout interpreter. a Ref<'ctx, T> can either borrow from Context or be Arc<T>
 use std::{ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug, Eq)]

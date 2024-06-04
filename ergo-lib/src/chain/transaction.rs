@@ -349,6 +349,7 @@ pub fn verify_tx_input_proof<'ctx>(
     input_idx: usize,
     bytes_to_sign: &[u8],
 ) -> Result<VerificationResult, TxValidationError> {
+    update_context(ctx, tx_context, input_idx)?;
     let input = tx_context
         .spending_tx
         .inputs
@@ -357,7 +358,6 @@ pub fn verify_tx_input_proof<'ctx>(
     let input_box = tx_context
         .get_input_box(&input.box_id)
         .ok_or(TransactionContextError::InputBoxNotFound(input_idx))?;
-    update_context(ctx, tx_context, input_idx)?;
     let verifier = TestVerifier;
     // Try spending in storage rent, if any condition is not satisfied fallback to normal script validation
     match try_spend_storage_rent(input, input_box, state_context, ctx) {
@@ -372,7 +372,7 @@ pub fn verify_tx_input_proof<'ctx>(
         None => verifier
             .verify(
                 &input_box.ergo_tree,
-                &ctx,
+                ctx,
                 input.spending_proof.proof.clone(),
                 bytes_to_sign,
             )

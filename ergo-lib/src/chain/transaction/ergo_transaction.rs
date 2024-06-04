@@ -1,10 +1,7 @@
 //! Exposes common properties for signed and unsigned transactions
-use ergotree_interpreter::{
-    eval::context::TxIoVec,
-    sigma_protocol::{
-        prover::ContextExtension,
-        verifier::{VerificationResult, VerifierError},
-    },
+use ergotree_interpreter::sigma_protocol::{
+    prover::ContextExtension,
+    verifier::{VerificationResult, VerifierError},
 };
 use ergotree_ir::{
     chain::{
@@ -87,7 +84,7 @@ pub enum TxValidationError {
 /// Exposes common properties for signed and unsigned transactions
 pub trait ErgoTransaction {
     /// input boxes ids
-    fn inputs_ids(&self) -> impl Iterator<Item = BoxId> + ExactSizeIterator; //TxIoVec<BoxId>;
+    fn inputs_ids(&self) -> impl ExactSizeIterator<Item = BoxId>;
     /// data input boxes
     fn data_inputs(&self) -> Option<&[DataInput]>;
     /// output boxes
@@ -118,7 +115,7 @@ pub trait ErgoTransaction {
 }
 
 impl ErgoTransaction for UnsignedTransaction {
-    fn inputs_ids(&self) -> impl Iterator<Item = BoxId> + ExactSizeIterator {
+    fn inputs_ids(&self) -> impl ExactSizeIterator<Item = BoxId> {
         self.inputs.iter().map(|input| input.box_id)
     }
 
@@ -138,7 +135,7 @@ impl ErgoTransaction for UnsignedTransaction {
 }
 
 impl ErgoTransaction for Transaction {
-    fn inputs_ids(&self) -> impl Iterator<Item = BoxId> + ExactSizeIterator {
+    fn inputs_ids(&self) -> impl ExactSizeIterator<Item = BoxId> {
         self.inputs.iter().map(|input| input.box_id)
     }
 
