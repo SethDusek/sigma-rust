@@ -15,6 +15,7 @@ use crate::chain::ergo_state_context::ErgoStateContext;
 use crate::chain::transaction::Transaction;
 use crate::chain::transaction::UnsignedInput;
 use crate::wallet::signing::make_context;
+use crate::wallet::signing::update_context;
 use crate::wallet::signing::TransactionContext;
 use crate::wallet::signing::TxSigningError;
 use crate::wallet::tx_context::TransactionContextError;
@@ -67,13 +68,13 @@ pub fn reduce_tx(
     state_context: &ErgoStateContext,
 ) -> Result<ReducedTransaction, TxSigningError> {
     let tx = &tx_context.spending_tx;
-    let ctx = make_context(state_context, &tx_context, 0)?;
+    let mut ctx = make_context(state_context, &tx_context, 0)?;
     let reduced_inputs = tx
         .inputs
         .clone()
         .enumerated()
         .try_mapped::<_, _, TxSigningError>(|(idx, input)| {
-            // TODO: use Context::with_self_box_index
+            update_context(&mut ctx, &tx_context, idx)?;
             let input_box = tx_context
                 .get_input_box(&input.box_id)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))?;

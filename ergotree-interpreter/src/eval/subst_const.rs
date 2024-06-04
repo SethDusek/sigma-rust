@@ -71,7 +71,7 @@ impl Evaluable for SubstConstants {
                 }
             }
             Ok(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(
-                ergo_tree.sigma_serialize_bytes()?.as_vec_i8().into(), // TODO: optimize
+                ergo_tree.sigma_serialize_bytes()?.as_vec_i8().into(),
             ))))
         } else {
             Err(EvalError::Misc(format!(

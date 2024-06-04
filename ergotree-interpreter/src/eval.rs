@@ -192,7 +192,7 @@ pub(crate) trait Evaluable {
         &self,
         env: &mut Env<'ctx>,
         ctx: &Context<'ctx>,
-        // TODO cost_accum: &mut CostAccumulator,
+        // TODO for JIT costing: cost_accum: &mut CostAccumulator,
     ) -> Result<Value<'ctx>, EvalError>;
 }
 

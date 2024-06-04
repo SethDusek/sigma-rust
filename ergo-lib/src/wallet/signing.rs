@@ -152,7 +152,7 @@ pub fn sign_transaction(
             prover,
             &tx_context,
             state_context,
-            &mut ctx, // TODO: use with_self_box_index
+            &mut ctx,
             tx_hints,
             idx,
             message_to_sign.as_slice(),

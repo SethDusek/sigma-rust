@@ -100,12 +100,12 @@ impl SType {
 
     pub(crate) fn with_subst(&self, subst: &HashMap<STypeVar, SType>) -> Self {
         match self {
-            SType::STypeVar(ref tpe_var) => subst.get(tpe_var).cloned().unwrap_or((*self).clone()),
+            SType::STypeVar(ref tpe_var) => subst.get(tpe_var).cloned().unwrap_or(self.clone()),
             SType::SOption(tpe) => SType::SOption(tpe.with_subst(subst).into()),
             SType::SColl(tpe) => SType::SColl(tpe.with_subst(subst).into()),
             SType::STuple(ref stup) => SType::STuple(stup.with_subst(subst)),
             SType::SFunc(ref sfunc) => SType::SFunc(sfunc.with_subst(subst)),
-            _ => (*self).clone(),
+            _ => self.clone(),
         }
     }
 }

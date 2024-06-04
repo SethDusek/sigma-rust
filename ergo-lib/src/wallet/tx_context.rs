@@ -234,8 +234,8 @@ fn verify_assets(
 ) -> Result<(), TxValidationError> {
     // If this transaction mints a new token, it's token ID must be the ID of the first box being spent
     #[allow(clippy::unwrap_used)]
-    // Inputs size is already validated so it must be of size atleast 1
-    let new_token_id: TokenId = inputs.nth(0).unwrap().into();
+    // Inputs size is already validated so it must be of atleast size 1
+    let new_token_id: TokenId = inputs.next().unwrap().into();
     for (&out_token_id, &out_amount) in &out_assets {
         if let Some(&in_amount) = in_assets.get(&out_token_id) {
             // Check that Transaction is not creating tokens out of thin air
