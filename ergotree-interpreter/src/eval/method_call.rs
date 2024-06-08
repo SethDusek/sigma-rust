@@ -2,8 +2,8 @@ use ergotree_ir::mir::method_call::MethodCall;
 use ergotree_ir::mir::value::Value;
 
 use super::smethod_eval_fn;
-use super::Env;
 use super::Context;
+use super::Env;
 use super::EvalError;
 use super::Evaluable;
 
