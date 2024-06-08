@@ -218,4 +218,35 @@ impl Wallet {
             .map_err(to_js)
             .map(Input::from)
     }
+
+    /// Sign a given multi-signature tx input
+    #[wasm_bindgen]
+    pub fn sign_tx_input_multi(
+        &self,
+        input_idx: usize,
+        state_context: &ErgoStateContext,
+        tx: &UnsignedTransaction,
+        boxes_to_spend: &ErgoBoxes,
+        data_boxes: &ErgoBoxes,
+        tx_hints: &TransactionHintsBag,
+    ) -> Result<Input, JsValue> {
+        let boxes_to_spend = boxes_to_spend.clone().into();
+        let data_boxes = data_boxes.clone().into();
+        let tx_context = ergo_lib::wallet::signing::TransactionContext::new(
+            tx.0.clone(),
+            boxes_to_spend,
+            data_boxes,
+        )
+        .map_err(to_js)?;
+        let state_context_inner = state_context.clone().into();
+        self.0
+            .sign_tx_input(
+                input_idx,
+                tx_context,
+                &state_context_inner,
+                Some(&tx_hints.0),
+            )
+            .map_err(to_js)
+            .map(Input::from)
+    }
 }
