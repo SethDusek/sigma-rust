@@ -1,8 +1,8 @@
-//! Reference type used extensively throughout interpreter. a Ref<'ctx, T> can either borrow from Context or be Arc<T>
+//! Reference type used extensively throughout interpreter. a Ref<'ctx, T> can either borrow from Context or be `Arc<T>`
 use std::{ops::Deref, sync::Arc};
 
 #[derive(Clone, Debug, Eq)]
-/// A wrapper type that provides immutable access to [`T`]. Ref can either be [`Ref::Borrowed`], holding a reference to some data in the [`Context`], or [`Ref::Arc`]
+/// A wrapper type that provides immutable access to T. Ref can either be [`Ref::Borrowed`], holding a reference to some data in Context, or [`Ref::Arc`]
 pub enum Ref<'ctx, T> {
     /// Data is borrowed from Context
     Borrowed(&'ctx T),
@@ -23,7 +23,7 @@ impl<'ctx, T: Clone> Ref<'ctx, T> {
     pub fn to_static(&'ctx self) -> Ref<'static, T> {
         Ref::Arc(self.to_arc())
     }
-    /// Convert [`Self`] to Arc
+    /// Convert [`Self`] to `Arc<T>`
     pub fn to_arc(&'ctx self) -> Arc<T> {
         match self {
             Ref::Arc(r) => r.clone(),
