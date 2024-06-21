@@ -9,11 +9,12 @@ const {
 const newPackageJson = {
   ...oldPackageJson,
   type: "module",
+  main: "./ergo_lib_wasm.js",
   exports: {
     ".": {
       types: "./ergo_lib_wasm.d.ts",
-      import: "./ergo_lib_wasm",
-      require: "./ergo_lib_wasm",
+      import: "./ergo_lib_wasm.js",
+      require: "./ergo_lib_wasm.js",
     },
   },
 };
