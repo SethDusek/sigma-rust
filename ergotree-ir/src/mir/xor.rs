@@ -8,6 +8,7 @@ use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
 use crate::types::stype::SType;
+use std::sync::Arc;
 
 /// Byte-wise XOR op on byte arrays
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -25,7 +26,7 @@ impl Xor {
         let right_type: SType = right.post_eval_tpe();
 
         match (left_type, right_type) {
-            (SType::SColl(l), SType::SColl(r)) => match (*l, *r) {
+            (SType::SColl(l), SType::SColl(r)) => match (&*l, &*r) {
                 (SType::SByte, SType::SByte) => Ok(Xor {
                     left: left.into(),
                     right: right.into(),
@@ -44,7 +45,7 @@ impl Xor {
 
     /// Type
     pub fn tpe(&self) -> SType {
-        SType::SColl(Box::new(SType::SByte))
+        SType::SColl(Arc::new(SType::SByte))
     }
 }
 
@@ -80,11 +81,11 @@ mod arbitrary {
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
             (
                 any_with::<Expr>(ArbExprParams {
-                    tpe: SType::SColl(Box::new(SType::SByte)),
+                    tpe: SType::SColl(Arc::new(SType::SByte)),
                     depth: 0,
                 }),
                 any_with::<Expr>(ArbExprParams {
-                    tpe: SType::SColl(Box::new(SType::SByte)),
+                    tpe: SType::SColl(Arc::new(SType::SByte)),
                     depth: 0,
                 }),
             )

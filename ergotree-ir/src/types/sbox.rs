@@ -1,4 +1,5 @@
 use crate::serialization::types::TypeCode;
+use std::sync::Arc;
 
 use super::sfunc::SFunc;
 use super::smethod::MethodId;
@@ -52,7 +53,7 @@ lazy_static! {
         name: "getReg",
         tpe: SFunc {
             t_dom: vec![SType::SBox, SType::SByte],
-            t_range: SType::SOption(Box::new(STypeVar::t().into())).into(),
+            t_range: SType::SOption(Arc::new(STypeVar::t().into())).into(),
             tpe_params: vec![],
         },
     };
@@ -67,7 +68,7 @@ lazy_static! {
         name: "tokens",
         tpe: SFunc {
             t_dom: vec![SType::SBox],
-            t_range: SType::SColl(Box::new(
+            t_range: SType::SColl(Arc::new(
                     STuple::pair(
                         SType::SColl(SType::SByte.into()),
                         SType::SLong

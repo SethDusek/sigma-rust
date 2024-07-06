@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use ergotree_ir::mir::coll_append::Append;
 // use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::CollKind;
@@ -5,13 +7,12 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::types::stype::SType;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
-fn concat<T>(mut e1: Vec<T>, e2: Vec<T>) -> Vec<T> {
-    e1.extend(e2);
-    e1
+fn concat<T>(e1: Vec<T>, e2: Vec<T>) -> Arc<[T]> {
+    e1.into_iter().chain(e2).collect()
 }
 
 fn extract_vecval(inp: Value) -> Result<Vec<Value>, EvalError> {
@@ -35,7 +36,11 @@ fn extract_elem_tpe(inp: &Value) -> Result<SType, EvalError> {
 }
 
 impl Evaluable for Append {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let col2_v = self.col_2.eval(env, ctx)?;
         let input_elem_tpe = extract_elem_tpe(&input_v)?;
@@ -48,8 +53,8 @@ impl Evaluable for Append {
         }
         let input_vecval: Vec<Value> = extract_vecval(input_v)?;
         let col_2_vecval: Vec<Value> = extract_vecval(col2_v)?;
-        let concat_vecval: Vec<Value> = concat(input_vecval, col_2_vecval);
-        Ok(Value::Coll(CollKind::from_vec(
+        let concat_vecval = concat(input_vecval, col_2_vecval);
+        Ok(Value::Coll(CollKind::from_collection(
             input_elem_tpe,
             concat_vecval,
         )?))

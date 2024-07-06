@@ -177,7 +177,8 @@ impl ErgoTree {
         Ok(if header.is_constant_segregation() {
             let mut data = Vec::new();
             let cs = ConstantStore::empty();
-            let mut w = SigmaByteWriter::new(&mut data, Some(cs));
+            let ww = &mut data;
+            let mut w = SigmaByteWriter::new(ww, Some(cs));
             expr.sigma_serialize(&mut w)?;
             #[allow(clippy::unwrap_used)]
             // We set constant store earlier

@@ -4,16 +4,22 @@ use ergotree_ir::mir::value::Value;
 use hashbrown::HashMap;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Apply {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
-        let func_v = self.func.eval(env, ctx)?;
-        let args_v_res: Result<Vec<Value>, EvalError> =
-            self.args.iter().map(|arg| arg.eval(env, ctx)).collect();
-        let args_v = args_v_res?;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
+        let func_v: Value<'ctx> = self.func.eval(env, ctx)?;
+        let args_v: Vec<Value> = self
+            .args
+            .iter()
+            .map(|arg| arg.eval(env, ctx))
+            .collect::<Result<_, EvalError>>()?;
         match func_v {
             Value::Lambda(fv) => {
                 let arg_ids: Vec<ValId> = fv.args.iter().map(|a| a.idx).collect();
@@ -50,8 +56,6 @@ impl Evaluable for Apply {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use std::rc::Rc;
-
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::bin_op::RelationOp;
     use ergotree_ir::mir::block::BlockValue;
@@ -115,7 +119,7 @@ mod tests {
         )
         .unwrap()
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert!(eval_out::<bool>(&apply, ctx));
+        let ctx = force_any_val::<Context>();
+        assert!(eval_out::<bool>(&apply, &ctx));
     }
 }

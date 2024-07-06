@@ -2,12 +2,16 @@ use ergotree_ir::mir::extract_creation_info::ExtractCreationInfo;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for ExtractCreationInfo {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         match input_v {
             Value::CBox(b) => Ok(b.creation_info().into()),
@@ -24,7 +28,6 @@ impl Evaluable for ExtractCreationInfo {
 mod tests {
     use crate::eval::tests::eval_out;
     use crate::eval::Context;
-    use std::rc::Rc;
 
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
@@ -38,8 +41,8 @@ mod tests {
         let expr: Expr = ExtractCreationInfo::try_build(GlobalVars::SelfBox.into())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        let v = eval_out::<(i32, Vec<i8>)>(&expr, ctx.clone());
+        let ctx = force_any_val::<Context>();
+        let v = eval_out::<(i32, Vec<i8>)>(&expr, &ctx);
         assert_eq!(v, ctx.self_box.creation_info());
     }
 }

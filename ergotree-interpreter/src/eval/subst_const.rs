@@ -1,5 +1,5 @@
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 use ergotree_ir::ergo_tree::ErgoTree;
@@ -15,7 +15,11 @@ use sigma_util::AsVecU8;
 use std::convert::TryFrom;
 
 impl Evaluable for SubstConstants {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let script_bytes_v = self.script_bytes.eval(env, ctx)?;
         let positions_v = self.positions.eval(env, ctx)?;
         let new_values_v = self.new_values.eval(env, ctx)?;
@@ -28,8 +32,8 @@ impl Evaluable for SubstConstants {
 
         let new_constants = if let Value::Coll(CollKind::WrappedColl { items, .. }) = new_values_v {
             let mut items_const = vec![];
-            for v in items {
-                let c = Constant::try_from(v).map_err(EvalError::Misc)?;
+            for v in &*items {
+                let c = Constant::try_from(v.to_static()).map_err(EvalError::Misc)?;
                 items_const.push(c);
             }
             items_const
@@ -67,7 +71,7 @@ impl Evaluable for SubstConstants {
                 }
             }
             Ok(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(
-                ergo_tree.sigma_serialize_bytes()?.as_vec_i8(),
+                ergo_tree.sigma_serialize_bytes()?.as_vec_i8().into(),
             ))))
         } else {
             Err(EvalError::Misc(format!(

@@ -2,12 +2,16 @@ use ergotree_ir::mir::sigma_prop_bytes::SigmaPropBytes;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for SigmaPropBytes {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         match input_v {
             Value::SigmaProp(sigma_prop) => Ok(sigma_prop.prop_bytes()?.into()),

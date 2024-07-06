@@ -1,22 +1,26 @@
 use std::convert::TryInto;
-use std::sync::Arc;
 
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::extract_reg_as::ExtractRegisterAs;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::reference::Ref;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for ExtractRegisterAs {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let ir_box = self
             .input
             .eval(env, ctx)?
-            .try_extract_into::<Arc<ErgoBox>>()?;
+            .try_extract_into::<Ref<'_, ErgoBox>>()?;
         let id = self.register_id.try_into().map_err(|e| {
             EvalError::RegisterIdOutOfBounds(format!(
                 "register index {} is out of bounds: {:?} ",
@@ -44,7 +48,6 @@ mod tests {
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval_box_get_reg_r0() {
@@ -56,8 +59,8 @@ mod tests {
         .unwrap()
         .into();
         let option_get_expr: Expr = OptionGet::try_build(get_reg_expr).unwrap().into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        let v = eval_out::<i64>(&option_get_expr, ctx.clone());
+        let ctx = force_any_val::<Context>();
+        let v = eval_out::<i64>(&option_get_expr, &ctx);
         assert_eq!(v, ctx.self_box.value.as_i64());
     }
 }

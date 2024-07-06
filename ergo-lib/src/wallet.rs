@@ -35,6 +35,7 @@ use crate::wallet::multi_sig::{
 
 use self::ext_secret_key::ExtSecretKey;
 use self::ext_secret_key::ExtSecretKeyError;
+use self::signing::make_context;
 use self::signing::sign_message;
 use self::signing::sign_reduced_transaction;
 use self::signing::sign_tx_input;
@@ -164,10 +165,13 @@ impl Wallet {
     ) -> Result<Input, WalletError> {
         let tx = tx_context.spending_tx.clone();
         let message_to_sign = tx.bytes_to_sign().map_err(TxSigningError::from)?;
+        let mut context =
+            make_context(state_context, &tx_context, input_idx).map_err(TxSigningError::from)?;
         Ok(sign_tx_input(
             self.prover.as_ref(),
             &tx_context,
             state_context,
+            &mut context,
             tx_hints,
             input_idx,
             message_to_sign.as_slice(),

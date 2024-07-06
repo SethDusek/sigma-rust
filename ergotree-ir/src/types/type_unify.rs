@@ -79,6 +79,8 @@ pub fn unify_one(t1: &SType, t2: &SType) -> Result<HashMap<STypeVar, SType>, Typ
 #[cfg(test)]
 #[allow(clippy::panic)]
 mod tests {
+    use std::sync::Arc;
+
     use super::super::stype::tests::primitive_type;
     use super::*;
     use crate::types::sfunc::SFunc;
@@ -185,20 +187,20 @@ mod tests {
             (STypeVar::t(), SColl(SInt.into())),
         );
         check_subst(
-            SColl(Box::new(STypeVar::t().into())),
+            SColl(Arc::new(STypeVar::t().into())),
             SColl(SInt.into()),
             (STypeVar::t(), SInt),
         );
         check_subst(
-            SColl(Box::new(STypeVar::t().into())),
-            SColl(Box::new(STuple::pair(SInt, SBoolean).into())),
+            SColl(Arc::new(STypeVar::t().into())),
+            SColl(Arc::new(STuple::pair(SInt, SBoolean).into())),
             (STypeVar::t(), STuple::pair(SInt, SBoolean).into()),
         );
         check_subst(
-            SColl(Box::new(
+            SColl(Arc::new(
                 STuple::pair(STypeVar::t().into(), SBoolean).into(),
             )),
-            SColl(Box::new(STuple::pair(SInt, SBoolean).into())),
+            SColl(Arc::new(STuple::pair(SInt, SBoolean).into())),
             (STypeVar::t(), SInt),
         );
 
@@ -209,20 +211,20 @@ mod tests {
             (STypeVar::t(), SOption(SInt.into())),
         );
         check_subst(
-            SOption(Box::new(STypeVar::t().into())),
+            SOption(Arc::new(STypeVar::t().into())),
             SOption(SInt.into()),
             (STypeVar::t(), SInt),
         );
         check_subst(
-            SOption(Box::new(STypeVar::t().into())),
-            SOption(Box::new(STuple::pair(SInt, SBoolean).into())),
+            SOption(Arc::new(STypeVar::t().into())),
+            SOption(Arc::new(STuple::pair(SInt, SBoolean).into())),
             (STypeVar::t(), STuple::pair(SInt, SBoolean).into()),
         );
         check_subst(
-            SOption(Box::new(
+            SOption(Arc::new(
                 STuple::pair(STypeVar::t().into(), SBoolean).into(),
             )),
-            SOption(Box::new(STuple::pair(SInt, SBoolean).into())),
+            SOption(Arc::new(STuple::pair(SInt, SBoolean).into())),
             (STypeVar::t(), SInt),
         );
 
@@ -292,8 +294,8 @@ mod tests {
         // Coll
         check_error(SColl(SColl(SInt.into()).into()), SColl(SInt.into()));
         check_error(
-            SColl(Box::new(STypeVar::t().into())),
-            SColl(Box::new(STypeVar::iv().into())),
+            SColl(Arc::new(STypeVar::t().into())),
+            SColl(Arc::new(STypeVar::iv().into())),
         );
 
         // Option

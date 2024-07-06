@@ -3,12 +3,16 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::serialization::SigmaSerializable;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for ExtractBytes {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         match input_v {
             Value::CBox(b) => Ok(b.sigma_serialize_bytes()?.into()),
@@ -30,7 +34,6 @@ mod tests {
     use ergotree_ir::mir::global_vars::GlobalVars;
     use sigma_test_util::force_any_val;
     use sigma_util::AsVecI8;
-    use std::rc::Rc;
 
     #[test]
     fn eval() {
@@ -38,9 +41,9 @@ mod tests {
             input: Box::new(GlobalVars::SelfBox.into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         assert_eq!(
-            eval_out::<Vec<i8>>(&e, ctx.clone()),
+            eval_out::<Vec<i8>>(&e, &ctx),
             ctx.self_box.sigma_serialize_bytes().unwrap().as_vec_i8()
         );
     }

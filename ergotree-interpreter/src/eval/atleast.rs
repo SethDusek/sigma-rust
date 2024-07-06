@@ -9,12 +9,16 @@ use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaProp;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Atleast {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let bound_v = self.bound.eval(env, ctx)?;
         let input_v = self.input.eval(env, ctx)?;
 
@@ -55,6 +59,8 @@ impl Evaluable for Atleast {
 #[allow(clippy::panic)]
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use crate::eval::tests::try_eval_out_wo_ctx;
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::constant::Literal;
@@ -62,7 +68,6 @@ mod tests {
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaConjecture;
     use ergotree_ir::types::stype::SType;
-    use std::rc::Rc;
 
     use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
@@ -80,12 +85,12 @@ mod tests {
 
         #[test]
         fn eval(sigmaprops in collection::vec(any::<SigmaProp>(), 4..8)) {
-            let items = Literal::Coll(CollKind::from_vec(SType::SSigmaProp,
-                sigmaprops.into_iter().map(|s| s.into()).collect::<Vec<Literal>>()).unwrap());
+            let items = Literal::Coll(CollKind::from_collection(SType::SSigmaProp,
+                sigmaprops.into_iter().map(|s| s.into()).collect::<Arc<[Literal]>>()).unwrap());
             let expr: Expr = Atleast::new(2i32.into(),
                 Constant {tpe: SType::SColl(SType::SSigmaProp.into()), v: items}.into()).unwrap().into();
-            let ctx = Rc::new(force_any_val::<Context>());
-            let res = eval_out::<SigmaProp>(&expr, ctx);
+            let ctx = force_any_val::<Context>();
+            let res = eval_out::<SigmaProp>(&expr, &ctx);
             prop_assert!(matches!(res.into(),
                 SigmaBoolean::SigmaConjecture(SigmaConjecture::Cthreshold(_))));
         }
@@ -95,12 +100,12 @@ mod tests {
     fn bound_error() {
         let sigmaprops = vec![force_any_val::<SigmaProp>(), force_any_val::<SigmaProp>()];
         let items = Literal::Coll(
-            CollKind::from_vec(
+            CollKind::from_collection(
                 SType::SSigmaProp,
                 sigmaprops
                     .into_iter()
                     .map(|s| s.into())
-                    .collect::<Vec<Literal>>(),
+                    .collect::<Arc<[Literal]>>(),
             )
             .unwrap(),
         );

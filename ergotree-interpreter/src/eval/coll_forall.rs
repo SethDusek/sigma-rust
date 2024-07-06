@@ -3,16 +3,20 @@ use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for ForAll {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let condition_v = self.condition.eval(env, ctx)?;
         let input_v_clone = input_v.clone();
-        let mut condition_call = |arg: Value| match &condition_v {
+        let mut condition_call = |arg: Value<'ctx>| match &condition_v {
             Value::Lambda(func_value) => {
                 let func_arg = func_value.args.first().ok_or_else(|| {
                     EvalError::NotFound(
@@ -36,7 +40,7 @@ impl Evaluable for ForAll {
         };
         let normalized_input_vals: Vec<Value> = match input_v {
             Value::Coll(coll) => {
-                if *coll.elem_tpe() != self.elem_tpe {
+                if coll.elem_tpe() != &*self.elem_tpe {
                     return Err(EvalError::UnexpectedValue(format!(
                         "expected ForAll input element type to be {0:?}, got: {1:?}",
                         self.elem_tpe,

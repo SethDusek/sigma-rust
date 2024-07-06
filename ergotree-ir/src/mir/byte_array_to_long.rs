@@ -1,4 +1,6 @@
 //! Convert byte array to SLong
+use std::sync::Arc;
+
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
 
@@ -34,7 +36,7 @@ impl OneArgOp for ByteArrayToLong {
 
 impl OneArgOpTryBuild for ByteArrayToLong {
     fn try_build(input: Expr) -> Result<Self, InvalidArgumentError> {
-        input.check_post_eval_tpe(&SType::SColl(Box::new(SType::SByte)))?;
+        input.check_post_eval_tpe(&SType::SColl(Arc::new(SType::SByte)))?;
         Ok(ByteArrayToLong {
             input: Box::new(input),
         })

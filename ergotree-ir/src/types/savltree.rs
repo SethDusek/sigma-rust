@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::serialization::types::TypeCode;
 
 use super::sfunc::SFunc;
@@ -73,7 +75,7 @@ lazy_static! {
         name: "digest",
         tpe: SFunc {
             t_dom: vec![ SType::SAvlTree],
-            t_range: SType::SColl(Box::new(SType::SByte)).into(),
+            t_range: SType::SColl(Arc::new(SType::SByte)).into(),
             tpe_params: vec![],
         },
     };
@@ -118,7 +120,7 @@ lazy_static! {
         name: "valueLengthOpt",
         tpe: SFunc {
             t_dom: vec![ SType::SAvlTree],
-            t_range: SType::SOption(Box::new(SType::SInt)).into(),
+            t_range: SType::SOption(Arc::new(SType::SInt)).into(),
             tpe_params: vec![],
         },
     };
@@ -232,18 +234,18 @@ lazy_static! {
         tpe: SFunc {
             t_dom: vec![ SType::SAvlTree,
                          SType::SColl(
-                           Box::new(
+                           Arc::new(
                                SType::STuple(
                                    STuple::pair(
-                                       SType::SColl(Box::new(SType::SByte)),
-                                       SType::SColl(Box::new(SType::SByte))
+                                       SType::SColl(Arc::new(SType::SByte)),
+                                       SType::SColl(Arc::new(SType::SByte))
                                    )
                                )
                            )
                          ),
-                         SType::SColl(Box::new(SType::SByte)),
+                         SType::SColl(Arc::new(SType::SByte)),
                        ],
-            t_range: SType::SOption(Box::new(SType::SAvlTree)).into(),
+            t_range: SType::SOption(Arc::new(SType::SAvlTree)).into(),
             tpe_params: vec![],
         },
     };
@@ -259,13 +261,13 @@ lazy_static! {
         tpe: SFunc {
             t_dom: vec![ SType::SAvlTree,
                          SType::SColl(
-                            Box::new(
-                                SType::SColl(Box::new(SType::SByte))
+                            Arc::new(
+                                SType::SColl(Arc::new(SType::SByte))
                             )
                          ),
-                         SType::SColl(Box::new(SType::SByte)),
+                         SType::SColl(Arc::new(SType::SByte)),
                        ],
-            t_range: SType::SOption(Box::new(SType::SAvlTree)).into(),
+            t_range: SType::SOption(Arc::new(SType::SAvlTree)).into(),
             tpe_params: vec![],
         },
     };
@@ -281,8 +283,8 @@ lazy_static! {
         tpe: SFunc {
             t_dom: vec![
                 SType::SAvlTree,
-                SType::SColl(Box::new(SType::SByte)),
-                SType::SColl(Box::new(SType::SByte)),
+                SType::SColl(Arc::new(SType::SByte)),
+                SType::SColl(Arc::new(SType::SByte)),
             ],
             t_range: SType::SBoolean.into(),
             tpe_params: vec![],
@@ -300,18 +302,18 @@ lazy_static! {
         tpe: SFunc {
             t_dom: vec![ SType::SAvlTree,
                          SType::SColl(
-                            Box::new(
+                            Arc::new(
                                 SType::STuple(
                                     STuple::pair(
-                                        SType::SColl(Box::new(SType::SByte)),
-                                        SType::SColl(Box::new(SType::SByte))
+                                        SType::SColl(Arc::new(SType::SByte)),
+                                        SType::SColl(Arc::new(SType::SByte))
                                     )
                                 )
                             )
                          ),
-                         SType::SColl(Box::new(SType::SByte)),
+                         SType::SColl(Arc::new(SType::SByte)),
                        ],
-            t_range: SType::SOption(Box::new(SType::SAvlTree)).into(),
+            t_range: SType::SOption(Arc::new(SType::SAvlTree)).into(),
             tpe_params: vec![],
         },
     };
@@ -325,7 +327,7 @@ lazy_static! {
         method_id: UPDATE_DIGEST_METHOD_ID,
         name: "updateDigest",
         tpe: SFunc {
-            t_dom: vec![ SType::SAvlTree, SType::SColl(Box::new(SType::SByte))],
+            t_dom: vec![ SType::SAvlTree, SType::SColl(Arc::new(SType::SByte))],
             t_range: SType::SAvlTree.into(),
             tpe_params: vec![],
         },

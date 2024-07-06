@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use ergo_chain_types::PreHeader;
 use ergotree_ir::mir::constant::TryExtractInto;
 
@@ -30,7 +32,7 @@ pub(crate) static HEIGHT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 
 pub(crate) static MINER_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     let preheader = obj.try_extract_into::<PreHeader>()?;
-    Ok(preheader.miner_pk.into())
+    Ok(Arc::new(*preheader.miner_pk).into())
 };
 
 pub(crate) static VOTES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
@@ -43,7 +45,6 @@ pub(crate) static VOTES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
 #[allow(clippy::expect_used)]
 mod tests {
     use std::convert::{TryFrom, TryInto};
-    use std::rc::Rc;
 
     use ergo_chain_types::{BlockId, EcPoint, Votes};
     use ergotree_ir::{
@@ -87,18 +88,18 @@ mod tests {
     #[test]
     fn test_eval_version() {
         let expr = create_get_preheader_property_expr(spreheader::VERSION_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.version as i8;
-        assert_eq!(expected, eval_out::<i8>(&expr, ctx));
+        assert_eq!(expected, eval_out::<i8>(&expr, &ctx));
     }
 
     #[test]
     fn test_eval_parent_id() {
         let expr = create_get_preheader_property_expr(spreheader::PARENT_ID_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.parent_id;
         let actual = {
-            let bs = eval_out::<Vec<i8>>(&expr, ctx);
+            let bs = eval_out::<Vec<i8>>(&expr, &ctx);
             block_id_from_bytes_signed(bs)
         };
         assert_eq!(expected, actual);
@@ -107,37 +108,37 @@ mod tests {
     #[test]
     fn test_eval_timestamp() {
         let expr = create_get_preheader_property_expr(spreheader::TIMESTAMP_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.timestamp as i64;
-        let actual = eval_out::<i64>(&expr, ctx);
+        let actual = eval_out::<i64>(&expr, &ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_n_bits() {
         let expr = create_get_preheader_property_expr(spreheader::N_BITS_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.n_bits as i64;
-        let actual = eval_out::<i64>(&expr, ctx);
+        let actual = eval_out::<i64>(&expr, &ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_height() {
         let expr = create_get_preheader_property_expr(spreheader::HEIGHT_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.height as i32;
-        let actual = eval_out::<i32>(&expr, ctx);
+        let actual = eval_out::<i32>(&expr, &ctx);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_eval_miner_pk() {
         let expr = create_get_preheader_property_expr(spreheader::MINER_PK_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.miner_pk.clone();
         let actual = {
-            let pk = eval_out::<EcPoint>(&expr, ctx);
+            let pk = eval_out::<EcPoint>(&expr, &ctx);
             Box::new(pk)
         };
         assert_eq!(expected, actual);
@@ -146,10 +147,10 @@ mod tests {
     #[test]
     fn test_eval_votes() {
         let expr = create_get_preheader_property_expr(spreheader::VOTES_PROPERTY.clone());
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let expected = ctx.pre_header.votes.clone();
         let actual = {
-            let votes_bytes = eval_out::<Vec<i8>>(&expr, ctx).as_vec_u8();
+            let votes_bytes = eval_out::<Vec<i8>>(&expr, &ctx).as_vec_u8();
             Votes::try_from(votes_bytes)
                 .expect("internal error: votes bytes buffer length isn't equal to 3")
         };

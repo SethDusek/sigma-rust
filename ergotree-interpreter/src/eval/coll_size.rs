@@ -2,21 +2,24 @@ use ergotree_ir::mir::coll_size::SizeOf;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for SizeOf {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
-        let normalized_input_vals: Vec<Value> = match input_v {
-            Value::Coll(coll) => Ok(coll.as_vec()),
+        match input_v {
+            Value::Coll(coll) => Ok((coll.len() as i32).into()),
             _ => Err(EvalError::UnexpectedValue(format!(
                 "SizeOf: expected input to be Value::Coll, got: {0:?}",
                 input_v
             ))),
-        }?;
-        Ok((normalized_input_vals.len() as i32).into())
+        }
     }
 }
 
@@ -30,17 +33,13 @@ mod tests {
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     #[test]
     fn eval() {
         let expr: Expr = SizeOf::try_build(GlobalVars::Outputs.into())
             .unwrap()
             .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert_eq!(
-            eval_out::<i32>(&expr, ctx.clone()),
-            ctx.outputs.len() as i32
-        );
+        let ctx = force_any_val::<Context>();
+        assert_eq!(eval_out::<i32>(&expr, &ctx), ctx.outputs.len() as i32);
     }
 }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use ergotree_ir::mir::collection::Collection;
 use ergotree_ir::mir::constant::TryExtractFromError;
 use ergotree_ir::mir::constant::TryExtractInto;
@@ -7,21 +9,26 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::types::stype::SType;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Collection {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         Ok(match self {
             Collection::BoolConstants(bools) => bools.clone().into(),
             Collection::Exprs { elem_tpe, items } => {
-                let items_v: Result<Vec<Value>, EvalError> =
+                let items_v: Result<Arc<[Value]>, EvalError> =
                     items.iter().map(|i| i.eval(env, ctx)).collect();
                 match elem_tpe {
                     SType::SByte => {
-                        let bytes: Result<Vec<i8>, TryExtractFromError> = items_v?
-                            .into_iter()
+                        let bytes: Result<Arc<[i8]>, TryExtractFromError> = items_v?
+                            .iter()
+                            .cloned()
                             .map(|i| i.try_extract_into::<i8>())
                             .collect();
                         Value::Coll(CollKind::NativeColl(NativeColl::CollByte(bytes?)))

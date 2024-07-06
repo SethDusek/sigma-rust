@@ -437,7 +437,7 @@ mod tests {
 
     #[test]
     fn parse_token_amount_as_str() {
-        let token_json = r#"               
+        let token_json = r#"
         {
             "tokenId": "2d554219a80c011cc51509e34fa4950965bb8e01de4d012536e766c9ca08bc2c",
             "amount": "99999999998"

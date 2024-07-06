@@ -1,10 +1,7 @@
 //! Exposes common properties for signed and unsigned transactions
-use ergotree_interpreter::{
-    eval::context::TxIoVec,
-    sigma_protocol::{
-        prover::ContextExtension,
-        verifier::{VerificationResult, VerifierError},
-    },
+use ergotree_interpreter::sigma_protocol::{
+    prover::ContextExtension,
+    verifier::{VerificationResult, VerifierError},
 };
 use ergotree_ir::{
     chain::{
@@ -87,11 +84,11 @@ pub enum TxValidationError {
 /// Exposes common properties for signed and unsigned transactions
 pub trait ErgoTransaction {
     /// input boxes ids
-    fn inputs_ids(&self) -> TxIoVec<BoxId>;
+    fn inputs_ids(&self) -> impl ExactSizeIterator<Item = BoxId>;
     /// data input boxes
-    fn data_inputs(&self) -> Option<TxIoVec<DataInput>>;
+    fn data_inputs(&self) -> Option<&[DataInput]>;
     /// output boxes
-    fn outputs(&self) -> TxIoVec<ErgoBox>;
+    fn outputs(&self) -> &[ErgoBox];
     /// ContextExtension for the given input index
     fn context_extension(&self, input_index: usize) -> Option<ContextExtension>;
 
@@ -108,30 +105,26 @@ pub trait ErgoTransaction {
             .ok_or(TxValidationError::OutputSumOverflow)?;
 
         // Check if there are no double-spends in input (one BoxId being spent more than once)
-        let unique_count = inputs.iter().unique().count();
-        if unique_count != inputs.len() {
-            return Err(TxValidationError::DoubleSpend(unique_count, inputs.len()));
+        let len = inputs.len();
+        let unique_count = inputs.unique().count();
+        if unique_count != len {
+            return Err(TxValidationError::DoubleSpend(unique_count, len));
         }
         Ok(())
     }
 }
 
 impl ErgoTransaction for UnsignedTransaction {
-    fn inputs_ids(&self) -> TxIoVec<BoxId> {
-        self.inputs.clone().mapped(|input| input.box_id)
+    fn inputs_ids(&self) -> impl ExactSizeIterator<Item = BoxId> {
+        self.inputs.iter().map(|input| input.box_id)
     }
 
-    fn data_inputs(&self) -> Option<TxIoVec<DataInput>> {
-        self.data_inputs.clone()
+    fn data_inputs(&self) -> Option<&[DataInput]> {
+        self.data_inputs.as_ref().map(|di| di.as_slice())
     }
 
-    fn outputs(&self) -> TxIoVec<ErgoBox> {
-        #[allow(clippy::unwrap_used)] // box serialization cannot fail?
-        self.output_candidates
-            .clone()
-            .enumerated()
-            .try_mapped(|(idx, b)| ErgoBox::from_box_candidate(&b, self.id(), idx as u16))
-            .unwrap()
+    fn outputs(&self) -> &[ErgoBox] {
+        self.outputs.as_slice()
     }
 
     fn context_extension(&self, input_index: usize) -> Option<ContextExtension> {
@@ -142,16 +135,16 @@ impl ErgoTransaction for UnsignedTransaction {
 }
 
 impl ErgoTransaction for Transaction {
-    fn inputs_ids(&self) -> TxIoVec<BoxId> {
-        self.inputs.clone().mapped(|input| input.box_id)
+    fn inputs_ids(&self) -> impl ExactSizeIterator<Item = BoxId> {
+        self.inputs.iter().map(|input| input.box_id)
     }
 
-    fn data_inputs(&self) -> Option<TxIoVec<DataInput>> {
-        self.data_inputs.clone()
+    fn data_inputs(&self) -> Option<&[DataInput]> {
+        self.data_inputs.as_ref().map(|di| di.as_slice())
     }
 
-    fn outputs(&self) -> TxIoVec<ErgoBox> {
-        self.outputs.clone()
+    fn outputs(&self) -> &[ErgoBox] {
+        self.outputs.as_slice()
     }
 
     fn context_extension(&self, input_index: usize) -> Option<ContextExtension> {

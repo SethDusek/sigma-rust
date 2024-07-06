@@ -1,5 +1,6 @@
 use crate::serialization::types::TypeCode;
 use crate::types::stype_companion::STypeCompanion;
+use std::sync::Arc;
 
 use super::sfunc::SFunc;
 use super::smethod::MethodId;
@@ -33,7 +34,7 @@ lazy_static! {
         name: "getEncoded",
         tpe: SFunc::new(
             vec![SType::SGroupElement],
-            SType::SColl(Box::new(SType::SByte)),
+            SType::SColl(Arc::new(SType::SByte)),
         )
     };
     /// GroupElement.geEncoded

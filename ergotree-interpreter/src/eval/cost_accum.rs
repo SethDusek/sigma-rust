@@ -3,6 +3,7 @@ use ergotree_ir::mir::expr::Expr;
 use thiserror::Error;
 
 #[derive(Debug)]
+#[allow(dead_code)] // TODO: Reintroduce this type for JIT costing
 pub struct CostAccumulator {
     costs: Costs,
     accum: u64,
@@ -15,6 +16,7 @@ pub enum CostError {
     LimitExceeded(u64),
 }
 
+#[allow(dead_code)] // TODO: Reintroduce this type for JIT costing
 impl CostAccumulator {
     pub fn new(initial_cost: u64, cost_limit: Option<u64>) -> CostAccumulator {
         CostAccumulator {

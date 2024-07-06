@@ -1,6 +1,6 @@
 use super::Evaluable;
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use ergo_chain_types::ADDigest;
 use ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
@@ -11,7 +11,11 @@ use sigma_util::AsVecU8;
 use std::convert::TryFrom;
 
 impl Evaluable for CreateAvlTree {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let flags_v = self.flags.eval(env, ctx)?.try_extract_into::<i8>()? as u8;
         let digest_v = self.digest.eval(env, ctx)?.try_extract_into::<Vec<i8>>()?;
         let key_length = self.key_length.eval(env, ctx)?.try_extract_into::<i32>()? as u32;

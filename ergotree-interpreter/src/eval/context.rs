@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::sigma_protocol::prover::ContextExtension;
 use bounded_vec::BoundedVec;
 use ergo_chain_types::{Header, PreHeader};
@@ -10,17 +8,17 @@ pub type TxIoVec<T> = BoundedVec<T, 1, { i16::MAX as usize }>;
 
 /// Interpreter's context (blockchain state)
 #[derive(Debug)]
-pub struct Context {
+pub struct Context<'ctx> {
     /// Current height
     pub height: u32,
     /// Box that contains the script we're evaluating (from spending transaction inputs)
-    pub self_box: Arc<ErgoBox>,
+    pub self_box: &'ctx ErgoBox,
     /// Spending transaction outputs
-    pub outputs: Vec<Arc<ErgoBox>>,
+    pub outputs: &'ctx [ErgoBox],
     /// Spending transaction data inputs
-    pub data_inputs: Option<TxIoVec<Arc<ErgoBox>>>,
+    pub data_inputs: Option<TxIoVec<&'ctx ErgoBox>>,
     /// Spending transaction inputs
-    pub inputs: TxIoVec<Arc<ErgoBox>>,
+    pub inputs: TxIoVec<&'ctx ErgoBox>,
     /// Pre header of current block
     pub pre_header: PreHeader,
     /// Fixed number of last block headers in descending order (first header is the newest one)
@@ -29,7 +27,7 @@ pub struct Context {
     pub extension: ContextExtension,
 }
 
-impl Context {
+impl<'ctx> Context<'ctx> {
     /// Return a new Context with given context extension
     pub fn with_extension(self, ext: ContextExtension) -> Self {
         Context {
@@ -46,7 +44,7 @@ mod arbitrary {
     use super::*;
     use proptest::{collection::vec, option::of, prelude::*};
 
-    impl Arbitrary for Context {
+    impl Arbitrary for Context<'static> {
         type Parameters = ();
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
@@ -71,14 +69,23 @@ mod arbitrary {
                         extension,
                         headers,
                     )| {
+                        // Leak variables. Since this is only used for testing this is acceptable and avoids introducing a new type (ContextOwned)
                         Self {
                             height,
-                            self_box: Arc::new(self_box),
-                            outputs: outputs.into_iter().map(Arc::new).collect(),
+                            self_box: Box::leak(Box::new(self_box)),
+                            outputs: Vec::leak(outputs),
                             data_inputs: data_inputs.map(|v| {
-                                TxIoVec::from_vec(v.into_iter().map(Arc::new).collect()).unwrap()
+                                v.into_iter()
+                                    .map(|i| &*Box::leak(Box::new(i)))
+                                    .collect::<Vec<_>>()
+                                    .try_into()
+                                    .unwrap()
                             }),
-                            inputs: TxIoVec::from_vec(inputs.into_iter().map(Arc::new).collect())
+                            inputs: inputs
+                                .into_iter()
+                                .map(|i| &*Box::leak(Box::new(i)))
+                                .collect::<Vec<_>>()
+                                .try_into()
                                 .unwrap(),
                             pre_header,
                             extension,

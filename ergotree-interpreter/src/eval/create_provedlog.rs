@@ -3,16 +3,20 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::sigma_protocol::sigma_boolean::ProveDlog;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for CreateProveDlog {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let value_v = self.input.eval(env, ctx)?;
         match value_v {
             Value::GroupElement(ecpoint) => {
-                let prove_dlog = ProveDlog::new(*ecpoint);
+                let prove_dlog = ProveDlog::new((*ecpoint).clone());
                 Ok(prove_dlog.into())
             }
             _ => Err(EvalError::UnexpectedValue(format!(

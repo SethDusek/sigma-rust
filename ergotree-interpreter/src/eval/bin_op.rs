@@ -8,7 +8,6 @@ use ergotree_ir::mir::bin_op::{BinOp, BitOp};
 use ergotree_ir::mir::constant::TryExtractFrom;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::Value;
-use eval::costs::Costs;
 use num_traits::CheckedAdd;
 use num_traits::CheckedDiv;
 use num_traits::CheckedMul;
@@ -16,9 +15,8 @@ use num_traits::CheckedRem;
 use num_traits::CheckedSub;
 use num_traits::Num;
 
-use crate::eval;
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
@@ -34,9 +32,9 @@ fn arithmetic_err<T: std::fmt::Display>(
     ))
 }
 
-fn eval_plus<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_plus<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + CheckedAdd + TryExtractFrom<Value> + Into<Value> + std::fmt::Display,
+    T: Num + CheckedAdd + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     lv_raw
@@ -45,9 +43,9 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_minus<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_minus<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + CheckedSub + TryExtractFrom<Value> + Into<Value> + std::fmt::Display,
+    T: Num + CheckedSub + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     lv_raw
@@ -56,9 +54,9 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_mul<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_mul<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + CheckedMul + TryExtractFrom<Value> + Into<Value> + std::fmt::Display,
+    T: Num + CheckedMul + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     lv_raw
@@ -67,9 +65,9 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_div<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_div<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + CheckedDiv + TryExtractFrom<Value> + Into<Value> + std::fmt::Display,
+    T: Num + CheckedDiv + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     lv_raw
@@ -78,9 +76,9 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_mod<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_mod<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + CheckedRem + TryExtractFrom<Value> + Into<Value> + std::fmt::Display,
+    T: Num + CheckedRem + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     lv_raw
@@ -89,16 +87,16 @@ where
         .map(|t| t.into()) // convert T to Value
 }
 
-fn eval_bit_op<T, F>(lv_raw: T, rv: Value, op: F) -> Result<Value, EvalError>
+fn eval_bit_op<'ctx, T, F>(lv_raw: T, rv: Value<'ctx>, op: F) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + TryExtractFrom<Value> + Into<Value> + std::fmt::Display,
+    T: Num + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>> + std::fmt::Display,
     F: FnOnce(T, T) -> T,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     Ok(op(lv_raw, rv_raw).into())
 }
 
-fn eval_ge(lv: Value, rv: Value) -> Result<Value, EvalError> {
+fn eval_ge<'ctx>(lv: Value<'ctx>, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError> {
     match lv {
         Value::Byte(lv_raw) => Ok((lv_raw >= rv.try_extract_into::<i8>()?).into()),
         Value::Short(lv_raw) => Ok((lv_raw >= rv.try_extract_into::<i16>()?).into()),
@@ -112,7 +110,7 @@ fn eval_ge(lv: Value, rv: Value) -> Result<Value, EvalError> {
     }
 }
 
-fn eval_gt(lv: Value, rv: Value) -> Result<Value, EvalError> {
+fn eval_gt<'ctx>(lv: Value<'ctx>, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError> {
     match lv {
         Value::Byte(lv_raw) => Ok((lv_raw > rv.try_extract_into::<i8>()?).into()),
         Value::Short(lv_raw) => Ok((lv_raw > rv.try_extract_into::<i16>()?).into()),
@@ -126,7 +124,7 @@ fn eval_gt(lv: Value, rv: Value) -> Result<Value, EvalError> {
     }
 }
 
-fn eval_lt(lv: Value, rv: Value) -> Result<Value, EvalError> {
+fn eval_lt<'ctx>(lv: Value<'ctx>, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError> {
     match lv {
         Value::Byte(lv_raw) => Ok((lv_raw < rv.try_extract_into::<i8>()?).into()),
         Value::Short(lv_raw) => Ok((lv_raw < rv.try_extract_into::<i16>()?).into()),
@@ -140,7 +138,7 @@ fn eval_lt(lv: Value, rv: Value) -> Result<Value, EvalError> {
     }
 }
 
-fn eval_le(lv: Value, rv: Value) -> Result<Value, EvalError> {
+fn eval_le<'ctx>(lv: Value<'ctx>, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError> {
     match lv {
         Value::Byte(lv_raw) => Ok((lv_raw <= rv.try_extract_into::<i8>()?).into()),
         Value::Short(lv_raw) => Ok((lv_raw <= rv.try_extract_into::<i16>()?).into()),
@@ -154,25 +152,29 @@ fn eval_le(lv: Value, rv: Value) -> Result<Value, EvalError> {
     }
 }
 
-fn eval_max<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_max<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + Ord + TryExtractFrom<Value> + Into<Value>,
+    T: Num + Ord + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>>,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     Ok((lv_raw.max(rv_raw)).into())
 }
 
-fn eval_min<T>(lv_raw: T, rv: Value) -> Result<Value, EvalError>
+fn eval_min<'ctx, T>(lv_raw: T, rv: Value<'ctx>) -> Result<Value<'ctx>, EvalError>
 where
-    T: Num + Ord + TryExtractFrom<Value> + Into<Value>,
+    T: Num + Ord + TryExtractFrom<Value<'ctx>> + Into<Value<'ctx>>,
 {
     let rv_raw = rv.try_extract_into::<T>()?;
     Ok((lv_raw.min(rv_raw)).into())
 }
 
 impl Evaluable for BinOp {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
-        ctx.cost_accum.add(Costs::DEFAULT.eq_const_size)?;
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
+        //ctx.cost_accum.add(Costs::DEFAULT.eq_const_size)?;
         let lv = self.left.eval(env, ctx)?;
         // using closure to keep right value from evaluation (for lazy AND, OR, XOR)
         let mut rv = || self.right.eval(env, ctx);
@@ -332,7 +334,6 @@ mod tests {
     use num_traits::Bounded;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;
-    use std::rc::Rc;
 
     fn check_eq_neq(left: Constant, right: Constant) -> bool {
         let eq_op: Expr = BinOp {
@@ -341,15 +342,15 @@ mod tests {
             right: Box::new(right.clone().into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
+        let ctx = force_any_val::<Context>();
         let neq_op: Expr = BinOp {
             kind: BinOpKind::Relation(RelationOp::NEq),
             left: Box::new(left.into()),
             right: Box::new(right.into()),
         }
         .into();
-        let ctx1 = Rc::new(force_any_val::<Context>());
-        eval_out::<bool>(&eq_op, ctx) && !eval_out::<bool>(&neq_op, ctx1)
+        let ctx1 = force_any_val::<Context>();
+        eval_out::<bool>(&eq_op, &ctx) && !eval_out::<bool>(&neq_op, &ctx1)
     }
 
     #[test]
@@ -417,8 +418,8 @@ mod tests {
             ),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert!(eval_out::<bool>(&e, ctx));
+        let ctx = force_any_val::<Context>();
+        assert!(eval_out::<bool>(&e, &ctx));
     }
 
     #[test]
@@ -437,11 +438,11 @@ mod tests {
             ),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        assert!(!eval_out::<bool>(&e, ctx));
+        let ctx = force_any_val::<Context>();
+        assert!(!eval_out::<bool>(&e, &ctx));
     }
 
-    fn eval_arith_op<T: TryExtractFrom<Value> + Into<Constant>>(
+    fn eval_arith_op<T: TryExtractFrom<Value<'static>> + Into<Constant> + 'static>(
         op: ArithOp,
         left: T,
         right: T,
@@ -452,11 +453,11 @@ mod tests {
             right: Box::new(right.into().into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        try_eval_out::<T>(&expr, ctx)
+        let ctx = force_any_val::<Context>();
+        try_eval_out::<T>(&expr, &ctx)
     }
 
-    fn eval_bit_op<T: TryExtractFrom<Value> + Into<Constant>>(
+    fn eval_bit_op<T: TryExtractFrom<Value<'static>> + Into<Constant> + 'static>(
         op: BitOp,
         left: T,
         right: T,
@@ -467,8 +468,8 @@ mod tests {
             right: Box::new(right.into().into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        try_eval_out::<T>(&expr, ctx)
+        let ctx = force_any_val::<Context>();
+        try_eval_out::<T>(&expr, &ctx)
     }
 
     fn eval_relation_op<T: Into<Constant>>(op: RelationOp, left: T, right: T) -> bool {
@@ -478,8 +479,8 @@ mod tests {
             right: Box::new(right.into().into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        eval_out::<bool>(&expr, ctx)
+        let ctx = force_any_val::<Context>();
+        eval_out::<bool>(&expr, &ctx)
     }
 
     fn eval_logical_op<T: Into<Constant>>(op: LogicalOp, left: T, right: T) -> bool {
@@ -489,8 +490,8 @@ mod tests {
             right: Box::new(right.into().into()),
         }
         .into();
-        let ctx = Rc::new(force_any_val::<Context>());
-        eval_out::<bool>(&expr, ctx)
+        let ctx = force_any_val::<Context>();
+        eval_out::<bool>(&expr, &ctx)
     }
 
     #[test]

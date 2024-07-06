@@ -1,9 +1,6 @@
 //! Represent `reduced` transaction, i.e. unsigned transaction where each unsigned input
 //! is augmented with ReducedInput which contains a script reduction result.
 
-use std::rc::Rc;
-
-use ergotree_interpreter::eval::env::Env;
 use ergotree_interpreter::eval::reduce_to_crypto;
 use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
@@ -18,6 +15,7 @@ use crate::chain::ergo_state_context::ErgoStateContext;
 use crate::chain::transaction::Transaction;
 use crate::chain::transaction::UnsignedInput;
 use crate::wallet::signing::make_context;
+use crate::wallet::signing::update_context;
 use crate::wallet::signing::TransactionContext;
 use crate::wallet::signing::TxSigningError;
 use crate::wallet::tx_context::TransactionContextError;
@@ -70,21 +68,22 @@ pub fn reduce_tx(
     state_context: &ErgoStateContext,
 ) -> Result<ReducedTransaction, TxSigningError> {
     let tx = &tx_context.spending_tx;
+    let mut ctx = make_context(state_context, &tx_context, 0)?;
     let reduced_inputs = tx
         .inputs
         .clone()
         .enumerated()
         .try_mapped::<_, _, TxSigningError>(|(idx, input)| {
+            update_context(&mut ctx, &tx_context, idx)?;
             let input_box = tx_context
                 .get_input_box(&input.box_id)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))?;
-            let ctx = Rc::new(make_context(state_context, &tx_context, idx)?);
             let expr = input_box
                 .ergo_tree
                 .proposition()
                 .map_err(ProverError::ErgoTreeError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
-            let reduction_result = reduce_to_crypto(&expr, &Env::empty(), ctx)
+            let reduction_result = reduce_to_crypto(&expr, &ctx)
                 .map_err(ProverError::EvalError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
             Ok(ReducedInput {

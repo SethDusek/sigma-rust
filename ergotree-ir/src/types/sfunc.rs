@@ -39,11 +39,12 @@ impl SFunc {
         }
     }
 
-    pub(crate) fn with_subst(self, subst: &HashMap<STypeVar, SType>) -> Self {
+    pub(crate) fn with_subst(&self, subst: &HashMap<STypeVar, SType>) -> Self {
         let remaining_vars = self
             .tpe_params
-            .into_iter()
+            .iter()
             .filter(|v| !subst.contains_key(&v.ident))
+            .cloned()
             .collect();
         SFunc {
             t_dom: self

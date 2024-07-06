@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use impl_trait_for_tuples::impl_for_tuples;
 
@@ -49,9 +50,9 @@ pub enum SType {
     /// AVL tree value
     SAvlTree,
     /// Optional value
-    SOption(Box<SType>),
+    SOption(Arc<SType>),
     /// Collection of elements of the same type
-    SColl(Box<SType>),
+    SColl(Arc<SType>),
     /// Tuple (elements can have different types)
     STuple(STuple),
     /// Function (signature)
@@ -97,14 +98,14 @@ impl SType {
         )
     }
 
-    pub(crate) fn with_subst(self, subst: &HashMap<STypeVar, SType>) -> Self {
+    pub(crate) fn with_subst(&self, subst: &HashMap<STypeVar, SType>) -> Self {
         match self {
-            SType::STypeVar(ref tpe_var) => subst.get(tpe_var).cloned().unwrap_or(self),
+            SType::STypeVar(ref tpe_var) => subst.get(tpe_var).cloned().unwrap_or(self.clone()),
             SType::SOption(tpe) => SType::SOption(tpe.with_subst(subst).into()),
             SType::SColl(tpe) => SType::SColl(tpe.with_subst(subst).into()),
-            SType::STuple(stup) => SType::STuple(stup.with_subst(subst)),
-            SType::SFunc(sfunc) => SType::SFunc(sfunc.with_subst(subst)),
-            _ => self,
+            SType::STuple(ref stup) => SType::STuple(stup.with_subst(subst)),
+            SType::SFunc(ref sfunc) => SType::SFunc(sfunc.with_subst(subst)),
+            _ => self.clone(),
         }
     }
 }
@@ -163,7 +164,7 @@ pub trait LiftIntoSType {
 
 impl<T: LiftIntoSType> LiftIntoSType for Vec<T> {
     fn stype() -> SType {
-        SType::SColl(Box::new(T::stype()))
+        SType::SColl(Arc::new(T::stype()))
     }
 }
 
@@ -259,7 +260,7 @@ impl LiftIntoSType for AvlTreeData {
 
 impl<T: LiftIntoSType> LiftIntoSType for Option<T> {
     fn stype() -> SType {
-        SType::SOption(Box::new(T::stype()))
+        SType::SOption(Arc::new(T::stype()))
     }
 }
 
@@ -313,8 +314,8 @@ pub(crate) mod tests {
                         prop_oneof![
                             prop::collection::vec(elem.clone(), 2..=5)
                                 .prop_map(|elems| SType::STuple(elems.try_into().unwrap())),
-                            elem.clone().prop_map(|tpe| SType::SColl(Box::new(tpe))),
-                            elem.prop_map(|tpe| SType::SOption(Box::new(tpe))),
+                            elem.clone().prop_map(|tpe| SType::SColl(Arc::new(tpe))),
+                            elem.prop_map(|tpe| SType::SOption(Arc::new(tpe))),
                         ]
                     },
                 )

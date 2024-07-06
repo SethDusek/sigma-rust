@@ -66,7 +66,7 @@ pub(crate) fn constant_from_js(val: &JsValue) -> Result<Constant, ConvError> {
         Ok(Constant {
             tpe: SType::SColl(SType::SByte.into()),
             v: Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(
-                bytes.to_vec().as_vec_i8(),
+                bytes.to_vec().as_vec_i8().into(),
             ))),
         })
     } else if let Ok(arr) = val.clone().dyn_into::<Array>() {
@@ -164,10 +164,10 @@ pub(crate) fn constant_to_js(c: Constant) -> Result<JsValue, ConvError> {
             }
             Literal::Coll(CollKind::WrappedColl { elem_tpe, items }) => {
                 let arr = Array::new();
-                for item in items {
+                for item in items.iter() {
                     arr.push(&constant_to_js(Constant {
                         tpe: elem_tpe.clone(),
-                        v: item,
+                        v: item.clone(),
                     })?);
                 }
                 arr.into()

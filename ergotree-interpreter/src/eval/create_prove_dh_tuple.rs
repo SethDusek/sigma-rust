@@ -5,12 +5,16 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::sigma_protocol::sigma_boolean::ProveDhTuple;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for CreateProveDhTuple {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let g = self.g.eval(env, ctx)?.try_extract_into::<EcPoint>()?;
         let h = self.h.eval(env, ctx)?.try_extract_into::<EcPoint>()?;
         let u = self.u.eval(env, ctx)?.try_extract_into::<EcPoint>()?;

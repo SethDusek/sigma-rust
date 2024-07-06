@@ -4,12 +4,16 @@ use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
 
 use crate::eval::env::Env;
-use crate::eval::EvalContext;
+use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 impl Evaluable for Slice {
-    fn eval(&self, env: &mut Env, ctx: &mut EvalContext) -> Result<Value, EvalError> {
+    fn eval<'ctx>(
+        &self,
+        env: &mut Env<'ctx>,
+        ctx: &Context<'ctx>,
+    ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         let from_v = self.from.eval(env, ctx)?;
         let until_v = self.until.eval(env, ctx)?;
@@ -27,9 +31,9 @@ impl Evaluable for Slice {
         // see https://github.com/ergoplatform/sigma-rust/issues/724
         let range = from.max(0) as usize..until.min(input_vec.len() as i32) as usize;
         match input_vec.get(range) {
-            Some(slice) => Ok(Value::Coll(CollKind::from_vec(elem_tpe, slice.to_vec())?)),
+            Some(slice) => Ok(Value::Coll(CollKind::from_collection(elem_tpe, slice)?)),
             // Scala version returns empty collection if the range is out of bounds
-            None => Ok(Value::Coll(CollKind::from_vec(elem_tpe, vec![])?)),
+            None => Ok(Value::Coll(CollKind::from_collection(elem_tpe, [])?)),
         }
     }
 }
