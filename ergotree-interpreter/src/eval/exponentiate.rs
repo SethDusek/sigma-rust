@@ -40,7 +40,7 @@ impl Evaluable for Exponentiate {
 mod tests {
     use super::*;
     use crate::eval::context::Context;
-    use crate::eval::tests::{eval_out, try_eval_out};
+    use crate::eval::tests::eval_out;
     use crate::sigma_protocol::private_input::DlogProverInput;
 
     use ergo_chain_types::EcPoint;
@@ -79,6 +79,12 @@ mod tests {
     fn eval_exponent_negative() {
         let left = force_any_val::<EcPoint>();
         let right = BigInt256::from_str_radix("-1", 10).unwrap();
+
+        let expected_exp = ergo_chain_types::ec_point::exponentiate(
+            &left,
+            &dlog_group::bigint256_to_scalar(right.clone()).unwrap(),
+        );
+
         let expr: Expr = Exponentiate {
             left: Box::new(Expr::Const(left.into())),
             right: Box::new(Expr::Const(right.into())),
@@ -86,6 +92,6 @@ mod tests {
         .into();
 
         let ctx = force_any_val::<Context>();
-        assert!(try_eval_out::<EcPoint>(&expr, &ctx).is_err());
+        assert_eq!(eval_out::<EcPoint>(&expr, &ctx), expected_exp);
     }
 }
