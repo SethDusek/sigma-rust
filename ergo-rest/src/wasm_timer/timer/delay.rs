@@ -103,7 +103,7 @@ impl Delay {
     /// specified by `at`.
     ///
     /// This method is usable even of this instance of `Delay` has "already
-    /// fired". That is, if this future has resovled, calling this method means
+    /// fired". That is, if this future has resolved, calling this method means
     /// that the future will still re-resolve at the specified instant.
     ///
     /// If `at` is in the past then this future will immediately be resolved

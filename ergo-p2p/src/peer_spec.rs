@@ -102,7 +102,7 @@ impl ScorexSerializable for PeerSpec {
         let node_name = r.get_short_string()?;
         let declared_addr: Option<PeerAddr> = r.get_option(&|r: &mut R| {
             // read the size bytes
-            // not used at the moment becuase PeerAddr is currently ipv4/4 bytes
+            // not used at the moment because PeerAddr is currently ipv4/4 bytes
             r.get_u8()?;
             let addr =
                 PeerAddr::scorex_parse(r).map_err(|_| VlqEncodingError::VlqDecodingFailed)?;

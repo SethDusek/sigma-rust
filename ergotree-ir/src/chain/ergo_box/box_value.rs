@@ -28,7 +28,7 @@ pub struct BoxValue(pub(crate) u64);
 pub struct BoxValue(pub(crate) u64);
 
 impl BoxValue {
-    /// Minimal box value per byte of the serialized box that was set on on launch
+    /// Minimal box value per byte of the serialized box that was set on launch
     pub const MIN_VALUE_PER_BOX_BYTE: u32 = 360;
     /// Minimal theoretical box size (smallest tree, no tokens, no registers, etc.)
     const MIN_BOX_SIZE_BYTES: usize = 30;
