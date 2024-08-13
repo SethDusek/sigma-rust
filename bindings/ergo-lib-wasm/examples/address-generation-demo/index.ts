@@ -33,7 +33,7 @@ const main = () => {
 
     console.log(`Change address: ${changeAddress.to_base58()}`);
 
-    // This is currently required becuase the line:
+    // This is currently required because the line:
     // `const changeSecretKey = deriveSecretKey(rootSecret, changePath);`
     // Takes ownership of the changePath pointer and frees it so it's null when we get to this point
     changePath = DerivationPath.new(0, new Uint32Array([0]));
