@@ -73,10 +73,12 @@ fn biguint_to_bytes(x: &BigUint) -> [u8; 32] {
 }
 
 /// Attempts to create Scalar from BigInt256
-/// Returns None if not in the range [0, modulus).
 pub fn bigint256_to_scalar(bi: BigInt256) -> Option<Scalar> {
+    // To convert BigInt bi to Scalar calculate (bi mod order)
+    let order = order();
+    let mut bi = &**bi % &order;
     if Sign::Minus == bi.sign() {
-        return None;
+        bi += order;
     }
     #[allow(clippy::unwrap_used)] // since it's 256-bit BigInt it should always fit into BigUint
     let bu = bi.to_biguint().unwrap();
