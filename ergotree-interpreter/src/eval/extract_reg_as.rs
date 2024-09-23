@@ -32,7 +32,16 @@ impl Evaluable for ExtractRegisterAs {
                 "Error getting the register id {id} with error {e:?}"
             ))
         })?;
-        Ok(Value::Opt(Box::new(reg_val_opt.map(|c| Value::from(c.v)))))
+        match reg_val_opt {
+            Some(constant) if constant.tpe == *self.elem_tpe => {
+                Ok(Value::Opt(Box::new(Some(constant.v.into()))))
+            }
+            Some(constant) => Err(EvalError::UnexpectedValue(format!(
+                "Expected register {id} to be of type {}, got {}",
+                self.elem_tpe, constant.tpe
+            ))),
+            None => Ok(Value::Opt(Box::new(None))),
+        }
     }
 }
 
@@ -41,7 +50,7 @@ impl Evaluable for ExtractRegisterAs {
 mod tests {
     use super::*;
     use crate::eval::context::Context;
-    use crate::eval::tests::eval_out;
+    use crate::eval::tests::{eval_out, try_eval_out};
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::mir::option_get::OptionGet;
@@ -62,5 +71,19 @@ mod tests {
         let ctx = force_any_val::<Context>();
         let v = eval_out::<i64>(&option_get_expr, &ctx);
         assert_eq!(v, ctx.self_box.value.as_i64());
+    }
+
+    #[test]
+    fn eval_box_get_reg_r0_wrong_type() {
+        let get_reg_expr: Expr = ExtractRegisterAs::new(
+            GlobalVars::SelfBox.into(),
+            0,
+            SType::SOption(SType::SInt.into()), // R0 (value) is long, but we're expecting int
+        )
+        .unwrap()
+        .into();
+        let option_get_expr: Expr = OptionGet::try_build(get_reg_expr).unwrap().into();
+        let ctx = force_any_val::<Context>();
+        assert!(try_eval_out::<Value>(&option_get_expr, &ctx).is_err());
     }
 }
