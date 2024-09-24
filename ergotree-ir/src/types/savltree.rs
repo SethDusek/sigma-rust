@@ -78,6 +78,7 @@ lazy_static! {
             t_range: SType::SColl(Arc::new(SType::SByte)).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.digest
     pub static ref DIGEST_METHOD: SMethod =
@@ -93,6 +94,7 @@ lazy_static! {
             t_range: SType::SByte.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.enabledOperations
     pub static ref ENABLED_OPERATIONS_METHOD: SMethod =
@@ -108,6 +110,7 @@ lazy_static! {
             t_range: SType::SInt.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.keyLength
     pub static ref KEY_LENGTH_METHOD: SMethod =
@@ -123,6 +126,7 @@ lazy_static! {
             t_range: SType::SOption(Arc::new(SType::SInt)).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.valueLengthOpt
     pub static ref VALUE_LENGTH_OPT_METHOD: SMethod =
@@ -138,6 +142,7 @@ lazy_static! {
             t_range: SType::SBoolean.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.isInsertAllowed
     pub static ref IS_INSERT_ALLOWED_METHOD: SMethod =
@@ -153,6 +158,7 @@ lazy_static! {
             t_range: SType::SBoolean.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.isUpdateAllowed
     pub static ref IS_UPDATE_ALLOWED_METHOD: SMethod =
@@ -168,6 +174,7 @@ lazy_static! {
             t_range: SType::SBoolean.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.isRemoveAllowed
     pub static ref IS_REMOVE_ALLOWED_METHOD: SMethod =
@@ -183,6 +190,7 @@ lazy_static! {
             t_range: SType::SAvlTree.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.updateOperations
     pub static ref UPDATE_OPERATIONS_METHOD: SMethod =
@@ -201,6 +209,7 @@ lazy_static! {
             t_range: SType::SOption(SType::SColl(SType::SByte.into()).into()).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
 
     /// AvlTree.get
@@ -220,6 +229,7 @@ lazy_static! {
             t_range: SType::SColl(SType::SOption(SType::SColl(SType::SByte.into()).into()).into()).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
 
     /// AvlTree.getMany
@@ -248,6 +258,7 @@ lazy_static! {
             t_range: SType::SOption(Arc::new(SType::SAvlTree)).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.insert
     pub static ref INSERT_METHOD: SMethod =
@@ -270,6 +281,7 @@ lazy_static! {
             t_range: SType::SOption(Arc::new(SType::SAvlTree)).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.remove
     pub static ref REMOVE_METHOD: SMethod =
@@ -289,6 +301,7 @@ lazy_static! {
             t_range: SType::SBoolean.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.contains
     pub static ref CONTAINS_METHOD: SMethod =
@@ -316,6 +329,7 @@ lazy_static! {
             t_range: SType::SOption(Arc::new(SType::SAvlTree)).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.update
     pub static ref UPDATE_METHOD: SMethod =
@@ -331,6 +345,7 @@ lazy_static! {
             t_range: SType::SAvlTree.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
     /// AvlTree.updateDigest
     pub static ref UPDATE_DIGEST_METHOD: SMethod =

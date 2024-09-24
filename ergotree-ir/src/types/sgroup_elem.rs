@@ -35,7 +35,8 @@ lazy_static! {
         tpe: SFunc::new(
             vec![SType::SGroupElement],
             SType::SColl(Arc::new(SType::SByte)),
-        )
+        ),
+        explicit_type_args: vec![]
     };
     /// GroupElement.geEncoded
     pub static ref GET_ENCODED_METHOD: SMethod = SMethod::new(STypeCompanion::GroupElem, GET_ENCODED_METHOD_DESC.clone(),);
@@ -48,7 +49,8 @@ lazy_static! {
         tpe: SFunc::new(
             vec![SType::SGroupElement],
             SType::SGroupElement,
-        )
+        ),
+        explicit_type_args: vec![]
     };
     /// GroupElement.negate
     pub static ref NEGATE_METHOD: SMethod = SMethod::new(STypeCompanion::GroupElem, NEGATE_METHOD_DESC.clone(),);

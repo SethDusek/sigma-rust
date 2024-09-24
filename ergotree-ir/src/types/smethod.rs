@@ -32,7 +32,7 @@ impl MethodId {
 pub struct SMethod {
     /// Object type companion
     pub obj_type: STypeCompanion,
-    method_raw: SMethodDesc,
+    pub(crate) method_raw: SMethodDesc,
 }
 
 impl SMethod {
@@ -100,6 +100,8 @@ pub struct SMethodDesc {
     pub(crate) name: &'static str,
     pub(crate) method_id: MethodId,
     pub(crate) tpe: SFunc,
+    // Typevars that cannot be inferred from arguments. For example Box.getReg[T](4), T can not be inferred thus must be explicitly serialized
+    pub(crate) explicit_type_args: Vec<STypeVar>,
 }
 
 impl SMethodDesc {
@@ -118,6 +120,7 @@ impl SMethodDesc {
                 t_range: res_tpe.into(),
                 tpe_params: vec![],
             },
+            explicit_type_args: vec![], // TODO: check if PropertyCalls need explicit type args as well
         }
     }
     pub(crate) fn as_method(&self, obj_type: STypeCompanion) -> SMethod {

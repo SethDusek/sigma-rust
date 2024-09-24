@@ -33,6 +33,7 @@ lazy_static! {
             t_range: SType::SGroupElement.into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
      /// GLOBAL.GroupGenerator
     pub static ref GROUP_GENERATOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, GROUP_GENERATOR_METHOD_DESC.clone(),);
@@ -52,6 +53,7 @@ lazy_static! {
             t_range: SType::SColl(SType::SByte.into()).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![]
     };
      /// GLOBAL.xor
     pub static ref XOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, XOR_METHOD_DESC.clone(),);
