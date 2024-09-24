@@ -11,7 +11,7 @@ use ergotree_ir::types::stype::SType;
 use super::EvalError;
 use super::EvalFn;
 
-pub(crate) static DATA_INPUTS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
+pub(crate) static DATA_INPUTS_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
     if obj != Value::Context {
         return Err(EvalError::UnexpectedValue(format!(
             "Context.dataInputs: expected object of Value::Context, got {:?}",
@@ -26,7 +26,7 @@ pub(crate) static DATA_INPUTS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
     }))
 };
 
-pub(crate) static SELF_BOX_INDEX_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
+pub(crate) static SELF_BOX_INDEX_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
     if obj != Value::Context {
         return Err(EvalError::UnexpectedValue(format!(
             "Context.selfBoxIndex: expected object of Value::Context, got {:?}",
@@ -41,7 +41,7 @@ pub(crate) static SELF_BOX_INDEX_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
     Ok(Value::Int(box_index as i32))
 };
 
-pub(crate) static HEADERS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
+pub(crate) static HEADERS_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
     if obj != Value::Context {
         return Err(EvalError::UnexpectedValue(format!(
             "Context.headers: expected object of Value::Context, got {:?}",
@@ -54,7 +54,7 @@ pub(crate) static HEADERS_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
     }))
 };
 
-pub(crate) static PRE_HEADER_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
+pub(crate) static PRE_HEADER_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
     if obj != Value::Context {
         return Err(EvalError::UnexpectedValue(format!(
             "Context.preHeader: expected object of Value::Context, got {:?}",
@@ -64,7 +64,7 @@ pub(crate) static PRE_HEADER_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
     Ok(Box::from(ctx.pre_header.clone()).into())
 };
 
-pub(crate) static LAST_BLOCK_UTXO_ROOT_HASH_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
+pub(crate) static LAST_BLOCK_UTXO_ROOT_HASH_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
     if obj != Value::Context {
         return Err(EvalError::UnexpectedValue(format!(
             "Context.LastBlockUtxoRootHash: expected object of Value::Context, got {:?}",
@@ -81,7 +81,7 @@ pub(crate) static LAST_BLOCK_UTXO_ROOT_HASH_EVAL_FN: EvalFn = |_env, ctx, obj, _
     })))
 };
 
-pub(crate) static MINER_PUBKEY_EVAL_FN: EvalFn = |_env, ctx, obj, _args| {
+pub(crate) static MINER_PUBKEY_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
     if obj != Value::Context {
         return Err(EvalError::UnexpectedValue(format!(
             "Context.preHeader: expected object of Value::Context, got {:?}",

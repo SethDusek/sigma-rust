@@ -5,6 +5,7 @@ use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::expr::Expr;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::types::smethod::SMethod;
 use ergotree_ir::types::stuple::STuple;
 use ergotree_ir::types::stype::SType::SInt;
 
@@ -14,7 +15,7 @@ use super::EvalFn;
 use std::convert::TryFrom;
 use std::sync::Arc;
 
-pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     Ok(Value::Int({
         let normalized_input_vals: Vec<Value> = match obj {
             Value::Coll(coll) => Ok(coll.as_vec()),
@@ -44,6 +45,7 @@ pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 };
 
 pub(crate) fn flatmap_eval<'ctx>(
+    _mc: &SMethod,
     env: &mut Env<'ctx>,
     ctx: &Context<'ctx>,
     obj: Value<'ctx>,
@@ -126,7 +128,7 @@ pub(crate) fn flatmap_eval<'ctx>(
         .map(Value::Coll)
 }
 
-pub(crate) static ZIP_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static ZIP_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let (type_1, coll_1) = match obj {
         Value::Coll(coll) => Ok((coll.elem_tpe().clone(), coll.as_vec())),
         _ => Err(EvalError::UnexpectedValue(format!(
@@ -157,7 +159,7 @@ pub(crate) static ZIP_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     }
 };
 
-pub(crate) static INDICES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static INDICES_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let input_len = match obj {
         Value::Coll(coll) => Ok(coll.len()),
         _ => Err(EvalError::UnexpectedValue(format!(
@@ -180,7 +182,7 @@ pub(crate) static INDICES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     }
 };
 
-pub(crate) static PATCH_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static PATCH_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let (input_tpe, normalized_input_vals) = match obj {
         Value::Coll(coll) => Ok((coll.elem_tpe().clone(), coll.as_vec())),
         _ => Err(EvalError::UnexpectedValue(format!(
@@ -221,7 +223,7 @@ pub(crate) static PATCH_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     Ok(Value::Coll(CollKind::from_collection(input_tpe, res)?))
 };
 
-pub(crate) static UPDATED_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static UPDATED_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let (input_tpe, normalized_input_vals) = match obj {
         Value::Coll(coll) => Ok((coll.elem_tpe().clone(), coll.as_vec())),
         _ => Err(EvalError::UnexpectedValue(format!(
@@ -255,7 +257,7 @@ pub(crate) static UPDATED_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 };
 
 pub(crate) static UPDATE_MANY_EVAL_FN: EvalFn =
-    |_env, _ctx, obj, args| {
+    |_mc, _env, _ctx, obj, args| {
         let (input_tpe, normalized_input_vals) = match obj {
             Value::Coll(coll) => Ok((coll.elem_tpe().clone(), coll.as_vec())),
             _ => Err(EvalError::UnexpectedValue(format!(

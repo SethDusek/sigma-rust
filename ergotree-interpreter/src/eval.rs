@@ -197,6 +197,7 @@ pub(crate) trait Evaluable {
 }
 
 type EvalFn = for<'ctx> fn(
+    mc: &SMethod,
     env: &mut Env<'ctx>,
     ctx: &Context<'ctx>,
     Value<'ctx>,

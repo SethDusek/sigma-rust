@@ -16,7 +16,7 @@ impl Evaluable for MethodCall {
         let ov = self.obj.eval(env, ectx)?;
         let argsv: Result<Vec<Value>, EvalError> =
             self.args.iter().map(|arg| arg.eval(env, ectx)).collect();
-        smethod_eval_fn(&self.method)?(env, ectx, ov, argsv?)
+        smethod_eval_fn(&self.method)?(&self.method, env, ectx, ov, argsv?)
     }
 }
 
@@ -42,7 +42,7 @@ mod tests {
         let mc: Expr = MethodCall::new(
             GlobalVars::SelfBox.into(),
             sbox::GET_REG_METHOD.clone(),
-            vec![Constant::from(0i8).into()],
+            vec![Constant::from(0i32).into()],
         )
         .unwrap()
         .into();

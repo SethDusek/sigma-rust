@@ -7,7 +7,7 @@ use ergotree_ir::serialization::SigmaSerializable;
 
 use super::EvalFn;
 
-pub(crate) static GET_ENCODED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static GET_ENCODED_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let encoded: Vec<u8> = match obj {
         Value::GroupElement(ec_point) => Ok(ec_point.sigma_serialize_bytes()?),
         _ => Err(EvalError::UnexpectedValue(format!(
@@ -19,7 +19,7 @@ pub(crate) static GET_ENCODED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     Ok(Value::from(encoded))
 };
 
-pub(crate) static NEGATE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static NEGATE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let negated: EcPoint = match obj {
         Value::GroupElement(ec_point) => Ok(-(*ec_point).clone()),
         _ => Err(EvalError::UnexpectedValue(format!(

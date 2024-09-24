@@ -51,7 +51,7 @@ impl MethodCall {
             .method_raw
             .explicit_type_args
             .iter()
-            .find(|tpe| !explicit_type_args.contains_key(&tpe))
+            .find(|tpe| !explicit_type_args.contains_key(tpe))
         {
             return Err(InvalidArgumentError(format!(
                 "MethodCall: explicit_type_args does not include substitution for STypeVar {missing_tpe:?}",
