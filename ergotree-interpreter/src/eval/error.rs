@@ -74,17 +74,25 @@ pub enum EvalError {
     /// Wrapped error with source span
     #[error("eval error: {0:?}")]
     Spanned(SpannedEvalError),
+    /// Script version error
+    #[error("Method requires at least version {required_version}, but activated version is {activated_version}")]
+    ScriptVersionError {
+        /// Opcode/method call requires this version
+        required_version: u8,
+        /// Currently activated script version on network
+        activated_version: u8,
+    },
 }
 
 /// Wrapped error with source span
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub struct SpannedEvalError {
     /// eval error
-    error: Box<EvalError>,
+    pub error: Box<EvalError>,
     /// source span for the expression where error occurred
-    source_span: SourceSpan,
+    pub source_span: SourceSpan,
     /// environment at the time when error occurred
-    env: Env<'static>,
+    pub env: Env<'static>,
 }
 
 /// Wrapped error with source span and source code

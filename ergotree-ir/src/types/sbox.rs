@@ -84,6 +84,7 @@ lazy_static! {
         SMethod::new( STypeCompanion::Box,TOKENS_METHOD_DESC.clone(),);
 }
 
+#[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
     use crate::{

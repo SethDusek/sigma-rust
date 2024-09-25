@@ -403,6 +403,22 @@ pub(crate) mod tests {
         })
     }
 
+    // Evaluate with activated version (set block version to version + 1)
+    pub fn try_eval_out_with_version<'ctx, T: TryExtractFrom<Value<'static>> + 'static>(
+        expr: &Expr,
+        ctx: &'ctx Context<'ctx>,
+        version: u8,
+    ) -> Result<T, EvalError> {
+        let mut ctx = ctx.clone();
+        ctx.pre_header.version = version + 1;
+        let mut env = Env::empty();
+        expr.eval(&mut env, &ctx).and_then(|v| {
+            v.to_static()
+                .try_extract_into::<T>()
+                .map_err(EvalError::TryExtractFrom)
+        })
+    }
+
     pub fn try_eval_out_wo_ctx<T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
     ) -> Result<T, EvalError> {

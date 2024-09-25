@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use crate::eval::EvalError;
 
 use ergotree_ir::chain::ergo_box::ErgoBox;
+use ergotree_ir::ergo_tree::ErgoTreeVersion;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::Value;
 use ergotree_ir::reference::Ref;
@@ -16,7 +17,13 @@ pub(crate) static VALUE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     ))
 };
 
-pub(crate) static GET_REG_EVAL_FN: EvalFn = |mc, _env, _ctx, obj, args| {
+pub(crate) static GET_REG_EVAL_FN: EvalFn = |mc, _env, ctx, obj, args| {
+    if ctx.activated_script_version() < ErgoTreeVersion::V6_SOFT_FORK_VERSION {
+        return Err(EvalError::ScriptVersionError {
+            required_version: ErgoTreeVersion::V6_SOFT_FORK_VERSION,
+            activated_version: ctx.activated_script_version(),
+        });
+    }
     #[allow(clippy::unwrap_used)]
     let reg_id: i8 = args
         .first()
@@ -69,22 +76,24 @@ pub(crate) static TOKENS_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 };
 
 #[allow(clippy::unwrap_used)]
+#[allow(clippy::panic)]
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
+    use ergotree_ir::ergo_tree::ErgoTreeVersion;
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::mir::method_call::MethodCall;
     use ergotree_ir::mir::property_call::PropertyCall;
-    use ergotree_ir::mir::value::Value;
     use ergotree_ir::types::sbox;
     use ergotree_ir::types::stype::SType;
     use ergotree_ir::types::stype_param::STypeVar;
     use sigma_test_util::force_any_val;
 
     use crate::eval::context::Context;
-    use crate::eval::tests::{eval_out, try_eval_out};
+    use crate::eval::tests::{eval_out, try_eval_out_with_version};
+    use crate::eval::EvalError;
 
     #[test]
     fn eval_box_value() {
@@ -107,7 +116,6 @@ mod tests {
         );
     }
 
-    // Attempt to extract SigmaProp from register of type SByte
     #[test]
     fn eval_reg_out() {
         let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
@@ -120,7 +128,19 @@ mod tests {
         .unwrap()
         .into();
         let ctx = force_any_val::<Context>();
-        try_eval_out::<Value>(&expr, &ctx).unwrap();
+        (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
+            assert!(try_eval_out_with_version::<i64>(&expr, &ctx, version).is_err())
+        });
+        (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
+            |version| {
+                assert_eq!(
+                    try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version)
+                        .unwrap()
+                        .unwrap(),
+                    ctx.self_box.value.as_i64()
+                )
+            },
+        );
     }
 
     // Attempt to extract SigmaProp from register of type SLong
@@ -136,6 +156,24 @@ mod tests {
         .unwrap()
         .into();
         let ctx = force_any_val::<Context>();
-        assert!(try_eval_out::<Value>(&expr, &ctx).is_err());
+        (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
+            let res = try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version);
+            match res {
+                Err(EvalError::Spanned(err))
+                    if matches!(
+                        *err.error,
+                        EvalError::ScriptVersionError {
+                            required_version: ErgoTreeVersion::V6_SOFT_FORK_VERSION,
+                            activated_version: _
+                        }
+                    ) => {}
+                _ => panic!("Expected script version error"),
+            }
+        });
+        (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
+            |version| {
+                assert!(try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version).is_err())
+            },
+        );
     }
 }

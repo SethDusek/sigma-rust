@@ -7,7 +7,7 @@ use ergotree_ir::chain::ergo_box::ErgoBox;
 pub type TxIoVec<T> = BoundedVec<T, 1, { i16::MAX as usize }>;
 
 /// Interpreter's context (blockchain state)
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Context<'ctx> {
     /// Current height
     pub height: u32,
@@ -34,6 +34,10 @@ impl<'ctx> Context<'ctx> {
             extension: ext,
             ..self
         }
+    }
+    /// Activated script version corresponds to block version - 1
+    pub fn activated_script_version(&self) -> u8 {
+        self.pre_header.version.saturating_sub(1)
     }
 }
 
