@@ -1,5 +1,5 @@
-use std::convert::TryInto;
 use std::io;
+use std::{convert::TryInto, io::Cursor};
 
 use crate::vlq_encode;
 use crate::vlq_encode::*;
@@ -111,8 +111,8 @@ pub trait ScorexSerializable: Sized {
         Ok(w)
     }
     /// Parse `self` from the bytes
-    fn scorex_parse_bytes(mut bytes: &[u8]) -> Result<Self, ScorexParsingError> {
-        Self::scorex_parse(&mut bytes)
+    fn scorex_parse_bytes(bytes: &[u8]) -> Result<Self, ScorexParsingError> {
+        Self::scorex_parse(&mut Cursor::new(bytes))
     }
 }
 
@@ -182,7 +182,7 @@ impl<T: ScorexSerializable> ScorexSerializable for Option<Box<T>> {
 pub fn scorex_serialize_roundtrip<T: ScorexSerializable>(v: &T) -> T {
     let mut data = Vec::new();
     v.scorex_serialize(&mut data).expect("serialization failed");
-    let reader = &mut &data[..];
+    let reader = &mut Cursor::new(&data[..]);
     T::scorex_parse(reader).expect("parse failed")
 }
 

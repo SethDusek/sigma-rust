@@ -12,14 +12,12 @@ use crate::serialization::{
 use crate::sigma_protocol::sigma_boolean::ProveDlog;
 use crate::types::stype::SType;
 use io::Cursor;
-use sigma_ser::vlq_encode::ReadSigmaVlqExt;
 use sigma_ser::vlq_encode::WriteSigmaVlqExt;
 
 use crate::serialization::constant_store::ConstantStore;
 use derive_more::From;
 use std::convert::TryFrom;
 use std::io;
-use std::io::Read;
 use thiserror::Error;
 
 mod tree_header;
@@ -108,6 +106,9 @@ pub enum ErgoTreeError {
     /// IO error
     #[error("IO error: {0:?}")]
     IoError(String),
+    /// ErgoTree root error. ErgoTree root TPE should be SigmaProp
+    #[error("Root Tpe error: expected SigmaProp, got {0}")]
+    RootTpeError(SType),
 }
 
 /// The root of ErgoScript IR. Serialized instances of this class are self sufficient and can be passed around.
@@ -146,6 +147,9 @@ impl ErgoTree {
         };
         r.set_constant_store(ConstantStore::new(constants.clone()));
         let root = Expr::sigma_parse(r)?;
+        if root.tpe() != SType::SSigmaProp {
+            return Err(ErgoTreeError::RootTpeError(root.tpe()));
+        }
         Ok(ParsedErgoTree {
             header,
             constants,
@@ -346,21 +350,22 @@ impl SigmaSerializable for ErgoTree {
     }
 
     fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> Result<Self, SigmaParsingError> {
+        let start_pos = r.stream_position()?;
         let header = ErgoTreeHeader::sigma_parse(r)?;
         if header.has_size() {
             let tree_size_bytes = r.get_u32()?;
+            let body_pos = r.stream_position()?;
             let mut buf = vec![0u8; tree_size_bytes as usize];
             r.read_exact(buf.as_mut_slice())?;
-            let buf_copy = buf.clone();
             let mut inner_r =
                 SigmaByteReader::new(Cursor::new(&mut buf[..]), ConstantStore::empty());
             match ErgoTree::sigma_parse_sized(&mut inner_r, header.clone()) {
                 Ok(parsed_tree) => Ok(parsed_tree.into()),
                 Err(error) => {
-                    let mut bytes = vec![header.serialized()];
-                    #[allow(clippy::unwrap_used)]
-                    bytes.put_u32(tree_size_bytes).unwrap();
-                    bytes.extend_from_slice(&buf_copy);
+                    let num_bytes = (body_pos - start_pos) + tree_size_bytes as u64;
+                    r.seek(io::SeekFrom::Start(start_pos))?;
+                    let mut bytes = vec![0; num_bytes as usize];
+                    r.read_exact(&mut bytes)?;
                     Ok(ErgoTree::Unparsed {
                         tree_bytes: bytes,
                         error,
@@ -380,51 +385,6 @@ impl SigmaSerializable for ErgoTree {
                 constants,
                 root,
             }))
-        }
-    }
-
-    fn sigma_parse_bytes(bytes: &[u8]) -> Result<Self, SigmaParsingError> {
-        let wrap_in_ergotree = |r: Result<ParsedErgoTree, ErgoTreeError>| -> Self {
-            match r {
-                Ok(parsed_tree) => ErgoTree::Parsed(parsed_tree),
-                Err(error) => ErgoTree::Unparsed {
-                    tree_bytes: bytes.to_vec(),
-                    error,
-                },
-            }
-        };
-        let mut r = SigmaByteReader::new(Cursor::new(bytes), ConstantStore::empty());
-        let tree: Result<ErgoTree, SigmaParsingError> = match ErgoTreeHeader::sigma_parse(&mut r) {
-            Ok(header) => {
-                if header.has_size() {
-                    let tree_size_bytes = r.get_u32()?;
-                    let mut buf = vec![0u8; tree_size_bytes as usize];
-                    r.read_exact(buf.as_mut_slice())?;
-                    let mut inner_r =
-                        SigmaByteReader::new(Cursor::new(&mut buf[..]), ConstantStore::empty());
-                    Ok(wrap_in_ergotree(ErgoTree::sigma_parse_sized(
-                        &mut inner_r,
-                        header,
-                    )))
-                } else {
-                    Ok(wrap_in_ergotree(ErgoTree::sigma_parse_sized(
-                        &mut r, header,
-                    )))
-                }
-            }
-            Err(e) => Ok(ErgoTree::Unparsed {
-                tree_bytes: bytes.to_vec(),
-                error: e.into(),
-            }),
-        };
-        let mut buffer = Vec::new();
-        if let Ok(0) = r.read_to_end(&mut buffer) {
-            tree
-        } else {
-            Ok(ErgoTree::Unparsed {
-                tree_bytes: bytes.to_vec(),
-                error: ErgoTreeRootParsingError::NonConsumedBytes.into(),
-            })
         }
     }
 }
@@ -507,6 +467,7 @@ mod tests {
     use crate::chain::address::AddressEncoder;
     use crate::chain::address::NetworkPrefix;
     use crate::mir::constant::Literal;
+    use crate::sigma_protocol::sigma_boolean::SigmaProp;
     use proptest::prelude::*;
 
     proptest! {
@@ -539,16 +500,9 @@ mod tests {
             99,
             99,
         ];
-        let tree = ErgoTree::sigma_parse_bytes(&bytes).unwrap();
-        assert!(tree.parsed_tree().is_err(), "parsing constants should fail");
         assert_eq!(
-            tree.sigma_serialize_bytes().unwrap(),
-            bytes,
-            "serialization should return original bytes"
-        );
-        assert!(
-            tree.template_bytes().is_err(),
-            "template bytes should not be parsed"
+            ErgoTree::sigma_parse_bytes(&bytes),
+            Err(SigmaParsingError::InvalidTypeCode(0))
         );
     }
 
@@ -580,17 +534,7 @@ mod tests {
     fn deserialization_non_parseable_root_v0() {
         // no constant segregation, Expr is invalid
         let bytes = [ErgoTreeHeader::v0(false).serialized(), 0, 1];
-        let tree = ErgoTree::sigma_parse_bytes(&bytes).unwrap();
-        assert!(tree.parsed_tree().is_err(), "parsing root should fail");
-        assert_eq!(
-            tree.sigma_serialize_bytes().unwrap(),
-            bytes,
-            "serialization should return original bytes"
-        );
-        assert!(
-            tree.template_bytes().is_err(),
-            "template bytes should not be parsed"
-        );
+        assert!(ErgoTree::sigma_parse_bytes(&bytes).is_err());
     }
 
     #[test]
@@ -641,8 +585,8 @@ mod tests {
     #[test]
     fn test_constant_segregation() {
         let expr = Expr::Const(Constant {
-            tpe: SType::SBoolean,
-            v: Literal::Boolean(true),
+            tpe: SType::SSigmaProp,
+            v: Literal::SigmaProp(SigmaProp::new(true.into()).into()),
         });
         let ergo_tree = ErgoTree::new(ErgoTreeHeader::v0(false), &expr).unwrap();
         let bytes = ergo_tree.sigma_serialize_bytes().unwrap();
@@ -717,28 +661,21 @@ mod tests {
             tree,
             ErgoTree::Unparsed {
                 tree_bytes,
-                error: ErgoTreeRootParsingError::NonConsumedBytes.into()
+                error: ErgoTreeError::RootTpeError(SType::SByte)
             }
         );
     }
 
     #[test]
-    fn parse_invalid_tree_extra_bytes() {
+    fn parse_tree_extra_bytes() {
         let valid_ergo_tree_hex =
             "0008cd02a706374307f3038cb2f16e7ae9d3e29ca03ea5333681ca06a9bd87baab1164bc";
+        let valid_ergo_tree_bytes = base16::decode(valid_ergo_tree_hex).unwrap();
         // extra bytes at the end will be left unparsed
         let invalid_ergo_tree_with_extra_bytes = format!("{}aaaa", valid_ergo_tree_hex);
         let bytes = base16::decode(invalid_ergo_tree_with_extra_bytes.as_bytes()).unwrap();
         let tree = ErgoTree::sigma_parse_bytes(&bytes).unwrap();
-        //dbg!(&tree);
-        assert_eq!(tree.sigma_serialize_bytes().unwrap(), bytes);
-        assert_eq!(
-            tree,
-            ErgoTree::Unparsed {
-                tree_bytes: bytes,
-                error: ErgoTreeRootParsingError::NonConsumedBytes.into()
-            }
-        );
+        assert_eq!(tree.sigma_serialize_bytes().unwrap(), valid_ergo_tree_bytes);
     }
 
     #[test]
@@ -753,20 +690,20 @@ mod tests {
             tree,
             ErgoTree::Unparsed {
                 tree_bytes: bytes,
-                error: ErgoTreeRootParsingError::NonConsumedBytes.into()
+                error: ErgoTreeError::RootTpeError(SType::SShort)
             }
         );
     }
 
     #[test]
-    fn parse_invalid_tree_707() {
+    fn parse_tree_707() {
         // see https://github.com/ergoplatform/sigma-rust/issues/707
         let ergo_tree_hex =
             "100208cd03553448c194fdd843c87d080f5e8ed983f5bb2807b13b45a9683bba8c7bfb5ae808cd0354c06b1af711e51986d787ff1df2883fcaf8d34865fea720f549e382063a08ebd1eb0273007301";
         let bytes = base16::decode(ergo_tree_hex.as_bytes()).unwrap();
         let tree = ErgoTree::sigma_parse_bytes(&bytes).unwrap();
         //dbg!(&tree);
-        assert!(tree.parsed_tree().is_err(), "the tree is BoolToSigmaProp(SigmaOr(pk1, pk2)) is invalid (BoolToSigmaProp expects bool");
+        assert!(tree.parsed_tree().is_ok());
     }
 
     // Test Ergotree.proposition() for contract with some constants segregated already and some not. See: https://github.com/ergoplatform/sigma-rust/issues/757
