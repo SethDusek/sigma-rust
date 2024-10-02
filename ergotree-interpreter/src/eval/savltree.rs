@@ -20,24 +20,24 @@ use super::EvalError;
 use super::EvalFn;
 use ergotree_ir::types::stype::SType;
 
-pub(crate) static DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static DIGEST_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Coll(CollKind::NativeColl(NativeColl::CollByte(
         avl_tree_data.digest.0.iter().map(|&b| b as i8).collect(),
     ))))
 };
 
-pub(crate) static ENABLED_OPERATIONS_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static ENABLED_OPERATIONS_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Byte(avl_tree_data.tree_flags.serialize() as i8))
 };
 
-pub(crate) static KEY_LENGTH_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static KEY_LENGTH_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Int(avl_tree_data.key_length as i32))
 };
 
-pub(crate) static VALUE_LENGTH_OPT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static VALUE_LENGTH_OPT_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Opt(Box::new(
         avl_tree_data
@@ -46,22 +46,22 @@ pub(crate) static VALUE_LENGTH_OPT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     )))
 };
 
-pub(crate) static IS_INSERT_ALLOWED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static IS_INSERT_ALLOWED_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Boolean(avl_tree_data.tree_flags.insert_allowed()))
 };
 
-pub(crate) static IS_UPDATE_ALLOWED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static IS_UPDATE_ALLOWED_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Boolean(avl_tree_data.tree_flags.update_allowed()))
 };
 
-pub(crate) static IS_REMOVE_ALLOWED_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static IS_REMOVE_ALLOWED_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     Ok(Value::Boolean(avl_tree_data.tree_flags.remove_allowed()))
 };
 
-pub(crate) static UPDATE_OPERATIONS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static UPDATE_OPERATIONS_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let new_operations = {
         let v = args.first().cloned().ok_or_else(|| {
@@ -73,7 +73,7 @@ pub(crate) static UPDATE_OPERATIONS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     Ok(Value::AvlTree(Box::new(avl_tree_data)))
 };
 
-pub(crate) static UPDATE_DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static UPDATE_DIGEST_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let new_digest = {
         let v = args.first().cloned().ok_or_else(|| {
@@ -86,7 +86,7 @@ pub(crate) static UPDATE_DIGEST_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
     Ok(Value::AvlTree(Box::new(avl_tree_data)))
 };
 
-pub(crate) static GET_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static GET_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let key = {
         let v = args
@@ -135,7 +135,7 @@ pub(crate) static GET_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 };
 
 pub(crate) static GET_MANY_EVAL_FN: EvalFn =
-    |_env, _ctx, obj, args| {
+    |_mc, _env, _ctx, obj, args| {
         let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
         let keys = {
@@ -197,7 +197,7 @@ pub(crate) static GET_MANY_EVAL_FN: EvalFn =
     };
 
 pub(crate) static INSERT_EVAL_FN: EvalFn =
-    |_env, _ctx, obj, args| {
+    |_mc, _env, _ctx, obj, args| {
         let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
         if !avl_tree_data.tree_flags.insert_allowed() {
@@ -260,7 +260,7 @@ pub(crate) static INSERT_EVAL_FN: EvalFn =
     };
 
 pub(crate) static REMOVE_EVAL_FN: EvalFn =
-    |_env, _ctx, obj, args| {
+    |_mc, _env, _ctx, obj, args| {
         let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
         if !avl_tree_data.tree_flags.remove_allowed() {
@@ -319,7 +319,7 @@ pub(crate) static REMOVE_EVAL_FN: EvalFn =
         }
     };
 
-pub(crate) static CONTAINS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static CONTAINS_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     let avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
     let key = {
         let v = args
@@ -367,7 +367,7 @@ pub(crate) static CONTAINS_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
 };
 
 pub(crate) static UPDATE_EVAL_FN: EvalFn =
-    |_env, _ctx, obj, args| {
+    |_mc, _env, _ctx, obj, args| {
         let mut avl_tree_data = obj.try_extract_into::<AvlTreeData>()?;
 
         if !avl_tree_data.tree_flags.update_allowed() {

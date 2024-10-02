@@ -159,7 +159,7 @@ impl<W: io::Write + ?Sized> WriteSigmaVlqExt for W {}
 /// Read and decode values using VLQ (+ ZigZag for signed values) encoded and written with [`WriteSigmaVlqExt`]
 /// for VLQ see <https://en.wikipedia.org/wiki/Variable-length_quantity> (GLE)
 /// for ZigZag see <https://developers.google.com/protocol-buffers/docs/encoding#types>
-pub trait ReadSigmaVlqExt: io::Read {
+pub trait ReadSigmaVlqExt: io::Read + io::Seek {
     /// Read i8 without decoding
     fn get_i8(&mut self) -> Result<i8, io::Error> {
         Self::get_u8(self).map(|v| v as i8)
@@ -256,7 +256,7 @@ pub trait ReadSigmaVlqExt: io::Read {
 }
 
 /// Mark all types implementing `Read` as implementing the extension.
-impl<R: io::Read + ?Sized> ReadSigmaVlqExt for R {}
+impl<R: io::Read + io::Seek + ?Sized> ReadSigmaVlqExt for R {}
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]

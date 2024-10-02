@@ -51,7 +51,7 @@ impl ErgoTreeHeader {
 
     /// Parse from byte
     pub fn new(header_byte: u8) -> Result<Self, ErgoTreeHeaderError> {
-        let version = ErgoTreeVersion::parse_version(header_byte)?;
+        let version = ErgoTreeVersion::parse_version(header_byte);
         let has_size = header_byte & Self::HAS_SIZE_FLAG != 0;
         let is_constant_segregation = header_byte & Self::CONSTANT_SEGREGATION_FLAG != 0;
         Ok(ErgoTreeHeader {
@@ -125,19 +125,23 @@ pub struct ErgoTreeVersion(u8);
 impl ErgoTreeVersion {
     /// Header mask to extract version bits.
     pub const VERSION_MASK: u8 = 0x07;
+
+    /// Max version of ErgoTree supported by interpreter
+    pub const MAX_SCRIPT_VERSION: u8 = 3;
+    /// Version for v6.0 (Evolution)
+    pub const V6_SOFT_FORK_VERSION: u8 = 3;
     /// Version 0
     pub const V0: Self = ErgoTreeVersion(0);
     /// Version 1 (size flag is mandatory)
     pub const V1: Self = ErgoTreeVersion(1);
+    /// Version 2 (JIT)
+    pub const V2: Self = ErgoTreeVersion(2);
+    /// Version 3 (v6.0/Evolution)
+    pub const V3: Self = ErgoTreeVersion(Self::V6_SOFT_FORK_VERSION);
 
     /// Returns a value of the version bits from the given header byte.
-    pub fn parse_version(header_byte: u8) -> Result<Self, ErgoTreeVersionError> {
-        let version = header_byte & ErgoTreeVersion::VERSION_MASK;
-        if version <= 1 {
-            Ok(ErgoTreeVersion(version))
-        } else {
-            Err(ErgoTreeVersionError::InvalidVersion(version))
-        }
+    pub fn parse_version(header_byte: u8) -> Self {
+        ErgoTreeVersion(header_byte & ErgoTreeVersion::VERSION_MASK)
     }
 }
 

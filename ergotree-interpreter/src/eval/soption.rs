@@ -2,11 +2,13 @@ use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
 use ergotree_ir::mir::value::Value;
+use ergotree_ir::types::smethod::SMethod;
 
 use super::env::Env;
 use super::Context;
 
 pub fn map_eval<'ctx>(
+    _mc: &SMethod,
     env: &mut Env<'ctx>,
     ctx: &Context<'ctx>,
     obj: Value<'ctx>,
@@ -54,6 +56,7 @@ pub fn map_eval<'ctx>(
 }
 
 pub fn filter_eval<'ctx>(
+    _mc: &SMethod,
     env: &mut Env<'ctx>,
     ctx: &Context<'ctx>,
     obj: Value<'ctx>,

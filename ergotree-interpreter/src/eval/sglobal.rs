@@ -12,7 +12,7 @@ fn helper_xor(x: &[i8], y: &[i8]) -> Arc<[i8]> {
     x.iter().zip(y.iter()).map(|(x1, x2)| *x1 ^ *x2).collect()
 }
 
-pub(crate) static GROUP_GENERATOR_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static GROUP_GENERATOR_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     if obj != Value::Global {
         return Err(EvalError::UnexpectedValue(format!(
             "sglobal.groupGenerator expected obj to be Value::Global, got {:?}",
@@ -22,7 +22,7 @@ pub(crate) static GROUP_GENERATOR_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     Ok(Value::from(generator()))
 };
 
-pub(crate) static XOR_EVAL_FN: EvalFn = |_env, _ctx, obj, args| {
+pub(crate) static XOR_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     if obj != Value::Global {
         return Err(EvalError::UnexpectedValue(format!(
             "sglobal.xor expected obj to be Value::Global, got {:?}",

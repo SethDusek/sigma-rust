@@ -1,6 +1,9 @@
+use std::collections::HashMap;
+
 use crate::serialization::op_code::OpCode;
 use crate::types::smethod::SMethod;
 use crate::types::stype::SType;
+use crate::types::stype_param::STypeVar;
 
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
@@ -24,15 +27,35 @@ pub struct MethodCall {
     pub method: SMethod,
     /// Arguments passed to the method on invocation
     pub args: Vec<Expr>,
+    /// Arguments that cannot be inferred from function signature, such as Box.getReg[T]()
+    pub explicit_type_args: HashMap<STypeVar, SType>,
 }
 
 impl MethodCall {
-    /// Create new object, returns an error if any of the requirements failed
-    pub fn new(obj: Expr, method: SMethod, args: Vec<Expr>) -> Result<Self, InvalidArgumentError> {
+    fn new_inner(
+        method: SMethod,
+        args: Vec<Expr>,
+        obj: Expr,
+        explicit_type_args: HashMap<STypeVar, SType>,
+    ) -> Result<MethodCall, InvalidArgumentError> {
         if method.tpe().t_dom.len() != args.len() + 1 {
             return Err(InvalidArgumentError(format!(
                 "MethodCall: expected arguments count {} does not match provided arguments count {}",
                 method.tpe().t_dom.len(), args.len() + 1)));
+        }
+        if method.method_raw.explicit_type_args.len() != explicit_type_args.len() {
+            return Err(InvalidArgumentError(format!("MethodCall: expected explicit type args count {} does not match provided type args count {}",
+                method.method_raw.explicit_type_args.len(), explicit_type_args.len())));
+        }
+        if let Some(missing_tpe) = method
+            .method_raw
+            .explicit_type_args
+            .iter()
+            .find(|tpe| !explicit_type_args.contains_key(tpe))
+        {
+            return Err(InvalidArgumentError(format!(
+                "MethodCall: explicit_type_args does not include substitution for STypeVar {missing_tpe:?}",
+            )));
         }
         let mut expected_types: Vec<SType> = vec![obj.tpe()];
         let arg_types: Vec<SType> = args.clone().into_iter().map(|a| a.tpe()).collect();
@@ -53,7 +76,23 @@ impl MethodCall {
             obj: obj.into(),
             method,
             args,
+            explicit_type_args,
         })
+    }
+
+    /// Create new object, returns an error if any of the requirements failed
+    pub fn new(obj: Expr, method: SMethod, args: Vec<Expr>) -> Result<Self, InvalidArgumentError> {
+        MethodCall::new_inner(method, args, obj, Default::default())
+    }
+
+    /// Create new object with explicit type args
+    pub fn with_type_args(
+        obj: Expr,
+        method: SMethod,
+        args: Vec<Expr>,
+        type_args: HashMap<STypeVar, SType>,
+    ) -> Result<Self, InvalidArgumentError> {
+        MethodCall::new_inner(method, args, obj, type_args)
     }
 
     /// Type

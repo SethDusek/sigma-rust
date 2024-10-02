@@ -518,6 +518,7 @@ impl Print for MethodCall {
                 obj: Box::new(obj),
                 method: self.method.clone(),
                 args,
+                explicit_type_args: self.explicit_type_args.clone(),
             },
         }
         .into())

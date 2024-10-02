@@ -4,6 +4,7 @@ use super::val_def_type_store::ValDefTypeStore;
 use sigma_ser::vlq_encode::ReadSigmaVlqExt;
 use std::io::Cursor;
 use std::io::Read;
+use std::io::Seek;
 
 /// Implementation of SigmaByteRead
 pub struct SigmaByteReader<R> {
@@ -67,6 +68,20 @@ pub trait SigmaByteRead: ReadSigmaVlqExt {
 impl<R: Read> Read for SigmaByteReader<R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.inner.read(buf)
+    }
+}
+
+impl<R: Seek> Seek for SigmaByteReader<R> {
+    fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+        self.inner.seek(pos)
+    }
+
+    fn rewind(&mut self) -> std::io::Result<()> {
+        self.inner.rewind()
+    }
+
+    fn stream_position(&mut self) -> std::io::Result<u64> {
+        self.inner.stream_position()
     }
 }
 

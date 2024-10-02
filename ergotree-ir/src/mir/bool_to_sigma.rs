@@ -37,7 +37,7 @@ impl OneArgOp for BoolToSigmaProp {
 
 impl OneArgOpTryBuild for BoolToSigmaProp {
     fn try_build(input: Expr) -> Result<Self, InvalidArgumentError> {
-        input.check_post_eval_tpe(&SType::SBoolean)?;
+        // Input TPE is not checked here as old versions of interpreter (v4.0) accepted SigmaProp as argument to BoolToSigmaProp
         Ok(Self {
             input: input.into(),
         })

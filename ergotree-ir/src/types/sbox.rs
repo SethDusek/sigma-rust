@@ -42,6 +42,7 @@ lazy_static! {
             t_range: Box::new(SType::SLong),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![],
     };
     /// Box.value
     pub static ref VALUE_METHOD: SMethod = SMethod::new(STypeCompanion::Box, VALUE_METHOD_DESC.clone(),);
@@ -52,10 +53,11 @@ lazy_static! {
         method_id: GET_REG_METHOD_ID,
         name: "getReg",
         tpe: SFunc {
-            t_dom: vec![SType::SBox, SType::SByte],
+            t_dom: vec![SType::SBox, SType::SInt],
             t_range: SType::SOption(Arc::new(STypeVar::t().into())).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![STypeVar::t()]
     };
     /// Box.getReg
     pub static ref GET_REG_METHOD: SMethod =
@@ -75,14 +77,21 @@ lazy_static! {
                     ).into())).into(),
             tpe_params: vec![],
         },
+        explicit_type_args: vec![],
     };
     /// Box.tokens
     pub static ref TOKENS_METHOD: SMethod =
         SMethod::new( STypeCompanion::Box,TOKENS_METHOD_DESC.clone(),);
 }
 
+#[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
+    use crate::{
+        mir::{constant::Constant, global_vars::GlobalVars, method_call::MethodCall},
+        serialization::SigmaSerializable,
+    };
+
     use super::*;
 
     #[test]
@@ -90,5 +99,21 @@ mod tests {
         assert!(SMethod::from_ids(TYPE_CODE, VALUE_METHOD_ID).map(|e| e.name()) == Ok("value"));
         assert!(SMethod::from_ids(TYPE_CODE, GET_REG_METHOD_ID).map(|e| e.name()) == Ok("getReg"));
         assert!(SMethod::from_ids(TYPE_CODE, TOKENS_METHOD_ID).map(|e| e.name()) == Ok("tokens"));
+    }
+
+    #[test]
+    fn test_getreg_serialization_roundtrip() {
+        let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
+        let mc = MethodCall::with_type_args(
+            GlobalVars::SelfBox.into(),
+            GET_REG_METHOD.clone().with_concrete_types(&type_args),
+            vec![Constant::from(4i32).into()],
+            type_args,
+        )
+        .unwrap();
+        assert_eq!(
+            MethodCall::sigma_parse_bytes(&mc.sigma_serialize_bytes().unwrap()).unwrap(),
+            mc
+        );
     }
 }

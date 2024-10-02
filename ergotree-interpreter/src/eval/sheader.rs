@@ -7,72 +7,72 @@ use ergotree_ir::{bigint256::BigInt256, mir::constant::TryExtractInto};
 
 use super::{EvalError, EvalFn};
 
-pub(crate) static VERSION_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static VERSION_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok((header.version as i8).into())
 };
 
-pub(crate) static ID_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static ID_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<i8>>::into(header.id).into())
 };
 
-pub(crate) static PARENT_ID_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static PARENT_ID_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<i8>>::into(header.parent_id).into())
 };
 
-pub(crate) static AD_PROOFS_ROOT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static AD_PROOFS_ROOT_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<i8>>::into(header.ad_proofs_root).into())
 };
 
-pub(crate) static STATE_ROOT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static STATE_ROOT_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<i8>>::into(header.state_root).into())
 };
 
-pub(crate) static TRANSACTION_ROOT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static TRANSACTION_ROOT_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<i8>>::into(header.transaction_root).into())
 };
 
-pub(crate) static EXTENSION_ROOT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static EXTENSION_ROOT_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<i8>>::into(header.extension_root).into())
 };
 
-pub(crate) static TIMESTAMP_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static TIMESTAMP_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok((header.timestamp as i64).into())
 };
 
-pub(crate) static N_BITS_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static N_BITS_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok((header.n_bits as i64).into())
 };
 
-pub(crate) static HEIGHT_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static HEIGHT_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok((header.height as i32).into())
 };
 
-pub(crate) static MINER_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static MINER_PK_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Arc::new(*header.autolykos_solution.miner_pk).into())
 };
 
-pub(crate) static POW_ONETIME_PK_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static POW_ONETIME_PK_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok((*header.autolykos_solution.pow_onetime_pk.unwrap_or_default()).into())
 };
 
-pub(crate) static POW_NONCE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static POW_NONCE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(header.autolykos_solution.nonce.into())
 };
 
-pub(crate) static POW_DISTANCE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static POW_DISTANCE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     let pow_distance: BigInt256 = header
         .autolykos_solution
@@ -83,7 +83,7 @@ pub(crate) static POW_DISTANCE_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
     Ok(pow_distance.into())
 };
 
-pub(crate) static VOTES_EVAL_FN: EvalFn = |_env, _ctx, obj, _args| {
+pub(crate) static VOTES_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let header = obj.try_extract_into::<Header>()?;
     Ok(Into::<Vec<u8>>::into(header.votes).into())
 };

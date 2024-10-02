@@ -14,7 +14,7 @@ impl Evaluable for PropertyCall {
         ectx: &Context<'ctx>,
     ) -> Result<Value<'ctx>, EvalError> {
         let ov = self.obj.eval(env, ectx)?;
-        smethod_eval_fn(&self.method)?(env, ectx, ov, vec![])
+        smethod_eval_fn(&self.method)?(&self.method, env, ectx, ov, vec![])
     }
 }
 
