@@ -11,7 +11,8 @@ use num_bigint::ToBigInt;
 use num_derive::{One, Zero};
 use num_integer::Integer;
 use num_traits::{
-    Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedSub, Num, Zero,
+    Bounded, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedSub, Num,
+    ToPrimitive, Zero,
 };
 
 /// 256-bit signed integer type
@@ -270,9 +271,41 @@ impl<'a> BitXor<&'a BigInt256> for &'a BigInt256 {
     }
 }
 
+impl ToPrimitive for BigInt256 {
+    fn to_i64(&self) -> Option<i64> {
+        self.0.to_i64()
+    }
+
+    fn to_u64(&self) -> Option<u64> {
+        self.0.to_u64()
+    }
+}
+
 impl fmt::Display for BigInt256 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", &self.to_str_radix(10))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+mod arbitrary {
+    use proptest::{
+        arbitrary::{any, Arbitrary},
+        strategy::{BoxedStrategy, Strategy},
+    };
+
+    use super::BigInt256;
+
+    impl Arbitrary for BigInt256 {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            #[allow(clippy::unwrap_used)]
+            any::<[u8; 32]>()
+                .prop_map(|bytes| Self::try_from(&bytes[..]).unwrap())
+                .boxed()
+        }
     }
 }
 

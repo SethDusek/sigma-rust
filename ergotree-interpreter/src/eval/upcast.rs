@@ -1,4 +1,5 @@
 use ergotree_ir::bigint256::BigInt256;
+use ergotree_ir::ergo_tree::ErgoTreeVersion;
 use ergotree_ir::mir::upcast::Upcast;
 use ergotree_ir::mir::value::Value;
 use ergotree_ir::types::stype::SType;
@@ -8,13 +9,17 @@ use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
-fn upcast_to_bigint(in_v: Value) -> Result<Value, EvalError> {
+fn upcast_to_bigint<'a>(in_v: Value<'a>, ctx: &Context) -> Result<Value<'a>, EvalError> {
     match in_v {
         Value::Byte(v) => Ok(BigInt256::from(v).into()),
         Value::Short(v) => Ok(BigInt256::from(v).into()),
         Value::Int(v) => Ok(BigInt256::from(v).into()),
         Value::Long(v) => Ok(BigInt256::from(v).into()),
-        Value::BigInt(_) => Ok(in_v),
+        Value::BigInt(_)
+            if ctx.activated_script_version() >= ErgoTreeVersion::V6_SOFT_FORK_VERSION =>
+        {
+            Ok(in_v)
+        }
         _ => Err(EvalError::UnexpectedValue(format!(
             "Upcast: cannot upcast {0:?} to BigInt",
             in_v
@@ -76,7 +81,7 @@ impl Evaluable for Upcast {
     ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
         match self.tpe {
-            SType::SBigInt => upcast_to_bigint(input_v),
+            SType::SBigInt => upcast_to_bigint(input_v, ctx),
             SType::SLong => upcast_to_long(input_v),
             SType::SInt => upcast_to_int(input_v),
             SType::SShort => upcast_to_short(input_v),
@@ -94,8 +99,9 @@ impl Evaluable for Upcast {
 #[cfg(test)]
 mod tests {
     use ergotree_ir::mir::constant::Constant;
+    use sigma_test_util::force_any_val;
 
-    use crate::eval::tests::eval_out_wo_ctx;
+    use crate::eval::tests::{eval_out_wo_ctx, try_eval_out_with_version};
 
     use super::*;
     use proptest::prelude::*;
@@ -177,13 +183,15 @@ mod tests {
         }
 
         #[test]
-        fn from_bigint(v in any::<i64>()) {
-            let v: BigInt256 = v.into();
+        fn from_bigint(v in any::<BigInt256>()) {
             let c: Constant = v.clone().into();
-            assert_eq!(
-                eval_out_wo_ctx::<BigInt256>(&Upcast::new(c.into(), SType::SBigInt).unwrap().into()),
-                v
-            );
+            let ctx = force_any_val::<Context>();
+            (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
+                assert!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version).is_err());
+            });
+            (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(|version| {
+                assert_eq!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version).unwrap(), v.clone());
+            });
         }
     }
 }
