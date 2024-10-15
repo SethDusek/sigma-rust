@@ -22,11 +22,13 @@ pub const GROUP_GENERATOR_METHOD_ID: MethodId = MethodId(1);
 pub const XOR_METHOD_ID: MethodId = MethodId(2);
 /// "fromBigEndianBytes" predefined function
 pub const FROM_BIGENDIAN_BYTES_METHOD_ID: MethodId = MethodId(5);
+/// serialize function added in v6.0
+pub const SERIALIZE_METHOD_ID: MethodId = MethodId(3);
 
 lazy_static! {
     /// Global method descriptors
     pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
-        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
+        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
 }
 
 lazy_static! {
@@ -71,11 +73,26 @@ lazy_static! {
         name: "fromBigEndianBytes",
         tpe: SFunc {
             t_dom: vec![SType::SGlobal, SType::SColl(SType::SByte.into())],
-            t_range:SType::STypeVar(STypeVar::t()).into(),
+            t_range: SType::STypeVar(STypeVar::t()).into(),
             tpe_params: vec![],
         },
         explicit_type_args: vec![STypeVar::t()]
     };
     /// GLOBAL.fromBigEndianBytes
     pub static ref FROM_BIGENDIAN_BYTES_METHOD: SMethod = SMethod::new(STypeCompanion::Global, FROM_BIGENDIAN_BYTES_METHOD_DESC.clone(),);
+    static ref SERIALIZE_METHOD_DESC: SMethodDesc = SMethodDesc {
+        method_id: SERIALIZE_METHOD_ID,
+        name: "serialize",
+        tpe: SFunc {
+            t_dom: vec![
+                SType::SGlobal,
+                STypeVar::t().into()
+            ],
+            t_range: SType::SColl(SType::SByte.into()).into(),
+            tpe_params: vec![],
+        },
+        explicit_type_args: vec![]
+    };
+     /// GLOBAL.serialize
+    pub static ref SERIALIZE_METHOD: SMethod = SMethod::new(STypeCompanion::Global, SERIALIZE_METHOD_DESC.clone(),);
 }

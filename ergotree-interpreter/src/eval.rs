@@ -345,6 +345,7 @@ fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
             sglobal::FROM_BIGENDIAN_BYTES_METHOD_ID => {
                 self::sglobal::SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN
             }
+            sglobal::SERIALIZE_METHOD_ID => self::sglobal::SERIALIZE_EVAL_FN,
             method_id => {
                 return Err(EvalError::NotFound(format!(
                     "Eval fn: method {:?} with method id {:?} not found in SGlobal",
