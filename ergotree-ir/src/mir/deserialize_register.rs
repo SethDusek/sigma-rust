@@ -39,6 +39,7 @@ impl SigmaSerializable for DeserializeRegister {
     }
 
     fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> Result<Self, SigmaParsingError> {
+        r.set_deserialize(true);
         let reg = r.get_u8()?;
         let tpe = SType::sigma_parse(r)?;
         let default = Option::<Box<Expr>>::sigma_parse(r)?;

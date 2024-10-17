@@ -39,6 +39,7 @@ impl SigmaSerializable for DeserializeContext {
     }
 
     fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> Result<Self, SigmaParsingError> {
+        r.set_deserialize(true);
         let tpe = SType::sigma_parse(r)?;
         let id = r.get_u8()?;
         Ok(Self { tpe, id })

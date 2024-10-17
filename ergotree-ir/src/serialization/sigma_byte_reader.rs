@@ -12,6 +12,7 @@ pub struct SigmaByteReader<R> {
     constant_store: ConstantStore,
     substitute_placeholders: bool,
     val_def_type_store: ValDefTypeStore,
+    was_deserialize: bool,
 }
 
 impl<R: Read> SigmaByteReader<R> {
@@ -22,6 +23,7 @@ impl<R: Read> SigmaByteReader<R> {
             constant_store,
             substitute_placeholders: false,
             val_def_type_store: ValDefTypeStore::new(),
+            was_deserialize: false,
         }
     }
 
@@ -36,6 +38,7 @@ impl<R: Read> SigmaByteReader<R> {
             constant_store,
             substitute_placeholders: true,
             val_def_type_store: ValDefTypeStore::new(),
+            was_deserialize: false,
         }
     }
 }
@@ -47,6 +50,7 @@ pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> SigmaByteReader<Cursor<T>> {
         constant_store: ConstantStore::empty(),
         substitute_placeholders: false,
         val_def_type_store: ValDefTypeStore::new(),
+        was_deserialize: false,
     }
 }
 
@@ -63,6 +67,12 @@ pub trait SigmaByteRead: ReadSigmaVlqExt {
 
     /// ValDef types store (resolves tpe on ValUse parsing)
     fn val_def_type_store(&mut self) -> &mut ValDefTypeStore;
+
+    /// Returns if value that was deserialized has deserialize nodes, such as DeserializeContext and DeserializeRegister
+    fn was_deserialize(&self) -> bool;
+
+    /// Set that deserialization node was read
+    fn set_deserialize(&mut self, has_deserialize: bool);
 }
 
 impl<R: Read> Read for SigmaByteReader<R> {
@@ -100,5 +110,13 @@ impl<R: ReadSigmaVlqExt> SigmaByteRead for SigmaByteReader<R> {
 
     fn val_def_type_store(&mut self) -> &mut ValDefTypeStore {
         &mut self.val_def_type_store
+    }
+
+    fn was_deserialize(&self) -> bool {
+        self.was_deserialize
+    }
+
+    fn set_deserialize(&mut self, has_deserialize: bool) {
+        self.was_deserialize = has_deserialize
     }
 }
