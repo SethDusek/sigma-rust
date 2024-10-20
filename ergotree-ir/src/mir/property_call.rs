@@ -1,4 +1,5 @@
 use crate::serialization::op_code::OpCode;
+use crate::traversable::impl_traversable_expr;
 use crate::types::smethod::SMethod;
 use crate::types::stype::SType;
 
@@ -52,3 +53,5 @@ impl PropertyCall {
 impl HasStaticOpCode for PropertyCall {
     const OP_CODE: OpCode = OpCode::PROPERTY_CALL;
 }
+
+impl_traversable_expr!(PropertyCall, boxed obj);

@@ -7,6 +7,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 use std::sync::Arc;
 
@@ -62,6 +63,8 @@ impl SigmaSerializable for OptionGetOrElse {
         Ok(OptionGetOrElse::new(input, default)?)
     }
 }
+
+impl_traversable_expr!(OptionGetOrElse, boxed input, boxed default);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

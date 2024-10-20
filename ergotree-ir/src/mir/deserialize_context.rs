@@ -7,7 +7,10 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
+
+use super::expr::Expr;
 
 /// Extracts context variable as `Coll[Byte]`, deserializes it to script and then executes
 /// this script in the current context. The original `Coll[Byte]` of the script is
@@ -45,6 +48,8 @@ impl SigmaSerializable for DeserializeContext {
         Ok(Self { tpe, id })
     }
 }
+
+impl_traversable_expr!(DeserializeContext);
 
 #[cfg(feature = "arbitrary")]
 /// Arbitrary impl

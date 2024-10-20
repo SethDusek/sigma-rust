@@ -4,6 +4,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stuple::STuple;
 use crate::types::stype::SType;
 
@@ -79,6 +80,8 @@ impl SigmaSerializable for Fold {
         })
     }
 }
+
+impl_traversable_expr!(Fold, boxed input, boxed zero, boxed fold_op);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

@@ -5,7 +5,10 @@ use std::sync::Arc;
 
 use crate::has_opcode::HasOpCode;
 use crate::serialization::op_code::OpCode;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
+
+use super::expr::Expr;
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 /// Predefined global variables
@@ -64,6 +67,8 @@ impl Display for GlobalVars {
         }
     }
 }
+
+impl_traversable_expr!(GlobalVars);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

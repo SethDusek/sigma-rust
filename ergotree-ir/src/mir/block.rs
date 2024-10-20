@@ -8,6 +8,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /** Block of statements ending with an expression
@@ -52,6 +53,8 @@ impl SigmaSerializable for BlockValue {
         })
     }
 }
+
+impl_traversable_expr!(BlockValue, arr items, boxed result);
 
 /// Arbitrary impl
 #[cfg(feature = "arbitrary")]

@@ -29,6 +29,9 @@ impl OneArgOp for ExtractBytesWithNoRef {
     fn input(&self) -> &Expr {
         &self.input
     }
+    fn input_mut(&mut self) -> &mut Expr {
+        &mut self.input
+    }
 }
 
 impl OneArgOpTryBuild for ExtractBytesWithNoRef {

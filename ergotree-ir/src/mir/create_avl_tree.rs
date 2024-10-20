@@ -7,6 +7,7 @@ use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::{SigmaParsingError, SigmaSerializable, SigmaSerializeResult};
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /// Creates an AVL tree
@@ -78,6 +79,8 @@ impl SigmaSerializable for CreateAvlTree {
         self.value_length.sigma_serialize(w)
     }
 }
+
+impl_traversable_expr!(CreateAvlTree, boxed flags, boxed digest, boxed key_length, opt value_length);
 
 #[allow(clippy::unwrap_used)]
 #[cfg(feature = "arbitrary")]

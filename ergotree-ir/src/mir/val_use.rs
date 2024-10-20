@@ -1,3 +1,4 @@
+use super::expr::Expr;
 use super::val_def::ValId;
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;
@@ -6,6 +7,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /** Special node which represents a reference to ValDef in was introduced as result of CSE. */
@@ -37,6 +39,8 @@ impl SigmaSerializable for ValUse {
         Ok(ValUse { val_id, tpe })
     }
 }
+
+impl_traversable_expr!(ValUse);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

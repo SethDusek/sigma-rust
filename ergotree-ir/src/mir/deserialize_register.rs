@@ -8,6 +8,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /// Extract register of SELF box as `Coll[Byte]`, deserialize and execute Expr out of it
@@ -20,6 +21,7 @@ pub struct DeserializeRegister {
     /// Default value (expression that would be executed if register is empty)
     pub default: Option<Box<Expr>>,
 }
+
 impl DeserializeRegister {
     /// Type
     pub fn tpe(&self) -> SType {
@@ -46,6 +48,8 @@ impl SigmaSerializable for DeserializeRegister {
         Ok(Self { reg, tpe, default })
     }
 }
+
+impl_traversable_expr!(DeserializeRegister, opt default);
 
 #[cfg(feature = "arbitrary")]
 /// Arbitrary impl

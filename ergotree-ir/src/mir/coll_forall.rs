@@ -9,6 +9,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /// Tests whether a predicate holds for all elements of this collection.
@@ -73,6 +74,8 @@ impl SigmaSerializable for ForAll {
         Ok(ForAll::new(input, condition)?)
     }
 }
+
+impl_traversable_expr!(ForAll, boxed input, boxed condition);
 
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]

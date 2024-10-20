@@ -9,6 +9,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /// Selects all elements of the collection that satisfy the condition
@@ -73,6 +74,8 @@ impl SigmaSerializable for Filter {
         Ok(Filter::new(input, condition)?)
     }
 }
+
+impl_traversable_expr!(Filter, boxed input, boxed condition);
 
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]

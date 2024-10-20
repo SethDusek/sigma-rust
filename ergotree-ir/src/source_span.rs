@@ -28,6 +28,7 @@ use crate::mir::select_field::SelectField;
 use crate::mir::subst_const::SubstConstants;
 use crate::mir::tree_lookup::TreeLookup;
 use crate::mir::val_def::ValDef;
+use crate::traversable::Traversable;
 
 /// Source position for the Expr
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
@@ -76,6 +77,16 @@ impl<T> Spanned<T> {
     /// Expression
     pub fn expr(&self) -> &T {
         &self.expr
+    }
+}
+
+impl<T: Traversable> Traversable for Spanned<T> {
+    type Item = T::Item;
+    fn children<'a>(&'a self) -> Box<dyn Iterator<Item = &Self::Item> + 'a> {
+        self.expr.children()
+    }
+    fn children_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &mut T::Item> + 'a> {
+        self.expr.children_mut()
     }
 }
 
