@@ -211,23 +211,11 @@ impl ErgoTree {
     /// get Expr out of ErgoTree
     pub fn proposition(&self) -> Result<Expr, ErgoTreeError> {
         let tree = self.parsed_tree()?.clone();
+        let root = tree.root;
         // This tree has ConstantPlaceholder nodes instead of Constant nodes.
         // We need to substitute placeholders with constant values.
-        // So far the easiest way to do it is during deserialization (after the serialization)
-        let root = tree.root;
         if tree.header.is_constant_segregation() {
-            let mut data = Vec::new();
-            let constants = {
-                let cs = ConstantStore::new(tree.constants.clone());
-                let mut w = SigmaByteWriter::new(&mut data, Some(cs));
-                root.sigma_serialize(&mut w)?;
-                #[allow(clippy::unwrap_used)] // constant store is specified in SigmaByteWriter::new
-                w.constant_store.unwrap()
-            };
-            let cursor = Cursor::new(&mut data[..]);
-            let mut sr = SigmaByteReader::new_with_substitute_placeholders(cursor, constants);
-            let parsed_expr = Expr::sigma_parse(&mut sr)?;
-            Ok(parsed_expr)
+            Ok(root.substitute_constants(&tree.constants)?)
         } else {
             Ok(root)
         }

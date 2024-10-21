@@ -1,10 +1,12 @@
 //! IR expression
 
+use std::convert::Infallible;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 
 use crate::pretty_printer::PosTrackingWriter;
 use crate::pretty_printer::Print;
+use crate::serialization::SigmaParsingError;
 use crate::source_span::Spanned;
 use crate::traversable::Traversable;
 use crate::types::stype::LiftIntoSType;
@@ -324,6 +326,57 @@ impl Expr {
                 expected_tpe, expr_tpe
             )))
         }
+    }
+
+    /// Rewrite tree, matching nodes that satisfy [`rule`] and applying [`subst`] to them
+    pub fn rewrite_bu(&self, rule: impl Fn(&Expr) -> bool, subst: impl Fn(&mut Expr)) -> Self {
+        let mut new_root = self.clone();
+        Self::rewrite_bu_inner(&mut new_root, &rule, &|node| {
+            Ok::<_, Infallible>(subst(node))
+        })
+        .unwrap();
+        new_root
+    }
+
+    /// Attempt to rewrite tree, returning early if [`subst`] returns `Err(E)`
+    pub fn try_rewrite_bu<E>(
+        &self,
+        rule: impl Fn(&Expr) -> bool,
+        subst: impl Fn(&mut Expr) -> Result<(), E>,
+    ) -> Result<Self, E> {
+        let mut new_root = self.clone();
+        Self::rewrite_bu_inner(&mut new_root, &rule, &subst).map(|_| new_root)
+    }
+
+    fn rewrite_bu_inner<E>(
+        root: &mut Expr,
+        rule: &impl Fn(&Expr) -> bool,
+        subst: &impl Fn(&mut Expr) -> Result<(), E>,
+    ) -> Result<(), E> {
+        root.children_mut()
+            .try_for_each(|expr| Self::rewrite_bu_inner(expr, rule, subst))?;
+        if rule(root) {
+            subst(root)?;
+        }
+        Ok(())
+    }
+
+    /// Substitute [`ConstantPlaceholder`] nodes in `self` with [`Constant`]
+    /// Errors if a constant can not be found in `constants`
+    pub fn substitute_constants(&self, constants: &[Constant]) -> Result<Self, SigmaParsingError> {
+        self.try_rewrite_bu::<SigmaParsingError>(
+            |expr| matches!(expr, Expr::ConstPlaceholder(_)),
+            |expr| {
+                if let Expr::ConstPlaceholder(ConstantPlaceholder { id, tpe: _ }) = expr {
+                    *expr = constants
+                        .get(*id as usize)
+                        .cloned()
+                        .map(Expr::from)
+                        .ok_or(SigmaParsingError::ConstantForPlaceholderNotFound(*id))?;
+                }
+                Ok(())
+            },
+        )
     }
 
     /// Prints the tree with newlines
