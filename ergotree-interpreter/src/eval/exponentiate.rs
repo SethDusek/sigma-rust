@@ -39,9 +39,9 @@ impl Evaluable for Exponentiate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
     use crate::sigma_protocol::private_input::DlogProverInput;
+    use ergotree_ir::chain::context::Context;
 
     use ergo_chain_types::EcPoint;
     use ergotree_ir::bigint256::BigInt256;

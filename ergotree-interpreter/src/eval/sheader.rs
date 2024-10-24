@@ -97,16 +97,14 @@ mod tests {
     use ergo_chain_types::{BlockId, Digest, Digest32, EcPoint, Votes};
     use ergotree_ir::{
         bigint256::BigInt256,
+        chain::context::Context,
         mir::{coll_by_index::ByIndex, expr::Expr, property_call::PropertyCall},
         types::{scontext, sheader, smethod::SMethod},
     };
     use sigma_test_util::force_any_val;
     use sigma_util::AsVecU8;
 
-    use crate::eval::{
-        context::Context,
-        tests::{eval_out, try_eval_out_wo_ctx},
-    };
+    use crate::eval::tests::{eval_out, try_eval_out_wo_ctx};
 
     // Index in Context.headers array
     const HEADER_INDEX: usize = 0;

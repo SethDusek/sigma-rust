@@ -1,4 +1,4 @@
-use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
+use ergotree_ir::chain::context_extension::ContextExtension;
 use ergotree_ir::{mir::constant::Constant, serialization::SigmaSerializable};
 use indexmap::IndexMap;
 use serde::{ser::SerializeMap, Deserialize, Serialize};

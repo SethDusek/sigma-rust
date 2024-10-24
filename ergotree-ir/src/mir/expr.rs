@@ -4,9 +4,14 @@ use std::convert::Infallible;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 
+use crate::chain::context::Context;
+use crate::chain::ergo_box::RegisterId;
+use crate::chain::ergo_box::RegisterIdOutOfBounds;
+use crate::chain::ergo_box::RegisterValueError;
 use crate::pretty_printer::PosTrackingWriter;
 use crate::pretty_printer::Print;
 use crate::serialization::SigmaParsingError;
+use crate::serialization::SigmaSerializable;
 use crate::source_span::Spanned;
 use crate::traversable::Traversable;
 use crate::types::stype::LiftIntoSType;
@@ -36,6 +41,7 @@ use super::constant::ConstantPlaceholder;
 use super::constant::Literal;
 use super::constant::TryExtractFrom;
 use super::constant::TryExtractFromError;
+use super::constant::TryExtractInto;
 use super::create_avl_tree::CreateAvlTree;
 use super::create_provedlog::CreateProveDlog;
 use super::decode_point::DecodePoint;
@@ -328,7 +334,7 @@ impl Expr {
         }
     }
 
-    /// Rewrite tree, matching nodes that satisfy [`rule`] and applying [`subst`] to them
+    /// Rewrite tree bottom-up, matching nodes that satisfy `rule` and applying `subst` to them
     pub fn rewrite_bu(&self, rule: impl Fn(&Expr) -> bool, subst: impl Fn(&mut Expr)) -> Self {
         let mut new_root = self.clone();
         Self::rewrite_bu_inner(&mut new_root, &rule, &|node| {
@@ -338,14 +344,13 @@ impl Expr {
         new_root
     }
 
-    /// Attempt to rewrite tree, returning early if [`subst`] returns `Err(E)`
+    /// Attempt to rewrite tree, returning early if `subst` returns `Err(E)`
     pub fn try_rewrite_bu<E>(
-        &self,
+        mut self,
         rule: impl Fn(&Expr) -> bool,
         subst: impl Fn(&mut Expr) -> Result<(), E>,
     ) -> Result<Self, E> {
-        let mut new_root = self.clone();
-        Self::rewrite_bu_inner(&mut new_root, &rule, &subst).map(|_| new_root)
+        Self::rewrite_bu_inner(&mut self, &rule, &subst).map(|_| self)
     }
 
     fn rewrite_bu_inner<E>(
@@ -361,9 +366,92 @@ impl Expr {
         Ok(())
     }
 
+    /// Return an iterator over the [`Expr`]
+    /// The iterator performs a pre-order traversal
+    pub fn iter(&self) -> impl Iterator<Item = &Expr> {
+        struct ExprIterator<'a> {
+            stack: Vec<&'a Expr>,
+        }
+        impl<'a> Iterator for ExprIterator<'a> {
+            type Item = &'a Expr;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let cur = self.stack.pop()?;
+                for node in cur.children() {
+                    self.stack.push(node);
+                }
+                Some(cur)
+            }
+        }
+        ExprIterator { stack: vec![&self] }
+    }
+
+    /// Returns true if the [`Expr`] has deserialize nodes, see: [`DeserializeContext`] and [`DeserializeRegister`]
+    pub fn has_deserialize(&self) -> bool {
+        // TODO: if expr is deserialized, use has_deserialize flag from reader to skip traversing tree
+        self.iter().any(|c| {
+            matches!(
+                c,
+                Expr::DeserializeContext(_) | Expr::DeserializeRegister(_)
+            )
+        })
+    }
+
+    /// Rewrite expr, replacing [`DeserializeContext`] and [`DeserializeRegister`] nodes with their respective context extension/register values
+    pub fn substitute_deserialize(self, ctx: &Context) -> Result<Self, SubstDeserializeError> {
+        self.try_rewrite_bu(
+            |expr| {
+                matches!(
+                    expr,
+                    Expr::DeserializeContext(_) | Expr::DeserializeRegister(_)
+                )
+            },
+            |expr| {
+                let (tpe, parsed_expr): (&mut SType, Expr) = match expr {
+                    Expr::DeserializeContext(DeserializeContext { tpe, id }) => {
+                        let vec = ctx
+                            .extension
+                            .values
+                            .get(&*id)
+                            .ok_or(SubstDeserializeError::ExtensionKeyNotFound(*id))?
+                            .clone()
+                            .try_extract_into::<Vec<u8>>()?;
+                        (tpe, Expr::sigma_parse_bytes(&vec)?)
+                    }
+                    Expr::DeserializeRegister(DeserializeRegister { reg, tpe, default }) => {
+                        let expr = ctx
+                            .self_box
+                            .get_register(*reg)?
+                            .map(|constant| -> Result<_, SubstDeserializeError> {
+                                Ok(Expr::sigma_parse_bytes(
+                                    &constant.try_extract_into::<Vec<u8>>()?,
+                                )?)
+                            })
+                            .transpose()?
+                            .or(default.as_deref().cloned());
+                        match expr {
+                            Some(expr) => (tpe, expr),
+                            None => return Ok(()), // When script in register is not found, and default is not defined, leave DeserializeRegisterNode unchanged, which will error on evaluation
+                        }
+                    }
+                    #[allow(clippy::unreachable)] // Rule is already checked in filter
+                    _ => unreachable!(),
+                };
+                if parsed_expr.tpe() != *tpe {
+                    return Err(SubstDeserializeError::ExprTpeError {
+                        expected: tpe.clone(),
+                        actual: parsed_expr.tpe(),
+                    });
+                }
+                *expr = parsed_expr;
+                Ok(())
+            },
+        )
+    }
+
     /// Substitute [`ConstantPlaceholder`] nodes in `self` with [`Constant`]
     /// Errors if a constant can not be found in `constants`
-    pub fn substitute_constants(&self, constants: &[Constant]) -> Result<Self, SigmaParsingError> {
+    pub fn substitute_constants(self, constants: &[Constant]) -> Result<Self, SigmaParsingError> {
         self.try_rewrite_bu::<SigmaParsingError>(
             |expr| matches!(expr, Expr::ConstPlaceholder(_)),
             |expr| {
@@ -568,6 +656,25 @@ impl From<BoundedVecOutOfBounds> for InvalidArgumentError {
     fn from(e: BoundedVecOutOfBounds) -> Self {
         InvalidArgumentError(format!("BoundedVecOutOfBounds: {0}", e))
     }
+}
+
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
+pub enum SubstDeserializeError {
+    #[error("TryExtractFromError: {0}")]
+    TryExtractFromError(#[from] TryExtractFromError),
+    #[error("Could not find context extension variable {0}")]
+    ExtensionKeyNotFound(u8),
+    #[error("executeFromReg: Register out of bounds {0}")]
+    InvalidRegister(#[from] RegisterIdOutOfBounds),
+    #[error("Register {0} does not exist")]
+    RegisterNotFound(RegisterId),
+    #[error("RegisterValueError: {0}")]
+    RegisterValueError(#[from] RegisterValueError),
+    #[error("Error while parsing Expr from bytes: {0}")]
+    ExprParsingError(#[from] SigmaParsingError),
+    #[error("Expected tpe {expected}, found {actual}")]
+    ExprTpeError { expected: SType, actual: SType },
 }
 
 impl<T: TryFrom<Expr>> TryExtractFrom<Expr> for T {

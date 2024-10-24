@@ -1,7 +1,8 @@
-use crate::sigma_protocol::prover::ContextExtension;
+//! Context(blockchain) for the interpreter
+use crate::chain::context_extension::ContextExtension;
+use crate::chain::ergo_box::ErgoBox;
 use bounded_vec::BoundedVec;
 use ergo_chain_types::{Header, PreHeader};
-use ergotree_ir::chain::ergo_box::ErgoBox;
 
 /// BoundedVec type for Tx inputs, output_candidates and outputs
 pub type TxIoVec<T> = BoundedVec<T, 1, { i16::MAX as usize }>;

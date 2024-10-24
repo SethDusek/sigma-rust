@@ -1,98 +1,26 @@
-use std::convert::TryInto;
-
-use ergotree_ir::chain::ergo_box::RegisterId;
-use ergotree_ir::mir::constant::TryExtractInto;
-use ergotree_ir::mir::deserialize_register::DeserializeRegister;
-use ergotree_ir::mir::expr::Expr;
-use ergotree_ir::mir::value::Value;
-use ergotree_ir::serialization::SigmaSerializable;
-use ergotree_ir::types::stype::SType;
-
-use crate::eval::env::Env;
-use crate::eval::Context;
-use crate::eval::EvalError;
-use crate::eval::Evaluable;
-
-impl Evaluable for DeserializeRegister {
-    fn eval<'ctx>(
-        &self,
-        env: &mut Env<'ctx>,
-        ctx: &Context<'ctx>,
-    ) -> Result<Value<'ctx>, EvalError> {
-        let reg_id: RegisterId = self.reg.try_into().map_err(|e| {
-            EvalError::RegisterIdOutOfBounds(format!("register index is out of bounds: {:?} ", e))
-        })?;
-        match ctx.self_box.get_register(reg_id) {
-            Ok(Some(c)) => {
-                if c.tpe != SType::SColl(SType::SByte.into()) {
-                    Err(EvalError::UnexpectedExpr(format!(
-                        "DeserializeRegister: expected register {} value {} to have type SColl(SByte), got {:?}",
-                        reg_id, c, c.tpe
-                    )))
-                } else {
-                    let bytes = c.v.try_extract_into::<Vec<u8>>()?;
-                    let expr = Expr::sigma_parse_bytes(bytes.as_slice())?;
-                    if expr.tpe() != self.tpe {
-                        let pretty_expr = expr.to_string_pretty();
-                        Err(EvalError::UnexpectedExpr(format!("DeserializeRegister: expected register {reg_id} deserialized expr {pretty_expr} to have type {:?}, got {:?}", self.tpe, expr.tpe())))
-                    } else {
-                        expr.eval(env, ctx)
-                    }
-                }
-            }
-            Ok(None) => match &self.default {
-                Some(default_expr) => eval_default(&self.tpe, default_expr, env, ctx),
-                None => Err(EvalError::NotFound(format!(
-                    "DeserializeRegister: register {reg_id} is empty"
-                ))),
-            },
-            Err(e) => match &self.default {
-                Some(default_expr) => eval_default(&self.tpe, default_expr, env, ctx),
-                None => Err(EvalError::NotFound(format!(
-                    "DeserializeRegister: failed to get the register id {reg_id} with error: {e:?}"
-                ))),
-            },
-        }
-    }
-}
-
-fn eval_default<'ctx>(
-    deserialize_reg_tpe: &SType,
-    default_expr: &Expr,
-    env: &mut Env<'ctx>,
-    ctx: &Context<'ctx>,
-) -> Result<Value<'ctx>, EvalError> {
-    if &default_expr.tpe() != deserialize_reg_tpe {
-        Err(EvalError::UnexpectedExpr(format!(
-            "DeserializeRegister: expected default expr to have type {:?}, got {:?}",
-            deserialize_reg_tpe,
-            default_expr.tpe()
-        )))
-    } else {
-        default_expr.eval(env, ctx)
-    }
-}
-
 #[allow(clippy::unwrap_used)]
 #[cfg(feature = "arbitrary")]
 #[cfg(test)]
 mod tests {
 
     use ergotree_ir::chain::ergo_box::ErgoBox;
+    use ergotree_ir::chain::ergo_box::NonMandatoryRegisterId;
     use ergotree_ir::chain::ergo_box::NonMandatoryRegisters;
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::bin_op::RelationOp;
     use ergotree_ir::mir::constant::Constant;
+    use ergotree_ir::mir::deserialize_register::DeserializeRegister;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
+    use ergotree_ir::mir::value::Value;
     use ergotree_ir::serialization::SigmaSerializable;
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
 
-    use crate::eval::context::Context;
     use crate::eval::tests::try_eval_out;
-
-    use super::*;
+    use crate::eval::tests::try_eval_with_deserialize;
+    use crate::eval::EvalError;
+    use ergotree_ir::chain::context::Context;
 
     fn make_ctx_with_self_box(self_box: ErgoBox) -> Context<'static> {
         let ctx = force_any_val::<Context>();
@@ -117,13 +45,13 @@ mod tests {
             .with_additional_registers(vec![reg_value].try_into().unwrap());
         // expected SBoolean
         let expr: Expr = DeserializeRegister {
-            reg: 4,
+            reg: NonMandatoryRegisterId::R4.into(),
             tpe: SType::SBoolean,
             default: None,
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert!(try_eval_out::<bool>(&expr, &ctx).unwrap());
+        assert!(try_eval_with_deserialize::<bool>(&expr, &ctx).unwrap());
     }
 
     #[test]
@@ -132,7 +60,7 @@ mod tests {
             force_any_val::<ErgoBox>().with_additional_registers(NonMandatoryRegisters::empty());
         // no default provided
         let expr: Expr = DeserializeRegister {
-            reg: 5,
+            reg: NonMandatoryRegisterId::R5.into(),
             tpe: SType::SBoolean,
             default: None,
         }
@@ -142,23 +70,30 @@ mod tests {
 
         // default with wrong type provided
         let expr: Expr = DeserializeRegister {
-            reg: 5,
+            reg: NonMandatoryRegisterId::R5.into(),
             tpe: SType::SInt,
             default: Some(Box::new(true.into())),
         }
         .into();
         let ctx = make_ctx_with_self_box(b.clone());
-        assert!(try_eval_out::<i32>(&expr, &ctx).is_err());
-
+        assert!(matches!(
+            try_eval_with_deserialize::<i32>(&expr, &ctx),
+            Err(EvalError::SubstDeserializeError(
+                ergotree_ir::mir::expr::SubstDeserializeError::ExprTpeError {
+                    expected: _,
+                    actual: _
+                }
+            ))
+        ));
         // default provided
         let expr: Expr = DeserializeRegister {
-            reg: 5,
+            reg: NonMandatoryRegisterId::R5.into(),
             tpe: SType::SInt,
             default: Some(Box::new(1i32.into())),
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert_eq!(try_eval_out::<i32>(&expr, &ctx).unwrap(), 1i32);
+        assert_eq!(try_eval_with_deserialize::<i32>(&expr, &ctx).unwrap(), 1i32);
     }
 
     #[test]
@@ -168,13 +103,16 @@ mod tests {
         let b = force_any_val::<ErgoBox>()
             .with_additional_registers(vec![reg_value].try_into().unwrap());
         let expr: Expr = DeserializeRegister {
-            reg: 4,
+            reg: NonMandatoryRegisterId::R4.into(),
             tpe: SType::SBoolean,
             default: None,
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert!(try_eval_out::<Value>(&expr, &ctx).is_err());
+        assert!(matches!(
+            try_eval_with_deserialize::<Value>(&expr, &ctx),
+            Err(EvalError::SubstDeserializeError(_))
+        ));
     }
 
     #[test]
@@ -186,12 +124,20 @@ mod tests {
             .with_additional_registers(vec![reg_value].try_into().unwrap());
         // expected SBoolean
         let expr: Expr = DeserializeRegister {
-            reg: 4,
+            reg: NonMandatoryRegisterId::R4.into(),
             tpe: SType::SBoolean,
             default: None,
         }
         .into();
         let ctx = make_ctx_with_self_box(b);
-        assert!(try_eval_out::<bool>(&expr, &ctx).is_err());
+        assert!(matches!(
+            try_eval_with_deserialize::<bool>(&expr, &ctx),
+            Err(EvalError::SubstDeserializeError(
+                ergotree_ir::mir::expr::SubstDeserializeError::ExprTpeError {
+                    expected: _,
+                    actual: _
+                }
+            ))
+        ));
     }
 }

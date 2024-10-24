@@ -1,4 +1,5 @@
 //! Interpreter
+use ergotree_ir::ergo_tree::ErgoTree;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaProp;
 use std::fmt::Display;
@@ -9,11 +10,9 @@ use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 
 use ergotree_ir::types::smethod::SMethod;
 
-use self::context::Context;
 use self::env::Env;
+use ergotree_ir::chain::context::Context;
 
-/// Context(blockchain) for the interpreter
-pub mod context;
 /// Environment for
 pub mod env;
 
@@ -124,7 +123,7 @@ pub struct ReductionResult {
 }
 
 /// Evaluate the given expression by reducing it to SigmaBoolean value.
-pub fn reduce_to_crypto(expr: &Expr, ctx: &Context) -> Result<ReductionResult, EvalError> {
+pub fn reduce_to_crypto(expr: &ErgoTree, ctx: &Context) -> Result<ReductionResult, EvalError> {
     fn inner<'ctx>(expr: &'ctx Expr, ctx: &Context<'ctx>) -> Result<ReductionResult, EvalError> {
         let mut env_mut = Env::empty();
         expr.eval(&mut env_mut, ctx)
@@ -151,7 +150,13 @@ pub fn reduce_to_crypto(expr: &Expr, ctx: &Context) -> Result<ReductionResult, E
             })
     }
 
-    let res = inner(expr, ctx);
+    let expr = expr.proposition()?;
+    let expr = if expr.has_deserialize() {
+        expr.substitute_deserialize(ctx)?
+    } else {
+        expr
+    };
+    let res = inner(&expr, ctx);
     if let Ok(reduction) = res {
         if reduction.sigma_prop == SigmaBoolean::TrivialProp(false) {
             let (_, printed_expr_str) = expr
@@ -403,6 +408,15 @@ pub(crate) mod tests {
         })
     }
 
+    /// Eval expr, performing deserialize node substitution before evaluation
+    pub fn try_eval_with_deserialize<'ctx, T: TryExtractFrom<Value<'static>> + 'static>(
+        expr: &Expr,
+        ctx: &'ctx Context<'ctx>,
+    ) -> Result<T, EvalError> {
+        let expr = expr.clone().substitute_deserialize(ctx)?;
+        try_eval_out(&expr, ctx)
+    }
+
     // Evaluate with activated version (set block version to version + 1)
     pub fn try_eval_out_with_version<'ctx, T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
@@ -440,7 +454,7 @@ pub(crate) mod tests {
             right: Box::new(0i32.into()),
         }
         .into();
-        let block: Expr = Expr::BlockValue(
+        let block: ErgoTree = Expr::BlockValue(
             BlockValue {
                 items: vec![ValDef {
                     id: 1.into(),
@@ -450,7 +464,9 @@ pub(crate) mod tests {
                 result: Box::new(bin_op),
             }
             .into(),
-        );
+        )
+        .try_into()
+        .unwrap();
         let ctx = force_any_val::<Context>();
         let res = reduce_to_crypto(&block, &ctx).unwrap();
         assert!(res.sigma_prop == SigmaBoolean::TrivialProp(false));

@@ -78,8 +78,12 @@ impl Evaluable for Expr {
             Expr::DecodePoint(op) => op.eval(env, ctx),
             Expr::SigmaAnd(op) => op.eval(env, ctx),
             Expr::SigmaOr(op) => op.eval(env, ctx),
-            Expr::DeserializeRegister(op) => op.eval(env, ctx),
-            Expr::DeserializeContext(op) => op.eval(env, ctx),
+            Expr::DeserializeRegister(_) => Err(EvalError::UnexpectedExpr(
+                "DeserializeRegister cannot be evaluated".to_string(),
+            )),
+            Expr::DeserializeContext(_) => Err(EvalError::UnexpectedExpr(
+                "DeserializeContext cannot be evaluated".to_string(),
+            )),
             Expr::GetVar(op) => op.eval(env, ctx),
             Expr::MultiplyGroup(op) => op.eval(env, ctx),
             Expr::Exponentiate(op) => op.eval(env, ctx),

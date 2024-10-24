@@ -27,8 +27,8 @@ impl Evaluable for SizeOf {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;

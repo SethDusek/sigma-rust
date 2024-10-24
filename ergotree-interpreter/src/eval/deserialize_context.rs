@@ -1,66 +1,27 @@
-use ergotree_ir::mir::constant::TryExtractInto;
-use ergotree_ir::mir::deserialize_context::DeserializeContext;
-use ergotree_ir::mir::expr::Expr;
-use ergotree_ir::mir::value::Value;
-use ergotree_ir::serialization::SigmaSerializable;
-use ergotree_ir::types::stype::SType;
-
-use crate::eval::env::Env;
-use crate::eval::Context;
-use crate::eval::EvalError;
-use crate::eval::Evaluable;
-
-impl Evaluable for DeserializeContext {
-    fn eval<'ctx>(
-        &self,
-        env: &mut Env<'ctx>,
-        ctx: &Context<'ctx>,
-    ) -> Result<Value<'ctx>, EvalError> {
-        match ctx.extension.values.get(&self.id) {
-            Some(c) => {
-                let expected_tpe = SType::SColl(SType::SByte.into());
-                if c.tpe != expected_tpe {
-                    Err(EvalError::UnexpectedExpr(format!(
-                        "DeserializeContext: expected extension value {} with id {} to have type {:?} got {:?}",
-                        c, self.id, expected_tpe, c.tpe
-                    )))
-                } else {
-                    let bytes = c.v.clone().try_extract_into::<Vec<u8>>()?;
-                    let expr = Expr::sigma_parse_bytes(bytes.as_slice())?;
-                    if expr.tpe() != self.tpe {
-                        return Err(EvalError::UnexpectedExpr(format!("DeserializeContext: expected deserialized expr from extension value {} with id {} to have type {:?}, got {:?}", c, self.id, self.tpe, expr.tpe())));
-                    }
-                    expr.eval(env, ctx)
-                }
-            }
-            None => Err(EvalError::NotFound(format!(
-                "DeserializeContext: no value with id {} in context extension map {}",
-                self.id, ctx.extension
-            ))),
-        }
-    }
-}
-
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
+    use ergotree_ir::ergo_tree::{ErgoTree, ErgoTreeHeader};
     use ergotree_ir::mir::constant::Constant;
+    use ergotree_ir::mir::deserialize_context::DeserializeContext;
+    use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::global_vars::GlobalVars;
+    use ergotree_ir::mir::value::Value;
+    use ergotree_ir::serialization::SigmaSerializable;
+    use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
 
-    use crate::eval::context::Context;
-    use crate::eval::tests::try_eval_out;
-    use crate::sigma_protocol::prover::ContextExtension;
-
-    use super::*;
+    use crate::eval::reduce_to_crypto;
+    use crate::eval::tests::try_eval_with_deserialize;
+    use ergotree_ir::chain::context::Context;
+    use ergotree_ir::chain::context_extension::ContextExtension;
 
     #[test]
     fn eval() {
-        let expr: Expr = DeserializeContext {
+        let expr: Expr = Expr::from(DeserializeContext {
             tpe: SType::SBoolean,
             id: 1,
-        }
-        .into();
+        });
         let inner_expr: Expr = true.into();
         let ctx_ext = ContextExtension {
             values: [(1u8, inner_expr.sigma_serialize_bytes().unwrap().into())]
@@ -69,7 +30,33 @@ mod tests {
                 .collect(),
         };
         let ctx = force_any_val::<Context>().with_extension(ctx_ext);
-        assert!(try_eval_out::<bool>(&expr, &ctx).unwrap());
+        assert!(try_eval_with_deserialize::<bool>(&expr, &ctx).unwrap());
+    }
+
+    // Verify that reduce_to_crypto performs deserialize substitution
+    #[test]
+    fn eval_reduction() {
+        let expr: Expr = Expr::from(DeserializeContext {
+            tpe: SType::SBoolean,
+            id: 1,
+        });
+        let inner_expr: Expr = true.into();
+        let ctx_ext = ContextExtension {
+            values: [(1u8, inner_expr.sigma_serialize_bytes().unwrap().into())]
+                .iter()
+                .cloned()
+                .collect(),
+        };
+        let ctx = force_any_val::<Context>().with_extension(ctx_ext);
+        assert_eq!(
+            reduce_to_crypto(
+                &ErgoTree::new(ErgoTreeHeader::v1(false), &expr).unwrap(),
+                &ctx,
+            )
+            .unwrap()
+            .sigma_prop,
+            true.into()
+        );
     }
 
     #[test]
@@ -80,7 +67,7 @@ mod tests {
         }
         .into();
         let ctx = force_any_val::<Context>().with_extension(ContextExtension::empty());
-        assert!(try_eval_out::<bool>(&expr, &ctx).is_err());
+        assert!(try_eval_with_deserialize::<bool>(&expr, &ctx).is_err());
     }
 
     #[test]
@@ -96,7 +83,7 @@ mod tests {
             values: [(1u8, ctx_ext_val)].iter().cloned().collect(),
         };
         let ctx = force_any_val::<Context>().with_extension(ctx_ext);
-        assert!(try_eval_out::<bool>(&expr, &ctx).is_err());
+        assert!(try_eval_with_deserialize::<bool>(&expr, &ctx).is_err());
     }
 
     #[test]
@@ -115,6 +102,24 @@ mod tests {
                 .collect(),
         };
         let ctx = force_any_val::<Context>().with_extension(ctx_ext);
-        assert!(try_eval_out::<Value>(&expr, &ctx).is_err());
+        assert!(try_eval_with_deserialize::<Value>(&expr, &ctx).is_err());
+    }
+
+    #[test]
+    fn eval_recursive() {
+        let expr: Expr = DeserializeContext {
+            tpe: SType::SBoolean,
+            id: 1,
+        }
+        .into();
+        let ctx_ext = ContextExtension {
+            values: [(1u8, expr.sigma_serialize_bytes().unwrap().into())]
+                .iter()
+                .cloned()
+                .collect(),
+        };
+        let ctx = force_any_val::<Context>().with_extension(ctx_ext);
+        // Evaluating executeFromVar(1) with ctx[1] being executeFromVar(1) should fail during evaluation
+        assert!(try_eval_with_deserialize::<bool>(&expr, &ctx).is_err());
     }
 }

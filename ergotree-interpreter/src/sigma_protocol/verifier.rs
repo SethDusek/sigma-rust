@@ -13,10 +13,10 @@ use super::{
     unchecked_tree::{UncheckedLeaf, UncheckedSchnorr},
     SigmaBoolean, UncheckedTree,
 };
-use crate::eval::context::Context;
 use crate::eval::EvalError;
 use crate::eval::{reduce_to_crypto, ReductionDiagnosticInfo};
 use dlog_protocol::FirstDlogProverMessage;
+use ergotree_ir::chain::context::Context;
 use ergotree_ir::ergo_tree::ErgoTree;
 use ergotree_ir::ergo_tree::ErgoTreeError;
 
@@ -64,8 +64,7 @@ pub trait Verifier {
         proof: ProofBytes,
         message: &[u8],
     ) -> Result<VerificationResult, VerifierError> {
-        let expr = tree.proposition()?;
-        let reduction_result = reduce_to_crypto(&expr, ctx)?;
+        let reduction_result = reduce_to_crypto(tree, ctx)?;
         let res: bool = match reduction_result.sigma_prop {
             SigmaBoolean::TrivialProp(b) => b,
             sb => {

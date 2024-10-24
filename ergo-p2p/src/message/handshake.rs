@@ -9,6 +9,8 @@ use crate::PeerSpec;
 /// peerSpec - general (declared) information about peer
 /// time     - handshake time
 pub struct Handshake {
+    /// Peer specification
     pub peer_spec: PeerSpec,
+    /// Handshake time
     pub time: SystemTime,
 }

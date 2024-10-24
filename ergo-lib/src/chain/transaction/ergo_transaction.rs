@@ -1,8 +1,6 @@
 //! Exposes common properties for signed and unsigned transactions
-use ergotree_interpreter::sigma_protocol::{
-    prover::ContextExtension,
-    verifier::{VerificationResult, VerifierError},
-};
+use ergotree_interpreter::sigma_protocol::verifier::{VerificationResult, VerifierError};
+use ergotree_ir::chain::context_extension::ContextExtension;
 use ergotree_ir::{
     chain::{
         ergo_box::{box_value::BoxValue, BoxId, ErgoBox},

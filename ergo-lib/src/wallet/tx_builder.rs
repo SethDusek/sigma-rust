@@ -1,7 +1,7 @@
 //! Builder for an UnsignedTransaction
 
-use ergotree_interpreter::eval::context::TxIoVec;
-use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
+use ergotree_ir::chain::context::TxIoVec;
+use ergotree_ir::chain::context_extension::ContextExtension;
 use ergotree_ir::chain::token::TokenAmount;
 use ergotree_ir::chain::token::TokenAmountError;
 use ergotree_ir::ergo_tree::ErgoTree;

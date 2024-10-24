@@ -86,8 +86,8 @@ impl Evaluable for Filter {
 #[cfg(test)]
 mod tests {
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
 
     use super::*;
 

@@ -33,8 +33,8 @@ mod tests {
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaConjecture;
     use std::convert::TryInto;
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
 
     use super::*;
 

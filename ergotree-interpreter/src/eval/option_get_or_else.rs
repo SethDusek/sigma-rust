@@ -28,8 +28,8 @@ impl Evaluable for OptionGetOrElse {
 #[cfg(test)]
 mod tests {
     use super::OptionGetOrElse;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::extract_reg_as::ExtractRegisterAs;

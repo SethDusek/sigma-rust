@@ -3,11 +3,11 @@ use crate::{
     util::{const_ptr_as_ref, mut_ptr_as_mut},
     Error,
 };
-use ergo_lib::ergotree_interpreter::sigma_protocol::prover;
+use ergo_lib::ergotree_ir::chain::context_extension;
 
 /// User-defined variables to be put into context
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub struct ContextExtension(pub prover::ContextExtension);
+pub struct ContextExtension(pub context_extension::ContextExtension);
 pub type ContextExtensionPtr = *mut ContextExtension;
 pub type ConstContextExtensionPtr = *const ContextExtension;
 
@@ -17,7 +17,7 @@ pub unsafe fn context_extension_empty(
 ) -> Result<(), Error> {
     let context_extension_out = mut_ptr_as_mut(context_extension_out, "context_extension_out")?;
     *context_extension_out = Box::into_raw(Box::new(ContextExtension(
-        prover::ContextExtension::empty(),
+        context_extension::ContextExtension::empty(),
     )));
     Ok(())
 }

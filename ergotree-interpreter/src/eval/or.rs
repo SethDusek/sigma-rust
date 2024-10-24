@@ -23,8 +23,8 @@ impl Evaluable for Or {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::expr::Expr;
     use proptest::collection;
     use proptest::prelude::*;
