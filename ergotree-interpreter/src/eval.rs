@@ -123,7 +123,7 @@ pub struct ReductionResult {
 }
 
 /// Evaluate the given expression by reducing it to SigmaBoolean value.
-pub fn reduce_to_crypto(expr: &ErgoTree, ctx: &Context) -> Result<ReductionResult, EvalError> {
+pub fn reduce_to_crypto(tree: &ErgoTree, ctx: &Context) -> Result<ReductionResult, EvalError> {
     fn inner<'ctx>(expr: &'ctx Expr, ctx: &Context<'ctx>) -> Result<ReductionResult, EvalError> {
         let mut env_mut = Env::empty();
         expr.eval(&mut env_mut, ctx)
@@ -150,8 +150,8 @@ pub fn reduce_to_crypto(expr: &ErgoTree, ctx: &Context) -> Result<ReductionResul
             })
     }
 
-    let expr = expr.proposition()?;
-    let expr = if expr.has_deserialize() {
+    let expr = tree.proposition()?;
+    let expr = if tree.has_deserialize() {
         expr.substitute_deserialize(ctx)?
     } else {
         expr
