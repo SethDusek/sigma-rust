@@ -1,6 +1,11 @@
 use super::zig_zag_encode;
-use std::convert::TryFrom;
-use std::io;
+use alloc::{
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
+use core::convert::TryFrom;
+use core2::io;
 
 use bitvec::order::Lsb0;
 use bitvec::prelude::BitVec;
@@ -16,7 +21,7 @@ pub enum VlqEncodingError {
     Io(String),
     /// value bounds check error
     #[error("Bounds check error: {1} for input: {0}")]
-    TryFrom(String, std::num::TryFromIntError),
+    TryFrom(String, core::num::TryFromIntError),
     /// Fail to decode a value from bytes
     #[error("VLQ decoding failed")]
     VlqDecodingFailed,
@@ -166,7 +171,7 @@ pub trait ReadSigmaVlqExt: io::Read + io::Seek {
     }
 
     /// Read u8 without decoding
-    fn get_u8(&mut self) -> std::result::Result<u8, io::Error> {
+    fn get_u8(&mut self) -> Result<u8, io::Error> {
         let mut slice = [0u8; 1];
         self.read_exact(&mut slice)?;
         Ok(slice[0])
@@ -265,10 +270,12 @@ mod tests {
     // See corresponding test suite in
     // https://github.com/ScorexFoundation/scorex-util/blob/9adb6c68b8a1c00ec17730e6da11c2976a892ad8/src/test/scala/scorex/util/serialization/VLQReaderWriterSpecification.scala#L11
     use super::*;
+    use alloc::format;
+    use alloc::vec;
+    use core2::io::Cursor;
+    use core2::io::Read;
+    use core2::io::Write;
     use proptest::collection;
-    use std::io::Cursor;
-    use std::io::Read;
-    use std::io::Write;
 
     extern crate derive_more;
     use derive_more::From;
@@ -944,7 +951,7 @@ mod tests {
             w.put_short_string(&s).unwrap();
             let inner = w.into_inner();
             prop_assert_eq!(inner[0] as usize, s.len());
-            prop_assert_eq!(std::str::from_utf8(&inner[1..]), Ok(&*s));
+            prop_assert_eq!(core::str::from_utf8(&inner[1..]), Ok(&*s));
         }
 
         #[test]
