@@ -1,5 +1,6 @@
 //! Ergo blockchain types
 
+#![cfg_attr(not(feature = "std"), no_std)]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
@@ -18,13 +19,18 @@
 #![deny(clippy::unreachable)]
 #![deny(clippy::panic)]
 
+#[macro_use]
+extern crate alloc;
+
 mod base16_bytes;
 mod block_id;
 mod digest32;
 pub mod ec_point;
 mod extensioncandidate;
 mod header;
+#[cfg(feature = "json")]
 mod json;
+#[cfg(feature = "std")]
 mod peer_addr;
 mod peer_connection_dir;
 mod preheader;
@@ -41,6 +47,7 @@ pub use digest32::DigestNError;
 pub use ec_point::EcPoint;
 pub use extensioncandidate::ExtensionCandidate;
 pub use header::{AutolykosSolution, Header};
+#[cfg(feature = "std")]
 pub use peer_addr::PeerAddr;
 pub use peer_connection_dir::ConnectionDirection;
 pub use preheader::PreHeader;

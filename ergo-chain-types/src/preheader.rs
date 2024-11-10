@@ -1,4 +1,6 @@
 //! Block header with fields that can be predicted by miner
+use alloc::boxed::Box;
+
 use crate::{BlockId, EcPoint, Header, Votes};
 
 /// Block header with the current `spendingTransaction`, that can be predicted

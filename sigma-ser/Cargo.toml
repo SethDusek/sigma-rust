@@ -7,9 +7,6 @@ repository.workspace = true
 edition.workspace = true
 description = "Ergo binary serialization primitives"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
 [features]
 default = ["std"]
 std = ["core2/std"]

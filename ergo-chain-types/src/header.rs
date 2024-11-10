@@ -1,12 +1,14 @@
 //! Block header
 use crate::{ADDigest, BlockId, Digest32, EcPoint};
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use core2::io::Write;
 use num_bigint::BigInt;
 use sigma_ser::vlq_encode::{ReadSigmaVlqExt, WriteSigmaVlqExt};
 use sigma_ser::{
     ScorexParsingError, ScorexSerializable, ScorexSerializationError, ScorexSerializeResult,
 };
 use sigma_util::hash::blake2b256_hash;
-use std::io::Write;
 
 use crate::votes::Votes;
 
@@ -56,7 +58,6 @@ pub struct Header {
 impl Header {
     /// Used in nipowpow
     pub fn serialize_without_pow(&self) -> Result<Vec<u8>, ScorexSerializationError> {
-        use byteorder::{BigEndian, WriteBytesExt};
         let mut data = Vec::new();
         let mut w = &mut data;
         w.put_u8(self.version)?;
@@ -69,12 +70,8 @@ impl Header {
 
         // n_bits needs to be serialized in big-endian format. Note that it actually fits in a
         // `u32`.
-        let mut n_bits_writer = vec![];
-        #[allow(clippy::unwrap_used)]
-        n_bits_writer
-            .write_u32::<BigEndian>(self.n_bits as u32)
-            .unwrap();
-        w.write_all(&n_bits_writer)?;
+        let n_bits_be = (self.n_bits as u32).to_be_bytes();
+        w.write_all(&n_bits_be)?;
 
         w.put_u32(self.height)?;
         w.write_all(&self.votes.0)?;
@@ -108,14 +105,7 @@ impl ScorexSerializable for Header {
         let extension_root = Digest32::scorex_parse(r)?;
         let mut n_bits_buf = [0u8, 0, 0, 0];
         r.read_exact(&mut n_bits_buf)?;
-        let n_bits = {
-            use byteorder::{BigEndian, ReadBytesExt};
-            let mut reader = std::io::Cursor::new(n_bits_buf);
-            #[allow(clippy::unwrap_used)]
-            {
-                reader.read_u32::<BigEndian>().unwrap() as u64
-            }
-        };
+        let n_bits = u32::from_be_bytes(n_bits_buf) as u64;
         let height = r.get_u32()?;
         let mut votes_bytes = [0u8, 0, 0];
         r.read_exact(&mut votes_bytes)?;
@@ -126,8 +116,9 @@ impl ScorexSerializable for Header {
         if version > 1 {
             let new_field_size = r.get_u8()?;
             if new_field_size > 0 {
-                let mut field_bytes: Vec<u8> =
-                    std::iter::repeat(0).take(new_field_size as usize).collect();
+                let mut field_bytes: Vec<u8> = core::iter::repeat(0)
+                    .take(new_field_size as usize)
+                    .collect();
                 r.read_exact(&mut field_bytes)?;
             }
         }
@@ -136,10 +127,10 @@ impl ScorexSerializable for Header {
         let autolykos_solution = if version == 1 {
             let miner_pk = EcPoint::scorex_parse(r)?.into();
             let pow_onetime_pk = Some(EcPoint::scorex_parse(r)?.into());
-            let mut nonce: Vec<u8> = std::iter::repeat(0).take(8).collect();
+            let mut nonce: Vec<u8> = core::iter::repeat(0).take(8).collect();
             r.read_exact(&mut nonce)?;
             let d_bytes_len = r.get_u8()?;
-            let mut d_bytes: Vec<u8> = std::iter::repeat(0).take(d_bytes_len as usize).collect();
+            let mut d_bytes: Vec<u8> = core::iter::repeat(0).take(d_bytes_len as usize).collect();
             r.read_exact(&mut d_bytes)?;
             let pow_distance = Some(BigInt::from_signed_bytes_be(&d_bytes));
             AutolykosSolution {
@@ -153,7 +144,7 @@ impl ScorexSerializable for Header {
             let pow_onetime_pk = None;
             let pow_distance = None;
             let miner_pk = EcPoint::scorex_parse(r)?.into();
-            let mut nonce: Vec<u8> = std::iter::repeat(0).take(8).collect();
+            let mut nonce: Vec<u8> = core::iter::repeat(0).take(8).collect();
             r.read_exact(&mut nonce)?;
             AutolykosSolution {
                 miner_pk,
