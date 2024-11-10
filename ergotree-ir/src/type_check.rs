@@ -1,5 +1,8 @@
 //! Type checking
 
+
+use alloc::string::String;
+
 use crate::mir::expr::Expr;
 use crate::source_span::Spanned;
 

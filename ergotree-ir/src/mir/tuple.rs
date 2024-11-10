@@ -1,4 +1,6 @@
-use std::convert::TryInto;
+use core::convert::TryInto;
+
+use alloc::vec::Vec;
 
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;

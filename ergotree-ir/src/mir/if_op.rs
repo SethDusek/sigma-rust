@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use super::expr::Expr;
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;

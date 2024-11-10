@@ -1,6 +1,7 @@
 //! Traversable trait
 
 use crate::mir::{expr::Expr, unary_op::OneArgOp};
+use alloc::boxed::Box;
 
 /// Trait for types that have child nodes.
 /// In ergotree-ir this is used for traversing trees of [`Expr`] and doing rewriting operations such as replacing [ConstantPlaceholder](crate::mir::constant::ConstantPlaceholder)s with [`Constant`](crate::mir::constant::Constant)s
@@ -17,10 +18,10 @@ impl<T: OneArgOp> Traversable for T {
     type Item = Expr;
 
     fn children<'a>(&'a self) -> Box<dyn Iterator<Item = &Self::Item> + 'a> {
-        Box::new(std::iter::once(self.input()))
+        Box::new(core::iter::once(self.input()))
     }
     fn children_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &mut Self::Item> + 'a> {
-        Box::new(std::iter::once(self.input_mut()))
+        Box::new(core::iter::once(self.input_mut()))
     }
 }
 
@@ -32,7 +33,7 @@ macro_rules! iter_from {
         $self.$x.iter().chain(crate::traversable::iter_from!($self, $($y)*))
     };
     ($self:ident, boxed $x:tt, $($y:tt)*) => {
-        std::iter::once(&*$self.$x).chain(crate::traversable::iter_from!($self, $($y)*))
+        core::iter::once(&*$self.$x).chain(crate::traversable::iter_from!($self, $($y)*))
     };
     ($self:ident, opt $x:tt) => {
         $self.$x.as_deref().into_iter()
@@ -41,10 +42,10 @@ macro_rules! iter_from {
         $self.$x.iter()
     };
     ($self:ident, boxed $x:tt) => {
-        std::iter::once(&*$self.$x)
+        core::iter::once(&*$self.$x)
     };
     ($self:ident) => {
-        std::iter::empty()
+        core::iter::empty()
     }
 }
 
@@ -56,7 +57,7 @@ macro_rules! iter_from_mut {
         $self.$x.iter_mut().chain(crate::traversable::iter_from_mut!($self, $($y)*))
     };
     ($self:ident, boxed $x:tt, $($y:tt)*) => {
-        std::iter::once(&mut *$self.$x).chain(crate::traversable::iter_from_mut!($self, $($y)*))
+        core::iter::once(&mut *$self.$x).chain(crate::traversable::iter_from_mut!($self, $($y)*))
     };
     ($self:ident, opt $x:tt) => {
         $self.$x.as_deref_mut().into_iter()
@@ -65,10 +66,10 @@ macro_rules! iter_from_mut {
         $self.$x.iter_mut()
     };
     ($self:ident, boxed $x:tt) => {
-        std::iter::once(&mut *$self.$x)
+        core::iter::once(&mut *$self.$x)
     };
     ($self:ident) => {
-        std::iter::empty()
+        core::iter::empty()
     }
 }
 
@@ -77,11 +78,11 @@ macro_rules! impl_traversable_expr {
     ($op:ident $(, $($args:tt)+ )? ) => {
         impl crate::traversable::Traversable for $op {
             type Item = Expr;
-            fn children(&self) -> Box<dyn Iterator<Item = &Self::Item> + '_> {
-                Box::new(crate::traversable::iter_from!(self $(, $($args)*)?))
+            fn children(&self) -> alloc::boxed::Box<dyn Iterator<Item = &Self::Item> + '_> {
+                alloc::boxed::Box::new(crate::traversable::iter_from!(self $(, $($args)*)?))
             }
-            fn children_mut(&mut self) -> Box<dyn Iterator<Item = &mut Self::Item> + '_> {
-                Box::new(crate::traversable::iter_from_mut!(self $(, $($args)*)?))
+            fn children_mut(&mut self) -> alloc::boxed::Box<dyn Iterator<Item = &mut Self::Item> + '_> {
+                alloc::boxed::Box::new(crate::traversable::iter_from_mut!(self $(, $($args)*)?))
             }
         }
     };
@@ -93,6 +94,8 @@ pub(crate) use iter_from_mut;
 
 #[cfg(test)]
 mod test {
+    use alloc::{boxed::Box, vec::Vec};
+
     use crate::mir::{constant::Constant, expr::Expr};
 
     use super::Traversable;

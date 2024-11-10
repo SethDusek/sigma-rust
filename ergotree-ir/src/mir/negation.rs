@@ -1,3 +1,6 @@
+use alloc::boxed::Box;
+
+
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
 use super::unary_op::OneArgOp;
@@ -91,6 +94,7 @@ mod tests {
     use super::*;
     use crate::mir::expr::Expr;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

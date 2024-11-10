@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use crate::mir::bin_op::BinOp;
 use crate::mir::bin_op::BinOpKind;
 use crate::mir::constant::Constant;
@@ -72,6 +74,7 @@ mod proptests {
     use super::*;
     use crate::mir::expr::arbitrary::ArbExprParams;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

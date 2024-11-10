@@ -1,5 +1,7 @@
 //! Reference type used extensively throughout interpreter. a Ref<'ctx, T> can either borrow from Context or be `Arc<T>`
-use std::{ops::Deref, sync::Arc};
+use core::ops::Deref;
+
+use alloc::sync::Arc;
 
 #[derive(Clone, Debug, Eq)]
 /// A wrapper type that provides immutable access to T. Ref can either be [`Ref::Borrowed`], holding a reference to some data in Context, or [`Ref::Arc`]
@@ -10,9 +12,9 @@ pub enum Ref<'ctx, T> {
     Arc(Arc<T>),
 }
 
-impl<T> std::cmp::PartialEq for Ref<'_, T>
+impl<T> core::cmp::PartialEq for Ref<'_, T>
 where
-    T: std::cmp::PartialEq,
+    T: core::cmp::PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.deref() == other.deref()
@@ -50,7 +52,7 @@ impl<'ctx, T> From<T> for Ref<'ctx, T> {
     }
 }
 
-impl<'ctx, T> std::ops::Deref for Ref<'ctx, T> {
+impl<'ctx, T> core::ops::Deref for Ref<'ctx, T> {
     type Target = T;
     fn deref(&self) -> &T {
         match self {

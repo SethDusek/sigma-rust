@@ -1,4 +1,6 @@
 //! Lookup in AVL tree
+use alloc::boxed::Box;
+
 use crate::serialization::op_code::OpCode;
 use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
@@ -66,7 +68,7 @@ impl_traversable_expr!(TreeLookup, boxed tree, boxed key, boxed proof);
 /// Arbitrary impl
 mod arbitrary {
     use crate::mir::expr::arbitrary::ArbExprParams;
-    use std::sync::Arc;
+    use alloc::sync::Arc;
 
     use super::*;
     use proptest::prelude::*;

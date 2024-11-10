@@ -24,12 +24,18 @@ use crate::sigma_protocol::sigma_boolean::SigmaProofOfKnowledgeTree;
 use crate::sigma_protocol::sigma_boolean::SigmaProp;
 use crate::source_span::Spanned;
 use crate::types::stype::SType;
+
+use alloc::boxed::Box;
+use alloc::string::{String, ToString};
+use alloc::sync::Arc;
+use alloc::vec;
+use alloc::vec::Vec;
+
 use ergo_chain_types::EcPoint;
 
+use core::convert::{TryFrom, TryInto};
 use sigma_util::hash::blake2b256_hash;
 use sigma_util::AsVecU8;
-use std::convert::{TryFrom, TryInto};
-use std::sync::Arc;
 use thiserror::Error;
 
 /**
@@ -585,8 +591,10 @@ pub(crate) mod arbitrary {
 mod tests {
 
     use super::*;
+
     use proptest::prelude::*;
 
+    #[cfg(feature = "std")]
     proptest! {
 
         #[test]

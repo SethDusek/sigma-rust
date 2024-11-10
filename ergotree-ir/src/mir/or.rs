@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use super::expr::Expr;
 use super::unary_op::OneArgOp;
 use crate::has_opcode::HasStaticOpCode;

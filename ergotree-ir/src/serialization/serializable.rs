@@ -11,12 +11,16 @@ use super::{
     sigma_byte_writer::{SigmaByteWrite, SigmaByteWriter},
 };
 use crate::types::smethod::MethodId;
+use alloc::boxed::Box;
+
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use bounded_vec::BoundedVec;
 use bounded_vec::BoundedVecOutOfBounds;
+use core::convert::TryInto;
+use core2::io;
 use io::Cursor;
 use sigma_ser::{vlq_encode, ScorexParsingError, ScorexSerializationError};
-use std::convert::TryInto;
-use std::io;
 use thiserror::Error;
 
 /// Ways serialization might fail
@@ -132,7 +136,7 @@ pub type SigmaSerializeResult = Result<(), SigmaSerializationError>;
 pub trait SigmaSerializable: Sized {
     /// Write `self` to the given `writer`.
     /// This function has a `sigma_` prefix to alert the reader that the
-    /// serialization in use is consensus-critical serialization    
+    /// serialization in use is consensus-critical serialization
     // fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> SigmaSerializeResult;
     fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> SigmaSerializeResult;
 

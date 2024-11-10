@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::mir::expr::Expr;
 use crate::mir::property_call::PropertyCall;
 use crate::types::smethod::MethodId;

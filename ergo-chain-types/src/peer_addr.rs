@@ -7,14 +7,12 @@ use std::{
 
 use derive_more::FromStr;
 use derive_more::{Display, From, Into};
-use serde::{Deserialize, Serialize};
 use sigma_ser::{ScorexSerializable, ScorexSerializationError};
 use url::Url;
 
 /// Peer address
-#[derive(
-    PartialEq, Eq, Debug, Copy, Clone, From, Into, Hash, Display, FromStr, Deserialize, Serialize,
-)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone, From, Into, Hash, Display, FromStr)]
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
 pub struct PeerAddr(pub SocketAddr);
 
 impl PeerAddr {

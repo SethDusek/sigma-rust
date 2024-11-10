@@ -1,4 +1,7 @@
-use std::fmt;
+use alloc::boxed::Box;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::fmt;
 
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;
@@ -40,7 +43,7 @@ impl SigmaSerializable for FuncArg {
     }
 }
 
-impl std::fmt::Display for FuncArg {
+impl core::fmt::Display for FuncArg {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "v{}: {}", self.idx, self.tpe)
     }

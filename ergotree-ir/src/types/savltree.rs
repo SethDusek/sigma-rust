@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use alloc::sync::Arc;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use crate::serialization::types::TypeCode;
 

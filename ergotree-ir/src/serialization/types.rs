@@ -8,9 +8,11 @@ use crate::serialization::{
 use crate::types::stuple;
 use crate::types::stype::SType;
 use crate::types::stype_param;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::convert::TryInto;
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
-use std::convert::TryInto;
 
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)] // to differentiate from similarly named SType enum variants
@@ -561,6 +563,7 @@ impl SigmaSerializable for SType {
 mod tests {
     use super::*;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

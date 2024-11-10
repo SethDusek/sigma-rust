@@ -6,6 +6,8 @@ use super::smethod::SMethodDesc;
 use super::stype::SType;
 use crate::types::smethod::SMethod;
 use crate::types::stype_companion::STypeCompanion;
+use alloc::vec;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 /// SGlobal type code

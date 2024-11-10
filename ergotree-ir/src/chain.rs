@@ -8,3 +8,8 @@ pub mod ergo_box;
 pub mod json;
 pub mod token;
 pub mod tx_id;
+
+/// Index Map
+pub type IndexMap<K, V> = indexmap::IndexMap<K, V, foldhash::fast::RandomState>;
+/// Index Set
+pub type IndexSet<T> = indexmap::IndexSet<T, foldhash::fast::RandomState>;

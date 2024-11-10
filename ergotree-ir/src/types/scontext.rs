@@ -8,6 +8,8 @@ use super::smethod::SMethod;
 use super::smethod::SMethodDesc;
 use super::stype::SType;
 use super::stype::SType::{SAvlTree, SBox, SByte, SColl, SHeader, SInt, SPreHeader};
+use alloc::vec;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 /// SContext type code

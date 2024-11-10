@@ -1,5 +1,8 @@
 //! Extract register of SELF box as `Coll[Byte]`, deserialize it into Value and inline into executing script.
 
+use alloc::boxed::Box;
+use alloc::string::ToString;
+
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
 use crate::chain::ergo_box::RegisterId;
@@ -71,6 +74,7 @@ mod arbitrary {
 
     use super::*;
 
+    use alloc::boxed::Box;
     use proptest::option;
     use proptest::prelude::*;
 

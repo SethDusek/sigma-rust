@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
 
@@ -46,6 +48,8 @@ impl OneArgOpTryBuild for ExtractId {
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
+    use alloc::boxed::Box;
+
     use crate::mir::global_vars::GlobalVars;
     use crate::serialization::sigma_serialize_roundtrip;
 

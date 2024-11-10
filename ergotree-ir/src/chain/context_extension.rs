@@ -5,10 +5,14 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
-use indexmap::IndexMap;
-use std::convert::TryFrom;
-use std::fmt;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::fmt;
+use core::hash::Hasher;
 use thiserror::Error;
+
+use super::IndexMap;
 
 /// User-defined variables to be put into context
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -21,7 +25,7 @@ impl ContextExtension {
     /// Returns an empty ContextExtension
     pub fn empty() -> Self {
         Self {
-            values: IndexMap::new(),
+            values: IndexMap::with_hasher(Default::default()),
         }
     }
 }
@@ -45,7 +49,8 @@ impl SigmaSerializable for ContextExtension {
 
     fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> Result<Self, SigmaParsingError> {
         let values_count = r.get_u8()?;
-        let mut values: IndexMap<u8, Constant> = IndexMap::with_capacity(values_count as usize);
+        let mut values: IndexMap<u8, Constant> =
+            IndexMap::with_capacity_and_hasher(values_count as usize, Default::default());
         for _ in 0..values_count {
             let idx = r.get_u8()?;
             values.insert(idx, Constant::sigma_parse(r)?);
@@ -60,11 +65,11 @@ impl SigmaSerializable for ContextExtension {
 pub struct ConstantParsingError(pub String);
 
 // for JSON encoding in ergo-lib
-impl TryFrom<IndexMap<String, String>> for ContextExtension {
+impl<H: Hasher> TryFrom<indexmap::IndexMap<String, String, H>> for ContextExtension {
     type Error = ConstantParsingError;
-    fn try_from(values_str: IndexMap<String, String>) -> Result<Self, Self::Error> {
+    fn try_from(values_str: indexmap::IndexMap<String, String, H>) -> Result<Self, Self::Error> {
         let values = values_str.iter().try_fold(
-            IndexMap::with_capacity(values_str.len()),
+            IndexMap::with_capacity_and_hasher(values_str.len(), Default::default()),
             |mut acc, pair| {
                 let idx: u8 = pair.0.parse().map_err(|_| {
                     ConstantParsingError(format!("cannot parse index from {0:?}", pair.0))

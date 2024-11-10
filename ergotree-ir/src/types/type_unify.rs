@@ -1,7 +1,10 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use super::stype::SType;
 use super::stype_param::STypeVar;
+
+use alloc::string::String;
+use alloc::vec::Vec;
 use SType::*;
 
 #[allow(clippy::unnecessary_wraps)]
@@ -79,7 +82,9 @@ pub fn unify_one(t1: &SType, t2: &SType) -> Result<HashMap<STypeVar, SType>, Typ
 #[cfg(test)]
 #[allow(clippy::panic)]
 mod tests {
-    use std::sync::Arc;
+
+    use alloc::sync::Arc;
+    use alloc::vec;
 
     use super::super::stype::tests::primitive_type;
     use super::*;

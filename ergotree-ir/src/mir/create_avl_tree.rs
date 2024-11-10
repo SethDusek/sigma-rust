@@ -1,5 +1,8 @@
 //! Create an AVL tree
 
+use alloc::boxed::Box;
+
+
 use super::expr::Expr;
 use crate::has_opcode::HasStaticOpCode;
 use crate::mir::expr::InvalidArgumentError;
@@ -32,7 +35,7 @@ impl CreateAvlTree {
         value_length: Option<Box<Expr>>,
     ) -> Result<Self, InvalidArgumentError> {
         flags.check_post_eval_tpe(&SType::SByte)?;
-        digest.check_post_eval_tpe(&SType::SColl(std::sync::Arc::new(SType::SByte)))?;
+        digest.check_post_eval_tpe(&SType::SColl(alloc::sync::Arc::new(SType::SByte)))?;
         key_length.check_post_eval_tpe(&SType::SInt)?;
         if !value_length
             .clone()
@@ -86,7 +89,7 @@ impl_traversable_expr!(CreateAvlTree, boxed flags, boxed digest, boxed key_lengt
 #[cfg(feature = "arbitrary")]
 /// Arbitrary impl
 mod arbitrary {
-    use std::sync::Arc;
+    use alloc::sync::Arc;
 
     use crate::mir::expr::arbitrary::ArbExprParams;
 

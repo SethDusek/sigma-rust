@@ -13,17 +13,19 @@ use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializationError;
 use crate::serialization::SigmaSerializeResult;
 
+use alloc::string::ToString;
+use alloc::vec::Vec;
 pub use box_id::*;
 use ergo_chain_types::Digest32;
 pub use register::*;
 
+use super::IndexSet;
 use bounded_vec::BoundedVec;
-use indexmap::IndexSet;
+use core::convert::TryFrom;
 use sigma_util::hash::blake2b256_hash;
 use sigma_util::AsVecI8;
-use std::convert::TryFrom;
 
-use std::convert::TryInto;
+use core::convert::TryInto;
 
 use self::box_value::BoxValue;
 
@@ -403,7 +405,7 @@ pub mod arbitrary {
         pub creation_height: BoxedStrategy<u32>,
         pub registers: BoxedStrategy<NonMandatoryRegisters>,
     }
-    impl std::default::Default for ArbBoxParameters {
+    impl core::default::Default for ArbBoxParameters {
         fn default() -> Self {
             Self {
                 value_range: ArbBoxValueRange::default(),
@@ -482,6 +484,7 @@ mod tests {
     use super::*;
     use crate::chain::token::arbitrary::ArbTokenIdParam;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::collection::SizeRange;
     use proptest::prelude::*;
     use sigma_test_util::force_any_val;

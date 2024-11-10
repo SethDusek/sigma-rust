@@ -1,6 +1,7 @@
 //! Operators in ErgoTree
 
-use std::fmt::Display;
+use alloc::boxed::Box;
+use core::fmt::Display;
 
 use super::expr::Expr;
 use crate::has_opcode::HasOpCode;
@@ -48,7 +49,7 @@ impl From<ArithOp> for OpCode {
 }
 
 impl Display for ArithOp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             ArithOp::Plus => write!(f, "+"),
             ArithOp::Minus => write!(f, "-"),
@@ -93,7 +94,7 @@ impl From<RelationOp> for OpCode {
 }
 
 impl Display for RelationOp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             RelationOp::Eq => write!(f, "=="),
             RelationOp::NEq => write!(f, "!="),
@@ -128,7 +129,7 @@ impl From<LogicalOp> for OpCode {
 }
 
 impl Display for LogicalOp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             LogicalOp::And => write!(f, "&&"),
             LogicalOp::Or => write!(f, "||"),
@@ -160,7 +161,7 @@ impl From<BitOp> for OpCode {
 }
 
 impl Display for BitOp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             BitOp::BitOr => write!(f, "|"),
             BitOp::BitAnd => write!(f, "&"),
@@ -195,7 +196,7 @@ impl From<BinOpKind> for OpCode {
 }
 
 impl Display for BinOpKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             BinOpKind::Arith(op) => write!(f, "{}", op),
             BinOpKind::Relation(op) => write!(f, "{}", op),

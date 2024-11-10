@@ -1,4 +1,6 @@
 //! Embedding of Boolean values to SigmaProp
+use alloc::boxed::Box;
+
 use crate::has_opcode::HasStaticOpCode;
 use crate::mir::unary_op::OneArgOp;
 use crate::mir::unary_op::OneArgOpTryBuild;

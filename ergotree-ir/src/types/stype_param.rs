@@ -1,7 +1,12 @@
-use std::convert::TryInto;
-use std::fmt::Formatter;
-use std::hash::Hash;
+use core::convert::TryInto;
+use core::fmt::Formatter;
+use core::hash::Hash;
 
+
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 use bounded_vec::BoundedVec;
 
 use crate::mir::expr::InvalidArgumentError;
@@ -20,8 +25,8 @@ pub struct STypeVar {
     name_bytes: BoundedVec<u8, 1, 254>,
 }
 
-impl std::fmt::Debug for STypeVar {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for STypeVar {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         self.as_string().fmt(f)
     }
 }

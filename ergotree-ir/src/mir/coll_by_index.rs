@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use alloc::boxed::Box;
+
+use alloc::sync::Arc;
 
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;

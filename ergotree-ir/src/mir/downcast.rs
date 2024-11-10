@@ -1,5 +1,8 @@
 //! Numerical downcast
 
+use alloc::boxed::Box;
+
+
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
 use crate::serialization::op_code::OpCode;

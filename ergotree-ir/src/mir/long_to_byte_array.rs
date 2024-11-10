@@ -1,4 +1,6 @@
 //! Convert SLong to byte array
+use alloc::boxed::Box;
+
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
 
@@ -78,6 +80,7 @@ mod arbitrary {
 mod tests {
     use super::*;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

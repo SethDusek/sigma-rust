@@ -1,6 +1,9 @@
 //! 256-bit signed integer type
 
-use std::ops::{Div, Mul, Neg, Rem};
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::ops::{Div, Mul, Neg, Rem};
 
 use bnum::cast::As;
 use bnum::types::I256;

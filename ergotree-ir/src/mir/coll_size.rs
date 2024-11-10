@@ -1,3 +1,6 @@
+use alloc::boxed::Box;
+
+
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
 

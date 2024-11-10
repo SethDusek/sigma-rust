@@ -6,6 +6,8 @@ use super::smethod::{MethodId, SMethod, SMethodDesc};
 use super::stype::SType;
 use super::stype_companion::STypeCompanion;
 use crate::types::stype::SType::{SByte, SColl};
+use alloc::vec;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 /// SPreHeader type code
