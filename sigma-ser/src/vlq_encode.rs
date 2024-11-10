@@ -131,8 +131,12 @@ pub trait WriteSigmaVlqExt: io::Write {
     /// Put a short string (< 256 bytes) into the writer. Writes length (as u8) and string bytes to the writer
     fn put_short_string(&mut self, s: &str) -> io::Result<()> {
         if s.len() > 255 {
+            #[cfg(feature = "std")]
+            let err_kind = io::ErrorKind::Unsupported;
+            #[cfg(not(feature = "std"))]
+            let err_kind = io::ErrorKind::Uncategorized;
             return Err(io::Error::new(
-                io::ErrorKind::Unsupported,
+                err_kind,
                 "Serializing strings with more than 255 bytes is not allowed",
             ));
         }

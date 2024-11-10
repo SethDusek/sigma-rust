@@ -39,9 +39,6 @@ ergo-rest = { version = "^0.13.0", path = "./ergo-rest" }
 ergo-lib = { version = "^0.28.0", path = "./ergo-lib" }
 k256 = { version = "0.13.1", features = ["arithmetic", "ecdsa"] }
 elliptic-curve = { version = "0.12", features = ["ff"] }
-thiserror = { version = "2", default-features = false }
-bounded-vec = { version = "^0.7.0" }
-bitvec = { version = "1.0.1" }
 derive_more = { version = "0.99", features = [
     "add",
     "add_assign",
@@ -54,6 +51,9 @@ derive_more = { version = "0.99", features = [
     "display",
 ] }
 num-derive = "0.4.2"
+thiserror = { version = "2.0.1", default-features = false }
+bounded-vec = { git = "https://github.com/SethDusek/bounded-vec", branch = "no_std" } # TODO: merge no_std support in bounded-vec
+bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 num-traits = "0.2.14"

@@ -1,7 +1,6 @@
 //! Sigma serialization
 
-#![no_std]
-// #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]

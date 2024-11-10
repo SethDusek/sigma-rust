@@ -37,9 +37,20 @@ impl From<io::Error> for ScorexSerializationError {
     }
 }
 
+#[cfg(feature = "std")]
 impl From<ScorexSerializationError> for io::Error {
     fn from(e: ScorexSerializationError) -> Self {
         io::Error::new(io::ErrorKind::InvalidInput, e.to_string())
+    }
+}
+
+#[cfg(not(feature = "std"))]
+impl From<ScorexSerializationError> for io::Error {
+    fn from(_e: ScorexSerializationError) -> Self {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Error messages are only supported on std target",
+        )
     }
 }
 
