@@ -217,7 +217,7 @@ impl<'ctx> Value<'ctx> {
             Value::Int(b) => Value::Int(*b),
             Value::Long(b) => Value::Long(*b),
             Value::Unit => Value::Unit,
-            Value::BigInt(b) => Value::BigInt(b.clone()),
+            Value::BigInt(b) => Value::BigInt(*b),
             Value::GroupElement(b) => Value::GroupElement(b.to_static()),
             Value::SigmaProp(p) => Value::SigmaProp(p.clone()),
             Value::AvlTree(t) => Value::AvlTree(t.clone()),

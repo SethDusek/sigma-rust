@@ -1,5 +1,5 @@
 use ergo_chain_types::Header;
-use ergotree_ir::sigma_protocol::dlog_group::order;
+use ergotree_ir::sigma_protocol::dlog_group::order_bigint;
 use num_bigint::BigInt;
 use num_traits::ToPrimitive;
 use std::convert::TryInto;
@@ -93,7 +93,7 @@ impl NipopowAlgos {
         let genesis_header = header.height == 1;
         if !genesis_header {
             // Order of the secp256k1 elliptic curve
-            let order = order();
+            let order = order_bigint();
             #[allow(clippy::unwrap_used)]
             let required_target = (order / decode_compact_bits(header.n_bits))
                 .to_f64()

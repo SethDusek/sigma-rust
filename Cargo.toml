@@ -35,16 +35,26 @@ ergotree-interpreter = { version = "^0.28.0", path = "./ergotree-interpreter" }
 ergo-nipopow = { version = "^0.15", path = "./ergo-nipopow" }
 ergo-merkle-tree = { version = "^0.15.0", path = "./ergo-merkle-tree" }
 ergo-rest = { version = "^0.13.0", path = "./ergo-rest" }
-ergo-lib = { version = "^0.28.0", path = "./ergo-lib"}
+ergo-lib = { version = "^0.28.0", path = "./ergo-lib" }
 k256 = { version = "0.13.1", features = ["arithmetic", "ecdsa"] }
 elliptic-curve = { version = "0.12", features = ["ff"] }
 thiserror = "1"
 bounded-vec = { version = "^0.7.0" }
 bitvec = { version = "1.0.1" }
-derive_more = "0.99"
+derive_more = { version = "0.99", features = [
+    "add",
+    "add_assign",
+    "mul",
+    "not",
+    "from",
+    "into",
+    "try_into",
+    "from_str",
+    "display",
+] }
 blake2 = "0.10"
 sha2 = "0.10"
-num-derive = "0.3.3"
+num-derive = "0.4.2"
 num-traits = "0.2.14"
 num-integer = "0.1.44"
 num-bigint = "0.4.0"

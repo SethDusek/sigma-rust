@@ -8,7 +8,6 @@ use crate::serialization::op_code::OpCode;
 use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
-extern crate derive_more;
 use derive_more::From;
 
 #[cfg(feature = "arbitrary")]

@@ -95,7 +95,10 @@ impl Constant {
     /// Create BigInt constant from byte array (signed bytes bit-endian)
     pub fn from_bigint_signed_bytes_be(num: &[u8]) -> Result<Constant, JsValue> {
         Ok(Constant(
-            ergo_lib::ergotree_ir::mir::constant::Constant::from(BigInt256::try_from(num)?),
+            ergo_lib::ergotree_ir::mir::constant::Constant::from(
+                BigInt256::from_be_slice(num)
+                    .ok_or_else(|| String::from("BigInt256: out of bounds"))?,
+            ),
         ))
     }
 

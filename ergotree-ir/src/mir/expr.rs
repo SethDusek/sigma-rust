@@ -2,7 +2,6 @@
 
 use std::convert::Infallible;
 use std::convert::TryFrom;
-use std::convert::TryInto;
 
 use crate::chain::context::Context;
 use crate::chain::ergo_box::RegisterId;

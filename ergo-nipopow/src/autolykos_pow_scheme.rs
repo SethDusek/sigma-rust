@@ -203,7 +203,7 @@ pub enum AutolykosPowSchemeError {
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use ergotree_ir::{serialization::SigmaSerializable, sigma_protocol::dlog_group::order};
+    use ergotree_ir::{serialization::SigmaSerializable, sigma_protocol::dlog_group::order_bigint};
 
     use crate::nipopow_algos::decode_compact_bits;
 
@@ -256,7 +256,7 @@ mod tests {
             "adProofsId" : "dec129290a763f4de41f04e87e2b661dd59758af6bdd00dd51f5d97c3a8cb9b5",
             "transactionsId" : "eba1dd82cf51147232e09c1f72b37c554c30f63274d5093bff36849a83472a42",
             "parentId" : "ac2101807f0000ca01ff0119db227f202201007f62000177a080005d440896d0"
-          } 
+          }
           "#;
 
         let header: Header = serde_json::from_str(json).unwrap();
@@ -285,7 +285,7 @@ mod tests {
         let decoded = decode_compact_bits(header.n_bits);
 
         // Target `b` from encoded difficulty `nBits`
-        let target_b = order() / decoded;
+        let target_b = order_bigint() / decoded;
         assert_eq!(
             target_b,
             BigInt::parse_bytes(
@@ -324,7 +324,7 @@ mod tests {
         let decoded = decode_compact_bits(header.n_bits);
 
         // Target `b` from encoded difficulty `nBits`
-        let target_b = order() / decoded;
+        let target_b = order_bigint() / decoded;
         let hit = pow.pow_hit(&header).unwrap();
 
         assert!(hit >= target_b);

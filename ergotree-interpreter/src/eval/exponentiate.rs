@@ -61,7 +61,7 @@ mod tests {
 
             let expected_exp = ergo_chain_types::ec_point::exponentiate(
                 &left,
-                &dlog_group::bigint256_to_scalar(right.clone()).unwrap()
+                &dlog_group::bigint256_to_scalar(right).unwrap()
             );
 
             let expr: Expr = Exponentiate {
@@ -82,7 +82,7 @@ mod tests {
 
         let expected_exp = ergo_chain_types::ec_point::exponentiate(
             &left,
-            &dlog_group::bigint256_to_scalar(right.clone()).unwrap(),
+            &dlog_group::bigint256_to_scalar(right).unwrap(),
         );
 
         let expr: Expr = Exponentiate {

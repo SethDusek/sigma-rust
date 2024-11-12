@@ -12,7 +12,6 @@ use crate::serialization::op_code::OpCode;
 use crate::serialization::SigmaSerializable;
 use ergo_chain_types::EcPoint;
 use std::convert::TryFrom;
-use std::convert::TryInto;
 use std::fmt::Formatter;
 
 extern crate derive_more;

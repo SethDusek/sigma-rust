@@ -184,7 +184,7 @@ mod tests {
 
         #[test]
         fn from_bigint(v in any::<BigInt256>()) {
-            let c: Constant = v.clone().into();
+            let c: Constant = v.into();
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
                 assert!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version).is_err());
