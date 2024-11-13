@@ -69,8 +69,8 @@ impl Evaluable for Fold {
 mod tests {
     use std::convert::TryInto;
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::bin_op::ArithOp;
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::expr::Expr;

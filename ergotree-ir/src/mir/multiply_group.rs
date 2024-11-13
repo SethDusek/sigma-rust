@@ -4,6 +4,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 use super::expr::Expr;
@@ -56,6 +57,8 @@ impl SigmaSerializable for MultiplyGroup {
         Ok(MultiplyGroup { left, right })
     }
 }
+
+impl_traversable_expr!(MultiplyGroup, boxed left, boxed right);
 
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]

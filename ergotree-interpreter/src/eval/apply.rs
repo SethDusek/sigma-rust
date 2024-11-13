@@ -56,6 +56,7 @@ impl Evaluable for Apply {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::bin_op::RelationOp;
     use ergotree_ir::mir::block::BlockValue;
@@ -67,7 +68,6 @@ mod tests {
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
 
     use super::*;

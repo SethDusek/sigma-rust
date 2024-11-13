@@ -7,8 +7,8 @@ use crate::chain::ergo_state_context::ErgoStateContext;
 use crate::chain::transaction::ergo_transaction::{ErgoTransaction, TxValidationError};
 use crate::chain::transaction::{verify_tx_input_proof, Transaction, TransactionError};
 use crate::ergotree_ir::chain::ergo_box::BoxId;
-use ergotree_interpreter::eval::context::TxIoVec;
 use ergotree_interpreter::sigma_protocol::verifier::VerificationResult;
+use ergotree_ir::chain::context::TxIoVec;
 use ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergotree_ir::chain::ergo_box::{BoxTokens, ErgoBox};
 use ergotree_ir::chain::token::{TokenAmount, TokenId};
@@ -288,8 +288,9 @@ pub enum TransactionContextError {
 mod test {
     use std::collections::HashMap;
 
-    use ergotree_interpreter::eval::context::TxIoVec;
-    use ergotree_interpreter::sigma_protocol::prover::{ContextExtension, ProofBytes};
+    use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
+    use ergotree_ir::chain::context::TxIoVec;
+    use ergotree_ir::chain::context_extension::ContextExtension;
     use ergotree_ir::chain::ergo_box::arbitrary::ArbBoxParameters;
     use ergotree_ir::chain::ergo_box::box_value::BoxValue;
     use ergotree_ir::chain::ergo_box::{

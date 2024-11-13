@@ -251,12 +251,7 @@ pub fn generate_commitments(
         let input_box = tx_context
             .get_input_box(&input.box_id)
             .ok_or(TransactionContextError::InputBoxNotFound(i))?;
-        let tree = input_box.ergo_tree.clone();
-        let exp = tree
-            .proposition()
-            .map_err(ProverError::ErgoTreeError)
-            .map_err(|e| TxSigningError::ProverError(e, i))?;
-        let reduction_result = reduce_to_crypto(&exp, &ctx)
+        let reduction_result = reduce_to_crypto(&input_box.ergo_tree, &ctx)
             .map_err(ProverError::EvalError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
 
@@ -280,12 +275,7 @@ pub fn extract_hints(
         let input_box = tx_context
             .get_input_box(&input.box_id)
             .ok_or(TransactionContextError::InputBoxNotFound(i))?;
-        let tree = input_box.ergo_tree.clone();
-        let exp = tree
-            .proposition()
-            .map_err(ProverError::ErgoTreeError)
-            .map_err(|e| TxSigningError::ProverError(e, i))?;
-        let reduction_result = reduce_to_crypto(&exp, &ctx)
+        let reduction_result = reduce_to_crypto(&input_box.ergo_tree, &ctx)
             .map_err(ProverError::EvalError)
             .map_err(|e| TxSigningError::ProverError(e, i))?;
         let sigma_tree = reduction_result.sigma_prop;
@@ -389,7 +379,6 @@ pub fn generate_commitments_for(
 mod tests {
     use super::*;
     use crate::chain::transaction::Transaction;
-    use crate::ergotree_interpreter::eval::context::Context;
     use crate::ergotree_interpreter::eval::reduce_to_crypto;
     use crate::ergotree_interpreter::sigma_protocol::private_input::{
         DlogProverInput, PrivateInput,
@@ -406,6 +395,7 @@ mod tests {
     use ergo_chain_types::Base16DecodedBytes;
     use ergotree_interpreter::sigma_protocol::private_input::DhTupleProverInput;
     use ergotree_interpreter::sigma_protocol::wscalar::Wscalar;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::atleast::Atleast;
     use ergotree_ir::mir::constant::{Constant, Literal};
     use ergotree_ir::mir::sigma_or::SigmaOr;
@@ -466,8 +456,7 @@ mod tests {
         let tree_m: ErgoTree = ErgoTree::sigma_parse_bytes(&bytes_m.0).unwrap();
 
         let contx = force_any_val::<Context>();
-        let exp = tree_m.proposition().unwrap();
-        let reduction_result = reduce_to_crypto(&exp, &contx).unwrap();
+        let reduction_result = reduce_to_crypto(&tree_m, &contx).unwrap();
         let sigma_tree = reduction_result.sigma_prop;
         let stx: Transaction = serde_json::from_str(signed_tx).unwrap();
         let test: ProofBytes = stx.inputs.first().clone().spending_proof.proof;
@@ -675,7 +664,7 @@ mod tests {
         .into();
         let tree_and = ErgoTree::try_from(expr.clone()).unwrap();
 
-        let cand = reduce_to_crypto(&expr, &ctx).unwrap().sigma_prop;
+        let cand = reduce_to_crypto(&tree_and, &ctx).unwrap().sigma_prop;
         let generate_for: Vec<SigmaBoolean> = vec![SigmaBoolean::ProofOfKnowledge(
             SigmaProofOfKnowledgeTree::ProveDlog(pk2),
         )];
@@ -747,7 +736,7 @@ mod tests {
 
         let tree_expr = ErgoTree::try_from(expr.clone()).unwrap();
 
-        let expr_reduced = reduce_to_crypto(&expr, &ctx).unwrap().sigma_prop;
+        let expr_reduced = reduce_to_crypto(&tree_expr, &ctx).unwrap().sigma_prop;
         let mut generate_for: Vec<SigmaBoolean> = vec![SigmaBoolean::ProofOfKnowledge(
             SigmaProofOfKnowledgeTree::ProveDlog(pk2),
         )];
@@ -882,7 +871,7 @@ mod tests {
         .into();
         let exp: Expr = SigmaAnd::new(vec![first_expr, second_expr]).unwrap().into();
         let tree = ErgoTree::try_from(exp.clone()).unwrap();
-        let ctree = reduce_to_crypto(&exp, &ctx).unwrap().sigma_prop;
+        let ctree = reduce_to_crypto(&tree, &ctx).unwrap().sigma_prop;
         let mut generate_for: Vec<SigmaBoolean> = vec![SigmaBoolean::ProofOfKnowledge(
             SigmaProofOfKnowledgeTree::ProveDlog(pk_alice.clone()),
         )];
@@ -993,7 +982,7 @@ mod tests {
 
         let tree_expr = ErgoTree::try_from(expr.clone()).unwrap();
 
-        let expr_reduced = reduce_to_crypto(&expr, &ctx).unwrap().sigma_prop;
+        let expr_reduced = reduce_to_crypto(&tree_expr, &ctx).unwrap().sigma_prop;
         let message = vec![0u8; 100];
 
         let hints_from_bob: HintsBag = generate_commitments_for(&expr_reduced, &[bob_pk.into()]);
@@ -1089,7 +1078,7 @@ mod tests {
 
         let tree_expr = ErgoTree::try_from(expr.clone()).unwrap();
 
-        let expr_reduced = reduce_to_crypto(&expr, &ctx).unwrap().sigma_prop;
+        let expr_reduced = reduce_to_crypto(&tree_expr, &ctx).unwrap().sigma_prop;
         let message = vec![0u8; 100];
 
         let bob_hints: HintsBag = generate_commitments_for(&expr_reduced, &[bob_pk.into()]);
@@ -1262,7 +1251,7 @@ mod tests {
         .into();
         let expr: Expr = Atleast::new(bound, input).unwrap().into();
         let tree_expr = ErgoTree::try_from(expr.clone()).unwrap();
-        let expr_reduced = reduce_to_crypto(&expr, &ctx).unwrap().sigma_prop;
+        let expr_reduced = reduce_to_crypto(&tree_expr, &ctx).unwrap().sigma_prop;
         let message = vec![0u8; 100];
 
         // only actors 1, 2, 3, 4, 5, 6, 7 are signing, others are simulated (see bag_one below)

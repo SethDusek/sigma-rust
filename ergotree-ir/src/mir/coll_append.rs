@@ -4,6 +4,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 // use crate::types::stuple::STuple;
 use crate::types::stype::SType;
 
@@ -39,11 +40,11 @@ impl Append {
             }
             (_, SType::SColl(_)) => {
                 Err(InvalidArgumentError(format!(
-                    "Expected Append input param to be a collection; got input={:?}", input.tpe())))   
+                    "Expected Append input param to be a collection; got input={:?}", input.tpe())))
             },
             (_, _) => {
                 Err(InvalidArgumentError(format!(
-                    "Expected Append input and col_2 param to be a collection; got input={:?} col_2={:?}", input.tpe(), col_2.tpe())))   
+                    "Expected Append input and col_2 param to be a collection; got input={:?} col_2={:?}", input.tpe(), col_2.tpe())))
             }
         }
     }
@@ -74,6 +75,8 @@ impl SigmaSerializable for Append {
         Ok(Append::new(input, col_2)?)
     }
 }
+
+impl_traversable_expr!(Append, boxed input, boxed col_2);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

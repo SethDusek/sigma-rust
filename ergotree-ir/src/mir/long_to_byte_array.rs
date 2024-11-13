@@ -30,6 +30,9 @@ impl OneArgOp for LongToByteArray {
     fn input(&self) -> &Expr {
         &self.input
     }
+    fn input_mut(&mut self) -> &mut Expr {
+        &mut self.input
+    }
 }
 
 impl OneArgOpTryBuild for LongToByteArray {

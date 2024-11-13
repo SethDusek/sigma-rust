@@ -1,3 +1,4 @@
+use ergotree_ir::mir::expr::SubstDeserializeError;
 use miette::miette;
 use miette::LabeledSpan;
 use std::fmt::Debug;
@@ -82,6 +83,9 @@ pub enum EvalError {
         /// Currently activated script version on network
         activated_version: u8,
     },
+    /// Deserialize substitution error, see [`ergotree_ir::mir::expr::Expr::substitute_deserialize`]
+    #[error("DeserializeRegister/DeserializeContext error: {0}")]
+    SubstDeserializeError(#[from] SubstDeserializeError),
 }
 
 /// Wrapped error with source span
@@ -215,10 +219,10 @@ mod tests {
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
 
-    use crate::eval::context::Context;
     use crate::eval::error::SpannedEvalError;
     use crate::eval::error::SpannedWithSourceEvalError;
     use crate::eval::tests::try_eval_out;
+    use ergotree_ir::chain::context::Context;
 
     fn check(expr: Expr, expected_tree: expect_test::Expect) {
         let mut w = PosTrackingWriter::new();

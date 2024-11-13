@@ -32,6 +32,9 @@ impl OneArgOp for OptionGet {
     fn input(&self) -> &Expr {
         &self.input
     }
+    fn input_mut(&mut self) -> &mut Expr {
+        &mut self.input
+    }
 }
 
 impl OneArgOpTryBuild for OptionGet {

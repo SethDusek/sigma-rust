@@ -7,6 +7,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::sfunc::SFunc;
 use crate::types::stype::SType;
 
@@ -80,6 +81,11 @@ impl FuncValue {
         &self.body
     }
 
+    /// Function body
+    pub fn body_mut(&mut self) -> &mut Expr {
+        &mut self.body
+    }
+
     /// Type
     pub fn tpe(&self) -> SType {
         self.tpe.clone()
@@ -104,6 +110,8 @@ impl SigmaSerializable for FuncValue {
         Ok(FuncValue::new(args, body))
     }
 }
+
+impl_traversable_expr!(FuncValue, boxed body);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

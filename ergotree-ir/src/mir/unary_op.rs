@@ -13,6 +13,8 @@ use super::expr::InvalidArgumentError;
 pub trait OneArgOp {
     /// Input value(expr) of the IR node
     fn input(&self) -> &Expr;
+    /// Mutable reference to input value(expr) of the IR node
+    fn input_mut(&mut self) -> &mut Expr;
 }
 
 /// Constructor for unary IR nodes that check the validity of the argument

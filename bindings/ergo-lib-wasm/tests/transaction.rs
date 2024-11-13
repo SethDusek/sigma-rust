@@ -7,6 +7,7 @@ use wasm_bindgen_test::*;
 
 wasm_bindgen_test_configure!(run_in_browser);
 
+#[allow(dead_code)]
 #[wasm_bindgen_test]
 fn test_random() {
     let sk1 = SecretKey::random_dlog();

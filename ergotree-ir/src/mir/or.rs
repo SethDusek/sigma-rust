@@ -1,4 +1,5 @@
 use super::expr::Expr;
+use super::unary_op::OneArgOp;
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
@@ -35,6 +36,16 @@ impl SigmaSerializable for Or {
         Ok(Self {
             input: Expr::sigma_parse(r)?.into(),
         })
+    }
+}
+
+impl OneArgOp for Or {
+    fn input(&self) -> &Expr {
+        &self.input
+    }
+
+    fn input_mut(&mut self) -> &mut Expr {
+        &mut self.input
     }
 }
 

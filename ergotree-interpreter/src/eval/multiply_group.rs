@@ -32,8 +32,8 @@ impl Evaluable for MultiplyGroup {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
 
     use ergo_chain_types::EcPoint;
     use ergotree_ir::mir::expr::Expr;

@@ -14,11 +14,11 @@ use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 
 use crate::chain::transaction::storage_rent::check_storage_rent_conditions;
 use crate::wallet::multi_sig::TransactionHintsBag;
-use ergotree_interpreter::eval::context::Context;
 use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
 use ergotree_interpreter::sigma_protocol::prover::Prover;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
 use ergotree_interpreter::sigma_protocol::prover::ProverResult;
+use ergotree_ir::chain::context::Context;
 use thiserror::Error;
 
 pub use super::tx_context::TransactionContext;
@@ -260,10 +260,8 @@ pub fn sign_tx_input<'ctx>(
 #[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
     use super::*;
-    use ergotree_interpreter::eval::context::TxIoVec;
     use ergotree_interpreter::sigma_protocol::private_input::DlogProverInput;
     use ergotree_interpreter::sigma_protocol::private_input::PrivateInput;
-    use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
     use ergotree_interpreter::sigma_protocol::prover::TestProver;
     use ergotree_interpreter::sigma_protocol::verifier::verify_signature;
     use ergotree_interpreter::sigma_protocol::verifier::TestVerifier;
@@ -271,6 +269,8 @@ mod tests {
     use ergotree_interpreter::sigma_protocol::verifier::VerifierError;
     use ergotree_ir::chain::address::AddressEncoder;
     use ergotree_ir::chain::address::NetworkPrefix;
+    use ergotree_ir::chain::context::TxIoVec;
+    use ergotree_ir::chain::context_extension::ContextExtension;
     use ergotree_ir::chain::ergo_box::box_value::BoxValue;
     use ergotree_ir::chain::ergo_box::ErgoBox;
     use ergotree_ir::chain::ergo_box::NonMandatoryRegisters;

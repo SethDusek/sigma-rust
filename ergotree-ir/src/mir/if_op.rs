@@ -6,6 +6,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 /// If (lazy evaluation)
@@ -48,6 +49,8 @@ impl SigmaSerializable for If {
         })
     }
 }
+
+impl_traversable_expr!(If, boxed condition, boxed true_branch, boxed false_branch);
 
 #[cfg(feature = "arbitrary")]
 /// Arbitrary impl

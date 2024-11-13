@@ -5,6 +5,7 @@ use std::fmt::Display;
 use super::expr::Expr;
 use crate::has_opcode::HasOpCode;
 use crate::serialization::op_code::OpCode;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 extern crate derive_more;
@@ -233,6 +234,8 @@ impl HasOpCode for BinOp {
         self.kind.into()
     }
 }
+
+impl_traversable_expr!(BinOp, boxed left, boxed right);
 
 #[cfg(feature = "arbitrary")]
 /// Arbitrary impl

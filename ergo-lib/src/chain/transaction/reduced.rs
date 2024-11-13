@@ -2,8 +2,8 @@
 //! is augmented with ReducedInput which contains a script reduction result.
 
 use ergotree_interpreter::eval::reduce_to_crypto;
-use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
+use ergotree_ir::chain::context_extension::ContextExtension;
 use ergotree_ir::serialization::sigma_byte_reader::SigmaByteRead;
 use ergotree_ir::serialization::sigma_byte_writer::SigmaByteWrite;
 use ergotree_ir::serialization::SigmaParsingError;
@@ -78,12 +78,7 @@ pub fn reduce_tx(
             let input_box = tx_context
                 .get_input_box(&input.box_id)
                 .ok_or(TransactionContextError::InputBoxNotFound(idx))?;
-            let expr = input_box
-                .ergo_tree
-                .proposition()
-                .map_err(ProverError::ErgoTreeError)
-                .map_err(|e| TxSigningError::ProverError(e, idx))?;
-            let reduction_result = reduce_to_crypto(&expr, &ctx)
+            let reduction_result = reduce_to_crypto(&input_box.ergo_tree, &ctx)
                 .map_err(ProverError::EvalError)
                 .map_err(|e| TxSigningError::ProverError(e, idx))?;
             Ok(ReducedInput {

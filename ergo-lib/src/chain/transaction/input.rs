@@ -2,8 +2,8 @@
 
 pub mod prover_result;
 
-use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
 use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
+use ergotree_ir::chain::context_extension::ContextExtension;
 use ergotree_ir::chain::ergo_box::BoxId;
 use ergotree_ir::serialization::sigma_byte_reader::SigmaByteRead;
 use ergotree_ir::serialization::sigma_byte_writer::SigmaByteWrite;

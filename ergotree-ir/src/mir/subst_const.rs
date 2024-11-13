@@ -8,6 +8,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -70,6 +71,8 @@ impl SigmaSerializable for SubstConstants {
         Ok(SubstConstants::new(script_bytes, positions, new_values)?)
     }
 }
+
+impl_traversable_expr!(SubstConstants, boxed script_bytes, boxed positions, boxed new_values);
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]

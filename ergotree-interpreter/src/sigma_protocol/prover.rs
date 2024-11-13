@@ -1,6 +1,5 @@
 //! Interpreter with enhanced functionality to prove statements.
 
-mod context_extension;
 mod prover_result;
 
 pub mod hint;
@@ -28,7 +27,6 @@ use gf2_192::gf2_192poly::Gf2_192PolyError;
 use gf2_192::Gf2_192Error;
 use std::convert::TryInto;
 
-pub use context_extension::*;
 use ergotree_ir::ergo_tree::ErgoTree;
 use ergotree_ir::ergo_tree::ErgoTreeError;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaConjecture;
@@ -53,8 +51,8 @@ use super::unproven_tree::UnprovenTree;
 use super::FirstProverMessage::FirstDhtProverMessage;
 use super::FirstProverMessage::FirstDlogProverMessage;
 
-use crate::eval::context::Context;
 use crate::eval::EvalError;
+use ergotree_ir::chain::context::Context;
 
 use crate::sigma_protocol::dht_protocol::SecondDhTupleProverMessage;
 use crate::sigma_protocol::dlog_protocol::SecondDlogProverMessage;
@@ -143,9 +141,8 @@ pub trait Prover {
         message: &[u8],
         hints_bag: &HintsBag,
     ) -> Result<ProverResult, ProverError> {
-        let expr = tree.proposition()?;
         let ctx_ext = ctx.extension.clone();
-        let reduction_result = reduce_to_crypto(&expr, ctx).map_err(ProverError::EvalError)?;
+        let reduction_result = reduce_to_crypto(tree, ctx).map_err(ProverError::EvalError)?;
         self.generate_proof(reduction_result.sigma_prop, message, hints_bag)
             .map(|p| ProverResult {
                 proof: p,

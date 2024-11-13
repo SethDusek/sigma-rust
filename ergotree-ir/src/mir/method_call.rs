@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::serialization::op_code::OpCode;
+use crate::traversable::impl_traversable_expr;
 use crate::types::smethod::SMethod;
 use crate::types::stype::SType;
 use crate::types::stype_param::STypeVar;
@@ -104,3 +105,5 @@ impl MethodCall {
 impl HasStaticOpCode for MethodCall {
     const OP_CODE: OpCode = OpCode::METHOD_CALL;
 }
+
+impl_traversable_expr!(MethodCall, boxed obj, arr args);

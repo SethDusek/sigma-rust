@@ -9,8 +9,6 @@ pub mod unsigned;
 
 use bounded_vec::BoundedVec;
 use ergo_chain_types::blake2b256_hash;
-use ergotree_interpreter::eval::context::Context;
-pub use ergotree_interpreter::eval::context::TxIoVec;
 use ergotree_interpreter::eval::env::Env;
 use ergotree_interpreter::eval::extract_sigma_boolean;
 use ergotree_interpreter::eval::EvalError;
@@ -20,6 +18,8 @@ use ergotree_interpreter::sigma_protocol::verifier::TestVerifier;
 use ergotree_interpreter::sigma_protocol::verifier::VerificationResult;
 use ergotree_interpreter::sigma_protocol::verifier::Verifier;
 use ergotree_interpreter::sigma_protocol::verifier::VerifierError;
+use ergotree_ir::chain::context::Context;
+pub use ergotree_ir::chain::context::TxIoVec;
 use ergotree_ir::chain::ergo_box::BoxId;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::chain::ergo_box::ErgoBoxCandidate;

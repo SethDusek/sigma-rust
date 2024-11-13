@@ -31,6 +31,9 @@ impl OneArgOp for CalcSha256 {
     fn input(&self) -> &Expr {
         &self.input
     }
+    fn input_mut(&mut self) -> &mut Expr {
+        &mut self.input
+    }
 }
 
 impl OneArgOpTryBuild for CalcSha256 {

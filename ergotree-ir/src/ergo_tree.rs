@@ -18,17 +18,19 @@ use crate::serialization::constant_store::ConstantStore;
 use derive_more::From;
 use std::convert::TryFrom;
 use std::io;
+use std::sync::OnceLock;
 use thiserror::Error;
 
 mod tree_header;
 pub use tree_header::*;
 
 /// Parsed ErgoTree
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(Eq, Debug, Clone)]
 pub struct ParsedErgoTree {
     header: ErgoTreeHeader,
     constants: Vec<Constant>,
     root: Expr,
+    has_deserialize: OnceLock<bool>,
 }
 
 impl ParsedErgoTree {
@@ -60,6 +62,12 @@ impl ParsedErgoTree {
 
     fn template_bytes(&self) -> Result<Vec<u8>, ErgoTreeError> {
         Ok(self.root.sigma_serialize_bytes()?)
+    }
+}
+
+impl PartialEq for ParsedErgoTree {
+    fn eq(&self, other: &Self) -> bool {
+        self.header == other.header && self.constants == other.constants && self.root == other.root
     }
 }
 
@@ -146,7 +154,11 @@ impl ErgoTree {
             vec![]
         };
         r.set_constant_store(ConstantStore::new(constants.clone()));
+        let was_deserialize = r.was_deserialize();
+        r.set_deserialize(false);
         let root = Expr::sigma_parse(r)?;
+        let has_deserialize = r.was_deserialize();
+        r.set_deserialize(was_deserialize);
         if root.tpe() != SType::SSigmaProp {
             return Err(ErgoTreeError::RootTpeError(root.tpe()));
         }
@@ -154,6 +166,7 @@ impl ErgoTree {
             header,
             constants,
             root,
+            has_deserialize: has_deserialize.into(),
         })
     }
 
@@ -195,12 +208,14 @@ impl ErgoTree {
                 header,
                 constants,
                 root: parsed_expr,
+                has_deserialize: OnceLock::new(),
             })
         } else {
             ErgoTree::Parsed(ParsedErgoTree {
                 header,
                 constants: Vec::new(),
                 root: expr.clone(),
+                has_deserialize: OnceLock::new(),
             })
         })
     }
@@ -211,25 +226,26 @@ impl ErgoTree {
     /// get Expr out of ErgoTree
     pub fn proposition(&self) -> Result<Expr, ErgoTreeError> {
         let tree = self.parsed_tree()?.clone();
+        let root = tree.root;
         // This tree has ConstantPlaceholder nodes instead of Constant nodes.
         // We need to substitute placeholders with constant values.
-        // So far the easiest way to do it is during deserialization (after the serialization)
-        let root = tree.root;
         if tree.header.is_constant_segregation() {
-            let mut data = Vec::new();
-            let constants = {
-                let cs = ConstantStore::new(tree.constants.clone());
-                let mut w = SigmaByteWriter::new(&mut data, Some(cs));
-                root.sigma_serialize(&mut w)?;
-                #[allow(clippy::unwrap_used)] // constant store is specified in SigmaByteWriter::new
-                w.constant_store.unwrap()
-            };
-            let cursor = Cursor::new(&mut data[..]);
-            let mut sr = SigmaByteReader::new_with_substitute_placeholders(cursor, constants);
-            let parsed_expr = Expr::sigma_parse(&mut sr)?;
-            Ok(parsed_expr)
+            Ok(root.substitute_constants(&tree.constants)?)
         } else {
             Ok(root)
+        }
+    }
+
+    /// Check if ErgoTree root has [`crate::mir::deserialize_context::DeserializeContext`] or [`crate::mir::deserialize_register::DeserializeRegister`] nodes
+    pub fn has_deserialize(&self) -> bool {
+        match self {
+            ErgoTree::Unparsed { .. } => false,
+            ErgoTree::Parsed(ParsedErgoTree {
+                header: _,
+                constants: _,
+                root,
+                has_deserialize,
+            }) => *has_deserialize.get_or_init(|| root.has_deserialize()),
         }
     }
 
@@ -384,6 +400,7 @@ impl SigmaSerializable for ErgoTree {
                 header,
                 constants,
                 root,
+                has_deserialize: OnceLock::new(),
             }))
         }
     }
@@ -459,6 +476,7 @@ pub(crate) mod arbitrary {
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
+#[allow(clippy::unreachable)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[allow(clippy::expect_used)]
@@ -466,7 +484,9 @@ mod tests {
     use super::*;
     use crate::chain::address::AddressEncoder;
     use crate::chain::address::NetworkPrefix;
+    use crate::mir::bool_to_sigma::BoolToSigmaProp;
     use crate::mir::constant::Literal;
+    use crate::mir::deserialize_context::DeserializeContext;
     use crate::sigma_protocol::sigma_boolean::SigmaProp;
     use proptest::prelude::*;
 
@@ -714,5 +734,37 @@ mod tests {
         let bytes = base16::decode(ergo_tree_hex.as_bytes()).unwrap();
         let tree = ErgoTree::sigma_parse_bytes(&bytes).unwrap();
         tree.proposition().unwrap();
+    }
+
+    fn has_deserialize(tree: ErgoTree) -> bool {
+        let ErgoTree::Parsed(ParsedErgoTree {
+            has_deserialize, ..
+        }) = ErgoTree::sigma_parse_bytes(&tree.sigma_serialize_bytes().unwrap()).unwrap()
+        else {
+            unreachable!();
+        };
+        *has_deserialize.get().unwrap()
+    }
+
+    #[test]
+    fn test_lazy_has_deserialize() {
+        let has_deserialize_expr: Expr = BoolToSigmaProp {
+            input: Box::new(
+                DeserializeContext {
+                    tpe: SType::SBoolean,
+                    id: 0,
+                }
+                .into(),
+            ),
+        }
+        .into();
+        let tree = ErgoTree::new(ErgoTreeHeader::v1(false), &has_deserialize_expr).unwrap();
+        assert!(has_deserialize(tree));
+        let no_deserialize_expr: Expr = BoolToSigmaProp {
+            input: Box::new(true.into()),
+        }
+        .into();
+        let tree = ErgoTree::new(ErgoTreeHeader::v1(false), &no_deserialize_expr).unwrap();
+        assert!(!has_deserialize(tree));
     }
 }

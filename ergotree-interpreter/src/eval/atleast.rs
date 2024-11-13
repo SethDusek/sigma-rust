@@ -69,8 +69,8 @@ mod tests {
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaConjecture;
     use ergotree_ir::types::stype::SType;
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
 
     use super::*;
 

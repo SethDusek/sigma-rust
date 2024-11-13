@@ -54,6 +54,17 @@ impl TryFrom<u8> for RegisterId {
     }
 }
 
+impl From<RegisterId> for u8 {
+    fn from(value: RegisterId) -> Self {
+        match value {
+            RegisterId::MandatoryRegisterId(mandatory_register_id) => mandatory_register_id as u8,
+            RegisterId::NonMandatoryRegisterId(non_mandatory_register_id) => {
+                non_mandatory_register_id as u8
+            }
+        }
+    }
+}
+
 impl Display for RegisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -65,6 +76,7 @@ impl Display for RegisterId {
 
 /// Register ids that every box have (box properties exposed as registers)
 #[derive(PartialEq, Eq, Debug, Clone, Copy, derive_more::Display)]
+#[repr(u8)]
 pub enum MandatoryRegisterId {
     /// Monetary value, in Ergo tokens
     R0 = 0,

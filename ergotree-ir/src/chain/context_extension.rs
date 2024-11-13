@@ -1,10 +1,10 @@
 //! ContextExtension type
-use ergotree_ir::mir::constant::Constant;
-use ergotree_ir::serialization::sigma_byte_reader::SigmaByteRead;
-use ergotree_ir::serialization::sigma_byte_writer::SigmaByteWrite;
-use ergotree_ir::serialization::SigmaParsingError;
-use ergotree_ir::serialization::SigmaSerializable;
-use ergotree_ir::serialization::SigmaSerializeResult;
+use crate::mir::constant::Constant;
+use crate::serialization::sigma_byte_reader::SigmaByteRead;
+use crate::serialization::sigma_byte_writer::SigmaByteWrite;
+use crate::serialization::SigmaParsingError;
+use crate::serialization::SigmaSerializable;
+use crate::serialization::SigmaSerializeResult;
 use indexmap::IndexMap;
 use std::convert::TryFrom;
 use std::fmt;
@@ -120,7 +120,7 @@ mod arbitrary {
 #[allow(clippy::panic)]
 mod tests {
     use super::*;
-    use ergotree_ir::serialization::sigma_serialize_roundtrip;
+    use crate::serialization::sigma_serialize_roundtrip;
     use proptest::prelude::*;
 
     proptest! {

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::chain::json::context_extension::ContextExtensionSerde;
-use ergotree_interpreter::sigma_protocol::prover::ContextExtension;
+use ergotree_ir::chain::context_extension::ContextExtension;
 use serde::ser::SerializeStruct;
 use serde::Serialize;
 

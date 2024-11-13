@@ -9,6 +9,7 @@ use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
 use crate::sigma_protocol::sigma_boolean::SigmaConjectureItems;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 use super::expr::Expr;
@@ -64,6 +65,8 @@ impl SigmaSerializable for SigmaOr {
         Ok(Self::new(Vec::<Expr>::sigma_parse(r)?)?)
     }
 }
+
+impl_traversable_expr!(SigmaOr, arr items);
 
 /// Arbitrary impl
 #[cfg(feature = "arbitrary")]

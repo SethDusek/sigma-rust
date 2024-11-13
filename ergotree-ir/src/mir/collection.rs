@@ -5,6 +5,7 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::Traversable;
 use crate::types::stype::SType;
 
 use super::constant::Constant;
@@ -73,6 +74,22 @@ impl HasOpCode for Collection {
         match self {
             Collection::BoolConstants(_) => OpCode::COLL_OF_BOOL_CONST,
             Collection::Exprs { .. } => OpCode::COLL,
+        }
+    }
+}
+
+impl Traversable for Collection {
+    type Item = Expr;
+    fn children(&self) -> Box<dyn Iterator<Item = &Expr> + '_> {
+        match self {
+            Self::Exprs { elem_tpe: _, items } => Box::new(items.iter()),
+            Self::BoolConstants(_) => Box::new(std::iter::empty()),
+        }
+    }
+    fn children_mut(&mut self) -> Box<dyn Iterator<Item = &mut Expr> + '_> {
+        match self {
+            Self::Exprs { elem_tpe: _, items } => Box::new(items.iter_mut()),
+            Self::BoolConstants(_) => Box::new(std::iter::empty()),
         }
     }
 }

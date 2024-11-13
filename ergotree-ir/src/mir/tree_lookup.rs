@@ -1,5 +1,6 @@
 //! Lookup in AVL tree
 use crate::serialization::op_code::OpCode;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
 
 use super::expr::Expr;
@@ -57,6 +58,8 @@ impl SigmaSerializable for TreeLookup {
         Ok(TreeLookup { tree, key, proof })
     }
 }
+
+impl_traversable_expr!(TreeLookup, boxed tree, boxed key, boxed proof);
 
 #[allow(clippy::unwrap_used)]
 #[cfg(feature = "arbitrary")]

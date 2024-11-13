@@ -84,9 +84,9 @@ impl Evaluable for Map {
 #[cfg(test)]
 mod tests {
 
-    use crate::eval::context::Context;
-    use crate::eval::context::TxIoVec;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
+    use ergotree_ir::chain::context::TxIoVec;
     use ergotree_ir::mir::bin_op::ArithOp;
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::expr::Expr;

@@ -27,8 +27,8 @@ impl Evaluable for OptionIsDefined {
 #[cfg(test)]
 mod tests {
     use super::OptionIsDefined;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::extract_reg_as::ExtractRegisterAs;
     use ergotree_ir::mir::global_vars::GlobalVars;

@@ -100,9 +100,9 @@ pub(crate) static MINER_PUBKEY_EVAL_FN: EvalFn = |_mc, _env, ctx, obj, _args| {
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
     use ergo_chain_types::{Header, PreHeader};
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::chain::ergo_box::ErgoBox;
     use ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
     use ergotree_ir::mir::expr::Expr;

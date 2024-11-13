@@ -62,8 +62,8 @@ mod tests {
     use ergotree_ir::mir::method_call::MethodCall;
     use ergotree_ir::mir::property_call::PropertyCall;
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::types::sglobal;
     use sigma_test_util::force_any_val;
 

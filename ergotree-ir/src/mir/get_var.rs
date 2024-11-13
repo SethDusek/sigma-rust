@@ -6,7 +6,10 @@ use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
+use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
+
+use super::expr::Expr;
 
 /// Extract value of variable from context by its ID.
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -40,6 +43,8 @@ impl SigmaSerializable for GetVar {
         Ok(Self { var_id, var_tpe })
     }
 }
+
+impl_traversable_expr!(GetVar);
 
 /// Arbitrary impl
 #[cfg(feature = "arbitrary")]

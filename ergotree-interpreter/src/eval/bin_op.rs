@@ -326,9 +326,9 @@ impl Evaluable for BinOp {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
     use crate::eval::tests::try_eval_out;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::expr::Expr;
     use num_traits::Bounded;

@@ -1,6 +1,6 @@
-use ergotree_interpreter::eval::context::Context;
 use ergotree_interpreter::sigma_protocol::private_input::DlogProverInput;
 use ergotree_interpreter::sigma_protocol::verifier::{TestVerifier, Verifier};
+use ergotree_ir::chain::context::Context;
 use ergotree_ir::ergo_tree::ErgoTree;
 use ergotree_ir::mir::atleast::Atleast;
 use ergotree_ir::mir::constant::{Constant, Literal};

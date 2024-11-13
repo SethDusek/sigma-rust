@@ -1,4 +1,5 @@
-use ergotree_interpreter::{eval::context::Context, sigma_protocol::prover::ProofBytes};
+use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
+use ergotree_ir::chain::context::Context;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::{
     chain::ergo_box::RegisterId, mir::constant::TryExtractInto, serialization::SigmaSerializable,

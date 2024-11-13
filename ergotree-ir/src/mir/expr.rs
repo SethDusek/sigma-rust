@@ -1,11 +1,19 @@
 //! IR expression
 
+use std::convert::Infallible;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 
+use crate::chain::context::Context;
+use crate::chain::ergo_box::RegisterId;
+use crate::chain::ergo_box::RegisterIdOutOfBounds;
+use crate::chain::ergo_box::RegisterValueError;
 use crate::pretty_printer::PosTrackingWriter;
 use crate::pretty_printer::Print;
+use crate::serialization::SigmaParsingError;
+use crate::serialization::SigmaSerializable;
 use crate::source_span::Spanned;
+use crate::traversable::Traversable;
 use crate::types::stype::LiftIntoSType;
 use crate::types::stype::SType;
 
@@ -33,6 +41,7 @@ use super::constant::ConstantPlaceholder;
 use super::constant::Literal;
 use super::constant::TryExtractFrom;
 use super::constant::TryExtractFromError;
+use super::constant::TryExtractInto;
 use super::create_avl_tree::CreateAvlTree;
 use super::create_provedlog::CreateProveDlog;
 use super::decode_point::DecodePoint;
@@ -325,6 +334,138 @@ impl Expr {
         }
     }
 
+    /// Rewrite tree bottom-up, matching nodes that satisfy `rule` and applying `subst` to them
+    pub fn rewrite_bu(&self, rule: impl Fn(&Expr) -> bool, subst: impl Fn(&mut Expr)) -> Self {
+        let mut new_root = self.clone();
+        Self::rewrite_bu_inner(&mut new_root, &rule, &|node| {
+            Ok::<_, Infallible>(subst(node))
+        })
+        .unwrap();
+        new_root
+    }
+
+    /// Attempt to rewrite tree, returning early if `subst` returns `Err(E)`
+    pub fn try_rewrite_bu<E>(
+        mut self,
+        rule: impl Fn(&Expr) -> bool,
+        subst: impl Fn(&mut Expr) -> Result<(), E>,
+    ) -> Result<Self, E> {
+        Self::rewrite_bu_inner(&mut self, &rule, &subst).map(|_| self)
+    }
+
+    fn rewrite_bu_inner<E>(
+        root: &mut Expr,
+        rule: &impl Fn(&Expr) -> bool,
+        subst: &impl Fn(&mut Expr) -> Result<(), E>,
+    ) -> Result<(), E> {
+        root.children_mut()
+            .try_for_each(|expr| Self::rewrite_bu_inner(expr, rule, subst))?;
+        if rule(root) {
+            subst(root)?;
+        }
+        Ok(())
+    }
+
+    /// Return an iterator over the [`Expr`]
+    /// The iterator performs a pre-order traversal
+    pub fn iter(&self) -> impl Iterator<Item = &Expr> {
+        struct ExprIterator<'a> {
+            stack: Vec<&'a Expr>,
+        }
+        impl<'a> Iterator for ExprIterator<'a> {
+            type Item = &'a Expr;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                let cur = self.stack.pop()?;
+                for node in cur.children() {
+                    self.stack.push(node);
+                }
+                Some(cur)
+            }
+        }
+        ExprIterator { stack: vec![&self] }
+    }
+
+    /// Returns true if the [`Expr`] has deserialize nodes, see: [`DeserializeContext`] and [`DeserializeRegister`]
+    pub(crate) fn has_deserialize(&self) -> bool {
+        self.iter().any(|c| {
+            matches!(
+                c,
+                Expr::DeserializeContext(_) | Expr::DeserializeRegister(_)
+            )
+        })
+    }
+
+    /// Rewrite expr, replacing [`DeserializeContext`] and [`DeserializeRegister`] nodes with their respective context extension/register values
+    pub fn substitute_deserialize(self, ctx: &Context) -> Result<Self, SubstDeserializeError> {
+        self.try_rewrite_bu(
+            |expr| {
+                matches!(
+                    expr,
+                    Expr::DeserializeContext(_) | Expr::DeserializeRegister(_)
+                )
+            },
+            |expr| {
+                let (tpe, parsed_expr): (&mut SType, Expr) = match expr {
+                    Expr::DeserializeContext(DeserializeContext { tpe, id }) => {
+                        let vec = ctx
+                            .extension
+                            .values
+                            .get(&*id)
+                            .ok_or(SubstDeserializeError::ExtensionKeyNotFound(*id))?
+                            .clone()
+                            .try_extract_into::<Vec<u8>>()?;
+                        (tpe, Expr::sigma_parse_bytes(&vec)?)
+                    }
+                    Expr::DeserializeRegister(DeserializeRegister { reg, tpe, default }) => {
+                        let expr = ctx
+                            .self_box
+                            .get_register(*reg)?
+                            .map(|constant| -> Result<_, SubstDeserializeError> {
+                                Ok(Expr::sigma_parse_bytes(
+                                    &constant.try_extract_into::<Vec<u8>>()?,
+                                )?)
+                            })
+                            .transpose()?
+                            .or(default.as_deref().cloned());
+                        match expr {
+                            Some(expr) => (tpe, expr),
+                            None => return Ok(()), // When script in register is not found, and default is not defined, leave DeserializeRegisterNode unchanged, which will error on evaluation
+                        }
+                    }
+                    #[allow(clippy::unreachable)] // Rule is already checked in filter
+                    _ => unreachable!(),
+                };
+                if parsed_expr.tpe() != *tpe {
+                    return Err(SubstDeserializeError::ExprTpeError {
+                        expected: tpe.clone(),
+                        actual: parsed_expr.tpe(),
+                    });
+                }
+                *expr = parsed_expr;
+                Ok(())
+            },
+        )
+    }
+
+    /// Substitute [`ConstantPlaceholder`] nodes in `self` with [`Constant`]
+    /// Errors if a constant can not be found in `constants`
+    pub fn substitute_constants(self, constants: &[Constant]) -> Result<Self, SigmaParsingError> {
+        self.try_rewrite_bu::<SigmaParsingError>(
+            |expr| matches!(expr, Expr::ConstPlaceholder(_)),
+            |expr| {
+                if let Expr::ConstPlaceholder(ConstantPlaceholder { id, tpe: _ }) = expr {
+                    *expr = constants
+                        .get(*id as usize)
+                        .cloned()
+                        .map(Expr::from)
+                        .ok_or(SigmaParsingError::ConstantForPlaceholderNotFound(*id))?;
+                }
+                Ok(())
+            },
+        )
+    }
+
     /// Prints the tree with newlines
     pub fn debug_tree(&self) -> String {
         let tree = format!("{:#?}", self);
@@ -337,6 +478,151 @@ impl Expr {
         #[allow(clippy::unwrap_used)] // it only fail due to formatting errors
         let _spanned_expr = self.print(&mut printer).unwrap();
         printer.as_string()
+    }
+}
+
+impl Traversable for Expr {
+    type Item = Expr;
+
+    fn children<'a>(&'a self) -> Box<dyn Iterator<Item = &Expr> + '_> {
+        match self {
+            Expr::Const(_) => Box::new(std::iter::empty()),
+            Expr::SubstConstants(op) => op.children(),
+            Expr::ByteArrayToLong(op) => op.children(),
+            Expr::ByteArrayToBigInt(op) => op.children(),
+            Expr::LongToByteArray(op) => op.children(),
+            Expr::CalcBlake2b256(op) => op.children(),
+            Expr::CalcSha256(op) => op.children(),
+            Expr::Fold(op) => op.children(),
+            Expr::ExtractRegisterAs(op) => op.children(),
+            Expr::GlobalVars(op) => op.children(),
+            Expr::MethodCall(op) => op.children(),
+            Expr::PropertyCall(op) => op.children(),
+            Expr::BinOp(op) => op.children(),
+            Expr::Global => Box::new(std::iter::empty()),
+            Expr::Context => Box::new(std::iter::empty()),
+            Expr::OptionGet(v) => v.children(),
+            Expr::Apply(op) => op.children(),
+            Expr::FuncValue(op) => op.children(),
+            Expr::ValUse(op) => op.children(),
+            Expr::BlockValue(op) => op.children(),
+            Expr::SelectField(op) => op.children(),
+            Expr::ExtractAmount(op) => op.children(),
+            Expr::ConstPlaceholder(_) => Box::new(std::iter::empty()),
+            Expr::Collection(op) => op.children(),
+            Expr::ValDef(op) => op.children(),
+            Expr::And(op) => op.children(),
+            Expr::Or(op) => op.children(),
+            Expr::Xor(op) => op.children(),
+            Expr::Atleast(op) => op.children(),
+            Expr::LogicalNot(op) => op.children(),
+            Expr::Map(op) => op.children(),
+            Expr::Filter(op) => op.children(),
+            Expr::BoolToSigmaProp(op) => op.children(),
+            Expr::Upcast(op) => op.children(),
+            Expr::Downcast(op) => op.children(),
+            Expr::If(op) => op.children(),
+            Expr::Append(op) => op.children(),
+            Expr::ByIndex(op) => op.children(),
+            Expr::ExtractScriptBytes(op) => op.children(),
+            Expr::SizeOf(op) => op.children(),
+            Expr::Slice(op) => op.children(),
+            Expr::CreateProveDlog(op) => op.children(),
+            Expr::CreateProveDhTuple(op) => op.children(),
+            Expr::ExtractCreationInfo(op) => op.children(),
+            Expr::Exists(op) => op.children(),
+            Expr::ExtractId(op) => op.children(),
+            Expr::SigmaPropBytes(op) => op.children(),
+            Expr::OptionIsDefined(op) => op.children(),
+            Expr::OptionGetOrElse(op) => op.children(),
+            Expr::Negation(op) => op.children(),
+            Expr::BitInversion(op) => op.children(),
+            Expr::ForAll(op) => op.children(),
+            Expr::Tuple(op) => op.children(),
+            Expr::DecodePoint(op) => op.children(),
+            Expr::SigmaAnd(op) => op.children(),
+            Expr::SigmaOr(op) => op.children(),
+            Expr::DeserializeRegister(op) => op.children(),
+            Expr::DeserializeContext(op) => op.children(),
+            Expr::GetVar(op) => op.children(),
+            Expr::MultiplyGroup(op) => op.children(),
+            Expr::Exponentiate(op) => op.children(),
+            Expr::XorOf(op) => op.children(),
+            Expr::ExtractBytes(op) => op.children(),
+            Expr::ExtractBytesWithNoRef(op) => op.children(),
+            Expr::TreeLookup(op) => op.children(),
+            Expr::CreateAvlTree(op) => op.children(),
+        }
+    }
+    fn children_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &mut Expr> + '_> {
+        match self {
+            Expr::Const(_) => Box::new(std::iter::empty()),
+            Expr::SubstConstants(op) => op.children_mut(),
+            Expr::ByteArrayToLong(op) => op.children_mut(),
+            Expr::ByteArrayToBigInt(op) => op.children_mut(),
+            Expr::LongToByteArray(op) => op.children_mut(),
+            Expr::CalcBlake2b256(op) => op.children_mut(),
+            Expr::CalcSha256(op) => op.children_mut(),
+            Expr::Fold(op) => op.children_mut(),
+            Expr::ExtractRegisterAs(op) => op.children_mut(),
+            Expr::GlobalVars(op) => op.children_mut(),
+            Expr::MethodCall(op) => op.children_mut(),
+            Expr::PropertyCall(op) => op.children_mut(),
+            Expr::BinOp(op) => op.children_mut(),
+            Expr::Global => Box::new(std::iter::empty()),
+            Expr::Context => Box::new(std::iter::empty()),
+            Expr::OptionGet(v) => v.children_mut(),
+            Expr::Apply(op) => op.children_mut(),
+            Expr::FuncValue(op) => op.children_mut(),
+            Expr::ValUse(op) => op.children_mut(),
+            Expr::BlockValue(op) => op.children_mut(),
+            Expr::SelectField(op) => op.children_mut(),
+            Expr::ExtractAmount(op) => op.children_mut(),
+            Expr::ConstPlaceholder(_) => Box::new(std::iter::empty()),
+            Expr::Collection(op) => op.children_mut(),
+            Expr::ValDef(op) => op.children_mut(),
+            Expr::And(op) => op.children_mut(),
+            Expr::Or(op) => op.children_mut(),
+            Expr::Xor(op) => op.children_mut(),
+            Expr::Atleast(op) => op.children_mut(),
+            Expr::LogicalNot(op) => op.children_mut(),
+            Expr::Map(op) => op.children_mut(),
+            Expr::Filter(op) => op.children_mut(),
+            Expr::BoolToSigmaProp(op) => op.children_mut(),
+            Expr::Upcast(op) => op.children_mut(),
+            Expr::Downcast(op) => op.children_mut(),
+            Expr::If(op) => op.children_mut(),
+            Expr::Append(op) => op.children_mut(),
+            Expr::ByIndex(op) => op.children_mut(),
+            Expr::ExtractScriptBytes(op) => op.children_mut(),
+            Expr::SizeOf(op) => op.children_mut(),
+            Expr::Slice(op) => op.children_mut(),
+            Expr::CreateProveDlog(op) => op.children_mut(),
+            Expr::CreateProveDhTuple(op) => op.children_mut(),
+            Expr::ExtractCreationInfo(op) => op.children_mut(),
+            Expr::Exists(op) => op.children_mut(),
+            Expr::ExtractId(op) => op.children_mut(),
+            Expr::SigmaPropBytes(op) => op.children_mut(),
+            Expr::OptionIsDefined(op) => op.children_mut(),
+            Expr::OptionGetOrElse(op) => op.children_mut(),
+            Expr::Negation(op) => op.children_mut(),
+            Expr::BitInversion(op) => op.children_mut(),
+            Expr::ForAll(op) => op.children_mut(),
+            Expr::Tuple(op) => op.children_mut(),
+            Expr::DecodePoint(op) => op.children_mut(),
+            Expr::SigmaAnd(op) => op.children_mut(),
+            Expr::SigmaOr(op) => op.children_mut(),
+            Expr::DeserializeRegister(op) => op.children_mut(),
+            Expr::DeserializeContext(op) => op.children_mut(),
+            Expr::GetVar(op) => op.children_mut(),
+            Expr::MultiplyGroup(op) => op.children_mut(),
+            Expr::Exponentiate(op) => op.children_mut(),
+            Expr::XorOf(op) => op.children_mut(),
+            Expr::ExtractBytes(op) => op.children_mut(),
+            Expr::ExtractBytesWithNoRef(op) => op.children_mut(),
+            Expr::TreeLookup(op) => op.children_mut(),
+            Expr::CreateAvlTree(op) => op.children_mut(),
+        }
     }
 }
 
@@ -369,6 +655,25 @@ impl From<BoundedVecOutOfBounds> for InvalidArgumentError {
     fn from(e: BoundedVecOutOfBounds) -> Self {
         InvalidArgumentError(format!("BoundedVecOutOfBounds: {0}", e))
     }
+}
+
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
+pub enum SubstDeserializeError {
+    #[error("TryExtractFromError: {0}")]
+    TryExtractFromError(#[from] TryExtractFromError),
+    #[error("Could not find context extension variable {0}")]
+    ExtensionKeyNotFound(u8),
+    #[error("executeFromReg: Register out of bounds {0}")]
+    InvalidRegister(#[from] RegisterIdOutOfBounds),
+    #[error("Register {0} does not exist")]
+    RegisterNotFound(RegisterId),
+    #[error("RegisterValueError: {0}")]
+    RegisterValueError(#[from] RegisterValueError),
+    #[error("Error while parsing Expr from bytes: {0}")]
+    ExprParsingError(#[from] SigmaParsingError),
+    #[error("Expected tpe {expected}, found {actual}")]
+    ExprTpeError { expected: SType, actual: SType },
 }
 
 impl<T: TryFrom<Expr>> TryExtractFrom<Expr> for T {

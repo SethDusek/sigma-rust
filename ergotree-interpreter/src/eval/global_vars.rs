@@ -35,11 +35,11 @@ impl Evaluable for GlobalVars {
 #[cfg(test)]
 mod tests {
 
-    use crate::eval::context::Context;
     use crate::eval::tests::eval_out;
     use ergo_chain_types::EcPoint;
     use ergoscript_compiler::compiler::compile_expr;
     use ergoscript_compiler::script_env::ScriptEnv;
+    use ergotree_ir::chain::context::Context;
     use ergotree_ir::chain::ergo_box::ErgoBox;
     use sigma_test_util::force_any_val;
 

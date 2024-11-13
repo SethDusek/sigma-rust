@@ -3,6 +3,7 @@
 
 use std::convert::TryFrom;
 
+use ergo_lib::ergotree_ir::chain::context_extension::ContextExtension;
 use ergo_lib::{
     chain::{
         ergo_box::box_builder::ErgoBoxCandidateBuilder,
@@ -12,10 +13,7 @@ use ergo_lib::{
 };
 use ergo_lib::{
     ergo_chain_types::ADDigest,
-    ergotree_interpreter::sigma_protocol::{
-        private_input::DlogProverInput,
-        prover::{ContextExtension, ProofBytes},
-    },
+    ergotree_interpreter::sigma_protocol::{private_input::DlogProverInput, prover::ProofBytes},
 };
 use ergo_lib::{
     ergo_chain_types::{blake2b256_hash, AutolykosSolution, Header, Votes},
