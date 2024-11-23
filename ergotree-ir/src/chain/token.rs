@@ -279,6 +279,7 @@ pub mod arbitrary {
 
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
 
     use crate::chain::token::TokenId;

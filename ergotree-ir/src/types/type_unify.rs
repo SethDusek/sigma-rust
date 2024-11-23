@@ -86,12 +86,15 @@ mod tests {
     use alloc::sync::Arc;
     use alloc::vec;
 
+    #[cfg(feature = "arbitrary")]
     use super::super::stype::tests::primitive_type;
     use super::*;
     use crate::types::sfunc::SFunc;
     use crate::types::stuple::STuple;
+    #[cfg(feature = "arbitrary")]
     use proptest::prelude::*;
 
+    #[cfg(feature = "arbitrary")]
     proptest! {
 
         #[test]

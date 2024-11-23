@@ -312,9 +312,12 @@ pub(crate) mod arbitrary {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "arbitrary")]
     use crate::serialization::sigma_serialize_roundtrip;
+    #[cfg(feature = "arbitrary")]
     use proptest::prelude::*;
 
+    #[cfg(feature = "arbitrary")]
     proptest! {
 
         #[test]

@@ -588,13 +588,13 @@ pub(crate) mod arbitrary {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
+#[cfg(feature = "arbitrary")]
 mod tests {
 
     use super::*;
 
     use proptest::prelude::*;
 
-    #[cfg(feature = "std")]
     proptest! {
 
         #[test]

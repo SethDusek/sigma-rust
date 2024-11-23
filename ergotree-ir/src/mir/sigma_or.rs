@@ -2,7 +2,6 @@
 
 use core::convert::TryInto;
 
-
 use alloc::vec::Vec;
 
 use crate::serialization::op_code::OpCode;
@@ -100,6 +99,7 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;

@@ -335,18 +335,23 @@ mod tests {
     use crate::mir::constant::Constant;
     use crate::mir::constant::Literal::Boolean;
     use crate::mir::expr::Expr;
-    use crate::serialization::sigma_serialize_roundtrip;
     use crate::serialization::SigmaSerializable;
-    use proptest::prelude::*;
 
-    proptest! {
+    #[cfg(feature = "arbitrary")]
+    mod proptests {
+        use super::BinOp;
+        use super::Expr;
+        use crate::serialization::sigma_serialize_roundtrip;
+        use proptest::prelude::*;
 
-        #[test]
-        fn ser_roundtrip(v in any::<BinOp>()) {
-            let expr: Expr = v.into();
-            prop_assert_eq![sigma_serialize_roundtrip(&expr), expr];
+        proptest! {
+            #[test]
+            fn ser_roundtrip(v in any::<BinOp>()) {
+                let expr: Expr = v.into();
+                prop_assert_eq![sigma_serialize_roundtrip(&expr), expr];
+            }
+
         }
-
     }
 
     // Test that binop with boolean literals serialized correctly

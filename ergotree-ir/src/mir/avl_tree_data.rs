@@ -135,6 +135,7 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 mod tests {

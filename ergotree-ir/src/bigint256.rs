@@ -288,6 +288,7 @@ mod arbitrary {
 mod tests {
     use super::*;
     use num_traits::Num;
+    #[cfg(feature = "arbitrary")]
     use proptest::{prelude::*, proptest};
 
     #[cfg(feature = "arbitrary")]

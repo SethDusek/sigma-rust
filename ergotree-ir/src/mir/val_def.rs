@@ -39,7 +39,7 @@ impl ValId {
  * This representation is more compact in serialized form.
  * @param id unique identifier of the variable in the current scope. */
 #[derive(PartialEq, Eq, Debug, Clone)]
-#[cfg_attr(test, derive(Arbitrary))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ValDef {
     /// Variable id
     pub id: ValId,

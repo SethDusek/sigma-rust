@@ -1097,6 +1097,7 @@ pub(crate) mod arbitrary {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 pub mod tests {
     use super::*;

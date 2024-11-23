@@ -63,6 +63,7 @@ impl<'ctx, T> core::ops::Deref for Ref<'ctx, T> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod test {
     use crate::reference::Ref;
     use proptest::prelude::*;

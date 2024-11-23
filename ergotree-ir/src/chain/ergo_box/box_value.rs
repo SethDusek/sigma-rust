@@ -246,6 +246,7 @@ pub mod tests {
     use super::*;
     use alloc::vec;
     use alloc::vec::Vec;
+    #[cfg(feature = "arbitrary")]
     use proptest::{collection::vec, prelude::*};
 
     extern crate derive_more;
@@ -324,6 +325,7 @@ pub mod tests {
         assert!(checked_sum(input.into_iter()).is_err());
     }
 
+    #[cfg(feature = "arbitrary")]
     proptest! {
 
         #[test]

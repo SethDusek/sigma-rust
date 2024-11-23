@@ -480,6 +480,7 @@ pub mod arbitrary {
 #[allow(clippy::panic)]
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::chain::token::arbitrary::ArbTokenIdParam;

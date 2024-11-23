@@ -82,6 +82,7 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 pub mod tests {
     use crate::mir::block::BlockValue;

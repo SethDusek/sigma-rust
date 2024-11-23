@@ -17,12 +17,12 @@ use crate::types::stype::SType;
 use super::expr::Expr;
 use super::val_def::ValId;
 
-#[cfg(test)]
+#[cfg(feature = "arbitrary")]
 use proptest_derive::Arbitrary;
 
 /// Argument parameter for the user-defined function [`FuncValue`]
 #[derive(PartialEq, Eq, Debug, Clone)]
-#[cfg_attr(test, derive(Arbitrary))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FuncArg {
     /// Value id (defined with [`super::val_def::ValDef`])
     pub idx: ValId,

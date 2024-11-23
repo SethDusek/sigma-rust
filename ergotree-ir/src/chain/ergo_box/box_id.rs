@@ -77,6 +77,7 @@ impl SigmaSerializable for BoxId {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::serialization::sigma_serialize_roundtrip;

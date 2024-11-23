@@ -420,6 +420,7 @@ mod arbitrary {
 
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;

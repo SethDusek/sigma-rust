@@ -79,6 +79,7 @@ mod arbitrary {
 
 #[cfg(test)]
 #[allow(clippy::panic)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::mir::expr::Expr;
