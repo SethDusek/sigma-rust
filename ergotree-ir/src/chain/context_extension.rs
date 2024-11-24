@@ -9,13 +9,18 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::convert::TryFrom;
 use core::fmt;
-use core::hash::Hasher;
+use core::hash::BuildHasher;
 use thiserror::Error;
 
 use super::IndexMap;
 
 /// User-defined variables to be put into context
 #[derive(Debug, PartialEq, Eq, Clone)]
+#[cfg_attr(
+    feature = "json",
+    derive(serde::Deserialize),
+    serde(try_from = "indexmap::IndexMap<String, String>")
+)]
 pub struct ContextExtension {
     /// key-value pairs of variable id and it's value
     pub values: IndexMap<u8, Constant>,
@@ -65,7 +70,7 @@ impl SigmaSerializable for ContextExtension {
 pub struct ConstantParsingError(pub String);
 
 // for JSON encoding in ergo-lib
-impl<H: Hasher> TryFrom<indexmap::IndexMap<String, String, H>> for ContextExtension {
+impl<H: BuildHasher> TryFrom<indexmap::IndexMap<String, String, H>> for ContextExtension {
     type Error = ConstantParsingError;
     fn try_from(values_str: indexmap::IndexMap<String, String, H>) -> Result<Self, Self::Error> {
         let values = values_str.iter().try_fold(
@@ -96,6 +101,25 @@ impl<H: Hasher> TryFrom<indexmap::IndexMap<String, String, H>> for ContextExtens
     }
 }
 
+#[cfg(feature = "json")]
+impl serde::Serialize for ContextExtension {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::Error;
+        use serde::ser::SerializeMap;
+        let mut map = serializer.serialize_map(Some(self.values.len()))?;
+        for (k, v) in &self.values {
+            map.serialize_entry(
+                &format!("{}", k),
+                &base16::encode_lower(&v.sigma_serialize_bytes().map_err(Error::custom)?),
+            )?;
+        }
+        map.end()
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 mod arbitrary {
     use super::*;
@@ -122,7 +146,7 @@ mod arbitrary {
 
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
-#[allow(clippy::panic)]
+#[allow(clippy::panic, clippy::unwrap_used)]
 mod tests {
     use super::*;
     use crate::serialization::sigma_serialize_roundtrip;
@@ -133,6 +157,26 @@ mod tests {
         #[test]
         fn ser_roundtrip(v in any::<ContextExtension>()) {
             prop_assert_eq![sigma_serialize_roundtrip(&v), v];
+        }
+    }
+    #[cfg(feature = "json")]
+    mod json {
+        use super::*;
+        #[test]
+        fn parse_empty_context_extension() {
+            let c: ContextExtension = serde_json::from_str("{}").unwrap();
+            assert_eq!(c, ContextExtension::empty());
+        }
+
+        #[test]
+        fn parse_context_extension() {
+            let json = r#"
+            {"1" :"05b0b5cad8e6dbaef44a", "3":"048ce5d4e505"}
+            "#;
+            let c: ContextExtension = serde_json::from_str(json).unwrap();
+            assert_eq!(c.values.len(), 2);
+            assert!(c.values.get(&1u8).is_some());
+            assert!(c.values.get(&3u8).is_some());
         }
     }
 }
