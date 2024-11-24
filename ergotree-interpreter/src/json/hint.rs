@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 use std::num::ParseIntError;
 use std::str::FromStr;
 

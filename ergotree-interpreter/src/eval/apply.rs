@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::apply::Apply;
 use ergotree_ir::mir::val_def::ValId;
 use ergotree_ir::mir::value::Value;
@@ -56,7 +57,7 @@ impl Evaluable for Apply {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use ergotree_ir::chain::context::Context;
+    use alloc::boxed::Box;
     use ergotree_ir::mir::bin_op::BinOp;
     use ergotree_ir::mir::bin_op::RelationOp;
     use ergotree_ir::mir::block::BlockValue;
@@ -66,9 +67,8 @@ mod tests {
     use ergotree_ir::mir::val_def::ValDef;
     use ergotree_ir::mir::val_use::ValUse;
     use ergotree_ir::types::stype::SType;
-    use sigma_test_util::force_any_val;
 
-    use crate::eval::tests::eval_out;
+    use crate::eval::tests::eval_out_wo_ctx;
 
     use super::*;
 
@@ -119,7 +119,6 @@ mod tests {
         )
         .unwrap()
         .into();
-        let ctx = force_any_val::<Context>();
-        assert!(eval_out::<bool>(&apply, &ctx));
+        assert!(eval_out_wo_ctx::<bool>(&apply));
     }
 }

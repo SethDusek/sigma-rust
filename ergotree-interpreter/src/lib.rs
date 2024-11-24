@@ -1,5 +1,6 @@
 //! ErgoTree interpreter
 
+#![cfg_attr(not(feature = "std"), no_std)]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![allow(clippy::needless_lifetimes)]
@@ -19,6 +20,9 @@
 #![deny(clippy::unimplemented)]
 #![deny(clippy::unreachable)]
 #![deny(clippy::panic)]
+
+#[macro_use]
+extern crate alloc;
 
 mod contracts;
 

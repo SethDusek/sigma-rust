@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use ergotree_ir::mir::coll_fold::Fold;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::NativeColl;
@@ -66,8 +67,9 @@ impl Evaluable for Fold {
 #[allow(clippy::panic)]
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     use crate::eval::tests::eval_out;
     use ergotree_ir::chain::context::Context;

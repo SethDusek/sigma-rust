@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::method_call::MethodCall;
 use ergotree_ir::mir::value::Value;
 

@@ -1,8 +1,8 @@
+use alloc::boxed::Box;
+use alloc::string::String;
+use core::fmt::Debug;
+use core::fmt::Display;
 use ergotree_ir::mir::expr::SubstDeserializeError;
-use miette::miette;
-use miette::LabeledSpan;
-use std::fmt::Debug;
-use std::fmt::Display;
 
 use bounded_vec::BoundedVecOutOfBounds;
 use derive_more::TryInto;
@@ -112,8 +112,9 @@ pub struct SpannedWithSourceEvalError {
     source: String,
 }
 
+#[cfg(feature = "std")]
 impl Display for SpannedWithSourceEvalError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let _ = miette::set_hook(Box::new(|_| {
             Box::new(
                 miette::MietteHandlerOpts::new()
@@ -126,8 +127,8 @@ impl Display for SpannedWithSourceEvalError {
             )
         }));
         let err_msg = self.error.to_string();
-        let report = miette!(
-            labels = vec![LabeledSpan::at(self.source_span, err_msg,)],
+        let report = miette::miette!(
+            labels = vec![miette::LabeledSpan::at(self.source_span, err_msg,)],
             // help = "Help msg",
             "Evaluation error"
         )
@@ -136,8 +137,16 @@ impl Display for SpannedWithSourceEvalError {
     }
 }
 
+#[cfg(not(feature = "std"))]
+impl Display for SpannedWithSourceEvalError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{self}")
+    }
+}
+
+#[cfg(feature = "std")]
 impl Debug for SpannedWithSourceEvalError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let _ = miette::set_hook(Box::new(|_| {
             Box::new(
                 miette::MietteHandlerOpts::new()
@@ -150,13 +159,21 @@ impl Debug for SpannedWithSourceEvalError {
             )
         }));
         let err_msg = self.error.to_string();
-        let report = miette!(
-            labels = vec![LabeledSpan::at(self.source_span, err_msg,)],
+        let report = miette::miette!(
+            labels = vec![miette::LabeledSpan::at(self.source_span, err_msg,)],
             // help = "Help msg",
             "Evaluation error"
         )
         .with_source_code(self.source.clone());
         write!(f, "{:?}", report)?;
+        write!(f, "Env:\n{}", self.env)
+    }
+}
+
+#[cfg(not(feature = "std"))]
+impl Debug for SpannedWithSourceEvalError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{self}")?;
         write!(f, "Env:\n{}", self.env)
     }
 }
@@ -203,6 +220,8 @@ impl<T> ExtResultEvalError<T> for Result<T, EvalError> {
 #[allow(clippy::unwrap_used, unused_imports, dead_code)]
 #[cfg(test)]
 mod tests {
+    use alloc::boxed::Box;
+    use alloc::string::ToString;
     use ergotree_ir::mir::coll_by_index::ByIndex;
     use ergotree_ir::mir::global_vars::GlobalVars;
     use ergotree_ir::source_span::SourceSpan;
@@ -227,7 +246,6 @@ mod tests {
     fn check(expr: Expr, expected_tree: expect_test::Expect) {
         let mut w = PosTrackingWriter::new();
         let spanned_expr = expr.print(&mut w).unwrap();
-        dbg!(&spanned_expr);
         let ctx = force_any_val::<Context>();
         let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, &ctx)
             .err()
@@ -246,7 +264,6 @@ mod tests {
     fn check_error_span(expr: Expr, expected_span: SourceSpan) {
         let mut w = PosTrackingWriter::new();
         let spanned_expr = expr.print(&mut w).unwrap();
-        dbg!(&spanned_expr);
         let ctx = force_any_val::<Context>();
         let err_raw: SpannedEvalError = try_eval_out::<i32>(&spanned_expr, &ctx)
             .err()

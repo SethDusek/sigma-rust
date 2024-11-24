@@ -1,4 +1,5 @@
 #![allow(clippy::unwrap_used)]
+use alloc::vec::Vec;
 use ergotree_ir::bigint256::BigInt256;
 use ergotree_ir::mir::byte_array_to_bigint::ByteArrayToBigInt;
 use ergotree_ir::mir::constant::TryExtractInto;
@@ -38,6 +39,7 @@ mod tests {
 
     use super::*;
     use crate::eval::tests::try_eval_out_wo_ctx;
+    use alloc::boxed::Box;
     use num_bigint::{BigInt, Sign, ToBigInt};
     use num_traits::{Bounded, Num, Pow};
 

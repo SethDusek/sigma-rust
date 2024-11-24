@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use alloc::{string::ToString, sync::Arc};
 
 use crate::eval::EvalError;
 

@@ -9,7 +9,7 @@ description = "ErgoTree interpreter"
 exclude = ["proptest-regressions/*"]
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [dependencies]
 sigma-util = { workspace = true }
@@ -20,7 +20,7 @@ indexmap = { workspace = true }
 k256 = { workspace = true }
 elliptic-curve = { workspace = true }
 blake2 = { workspace = true }
-rand = { workspace = true }
+rand = { workspace = true, optional = true }
 lazy_static = { workspace = true }
 thiserror = { workspace = true }
 derive_more = { workspace = true }
@@ -29,20 +29,29 @@ base16 = { workspace = true }
 proptest-derive = { workspace = true, optional = true }
 bytes = { workspace = true }
 num-bigint = { workspace = true }
-bounded-vec = { workspace = true, features = ["serde"] }
+bounded-vec = { workspace = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 serde_with = { workspace = true, optional = true }
 proptest = { workspace = true, optional = true }
-ergo_avltree_rust = "0.1.0"
+ergo_avltree_rust = { git = "https://github.com/SethDusek/scorex_crypto_avltree", branch = "no_std" } # TODO: wait for upstream
 gf2_192 = { version = "^0.28.0", path = "../gf2_192" }
-miette = { workspace = true }
+miette = { workspace = true, optional = true }
 hashbrown = { workspace = true }
-
+core2 = { workspace = true }
 [features]
-default = ["json"]
-json = ["serde", "serde_json", "serde_with", "bounded-vec/serde"]
+json = [
+    "serde",
+    "serde_json",
+    "serde_with",
+    "bounded-vec/serde",
+    "ergotree-ir/json",
+    "ergo-chain-types/json",
+]
+default = ["json", "std"]
+std = ["rand", "miette"]
 arbitrary = [
+    "std",
     "proptest",
     "proptest-derive",
     "ergotree-ir/arbitrary",

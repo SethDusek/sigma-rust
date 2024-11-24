@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use ergotree_ir::bigint256::BigInt256;
 use ergotree_ir::ergo_tree::ErgoTreeVersion;
 use ergotree_ir::mir::downcast::Downcast;
@@ -9,7 +10,7 @@ use crate::eval::env::Env;
 use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 fn downcast_to_bigint<'a>(in_v: Value<'a>, ctx: &Context<'_>) -> Result<Value<'a>, EvalError> {
     match in_v {

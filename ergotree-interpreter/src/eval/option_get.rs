@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use ergotree_ir::mir::option_get::OptionGet;
 use ergotree_ir::mir::value::Value;
 

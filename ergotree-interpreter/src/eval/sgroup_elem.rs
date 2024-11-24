@@ -1,5 +1,6 @@
 use crate::eval::EvalError;
 
+use alloc::vec::Vec;
 use ergo_chain_types::EcPoint;
 use ergotree_ir::mir::value::Value;
 use ergotree_ir::reference::Ref;
@@ -34,6 +35,7 @@ pub(crate) static NEGATE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
+    use alloc::vec::Vec;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::method_call::MethodCall;
     use ergotree_ir::types::sgroup_elem;

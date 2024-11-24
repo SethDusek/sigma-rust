@@ -1,6 +1,7 @@
-use std::collections::HashMap;
-use std::fmt::Display;
+use core::fmt::Display;
+use hashbrown::HashMap;
 
+use alloc::vec::Vec;
 use ergotree_ir::mir::val_def::ValId;
 use ergotree_ir::mir::value::Value;
 
@@ -57,7 +58,7 @@ impl<'ctx> Env<'ctx> {
 }
 
 impl Display for Env<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let mut keys: Vec<&ValId> = self.store.keys().collect();
         keys.sort();
         for k in keys {

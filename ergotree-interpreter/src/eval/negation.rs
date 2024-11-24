@@ -15,10 +15,10 @@ impl Evaluable for Negation {
     ) -> Result<Value<'ctx>, EvalError> {
         let input_v = self.input.eval(env, ctx)?;
 
-        fn overflow_err<T: std::fmt::Display>(v: &T) -> EvalError {
+        fn overflow_err<T: core::fmt::Display>(v: &T) -> EvalError {
             EvalError::ArithmeticException(format!("Overflow on Negation of value {}", *v))
         }
-        fn neg<'ctx, T: CheckedNeg + Into<Value<'ctx>> + std::fmt::Display>(
+        fn neg<'ctx, T: CheckedNeg + Into<Value<'ctx>> + core::fmt::Display>(
             v: &T,
         ) -> Result<Value<'ctx>, EvalError> {
             v.checked_neg()

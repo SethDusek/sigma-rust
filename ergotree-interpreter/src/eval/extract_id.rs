@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::extract_id::ExtractId;
 use ergotree_ir::mir::value::Value;
 
@@ -28,6 +29,7 @@ impl Evaluable for ExtractId {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::eval::tests::eval_out;

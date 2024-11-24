@@ -1,5 +1,7 @@
-use std::sync::Arc;
+use alloc::string::ToString;
+use alloc::sync::Arc;
 
+use alloc::vec::Vec;
 use ergotree_ir::mir::coll_filter::Filter;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::CollKind;
@@ -84,6 +86,7 @@ impl Evaluable for Filter {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
 
     use crate::eval::tests::eval_out;
