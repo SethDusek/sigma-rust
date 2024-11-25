@@ -1,5 +1,7 @@
 //! JSON serialization
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use ergotree_interpreter::sigma_protocol::prover::ProofBytes;

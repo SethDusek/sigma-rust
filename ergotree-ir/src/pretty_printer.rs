@@ -91,7 +91,6 @@ mod tests {
 
     use expect_test::expect;
 
-    use alloc::boxed::Box;
     use crate::chain::address::AddressEncoder;
     use crate::chain::address::NetworkPrefix;
     use crate::ergo_tree::ErgoTree;
@@ -103,6 +102,7 @@ mod tests {
     use crate::mir::val_use::ValUse;
     use crate::serialization::SigmaSerializable;
     use crate::types::stype::SType;
+    use alloc::boxed::Box;
 
     use super::*;
 

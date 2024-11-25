@@ -8,7 +8,6 @@ use ergotree_ir::{
     },
     serialization::SigmaSerializationError,
 };
-use itertools::Itertools;
 use thiserror::Error;
 
 use crate::wallet::tx_context::TransactionContextError;
@@ -104,7 +103,7 @@ pub trait ErgoTransaction {
 
         // Check if there are no double-spends in input (one BoxId being spent more than once)
         let len = inputs.len();
-        let unique_count = inputs.unique().count();
+        let unique_count = inputs.collect::<hashbrown::HashSet<_>>().len();
         if unique_count != len {
             return Err(TxValidationError::DoubleSpend(unique_count, len));
         }

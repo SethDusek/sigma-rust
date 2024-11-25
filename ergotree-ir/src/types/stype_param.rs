@@ -2,7 +2,6 @@ use core::convert::TryInto;
 use core::fmt::Formatter;
 use core::hash::Hash;
 
-
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec;

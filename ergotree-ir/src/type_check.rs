@@ -1,6 +1,5 @@
 //! Type checking
 
-
 use alloc::string::String;
 
 use crate::mir::expr::Expr;

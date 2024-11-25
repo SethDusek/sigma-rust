@@ -22,7 +22,7 @@ futures-util = "0.3"
 url = { workspace = true }
 bounded-integer = { workspace = true }
 serde_with = { workspace = true }
-bounded-vec = { workspace = true, features=["serde"] }
+bounded-vec = { workspace = true, features = ["serde"] }
 
 [features]
 default = ["mnemonic_gen", "ergo-lib/compiler"]

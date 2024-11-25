@@ -2,7 +2,6 @@ use core::convert::TryFrom;
 
 use alloc::boxed::Box;
 
-
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;

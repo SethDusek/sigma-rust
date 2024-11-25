@@ -2,7 +2,6 @@
 
 use alloc::boxed::Box;
 
-
 use super::expr::Expr;
 use crate::has_opcode::HasStaticOpCode;
 use crate::mir::expr::InvalidArgumentError;

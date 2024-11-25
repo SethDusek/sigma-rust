@@ -1,7 +1,8 @@
 //! Transaction context
 
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use alloc::vec::Vec;
+use hashbrown::hash_map::Entry;
+use hashbrown::HashMap;
 
 use crate::chain::ergo_state_context::ErgoStateContext;
 use crate::chain::transaction::ergo_transaction::{ErgoTransaction, TxValidationError};
@@ -288,6 +289,7 @@ pub enum TransactionContextError {
 mod test {
     use std::collections::HashMap;
 
+    use alloc::vec::Vec;
     use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
     use ergotree_ir::chain::context::TxIoVec;
     use ergotree_ir::chain::context_extension::ContextExtension;
@@ -387,10 +389,10 @@ mod test {
         let parameters = Parameters::default();
         let sufficient_amount =
             ErgoBox::MAX_BOX_SIZE as u64 * parameters.min_value_per_byte() as u64;
-        let max_outputs = std::cmp::min(i16::MAX as u16, (input_sum / sufficient_amount) as u16);
-        let outputs = std::cmp::min(
+        let max_outputs = core::cmp::min(i16::MAX as u16, (input_sum / sufficient_amount) as u16);
+        let outputs = core::cmp::min(
             max_outputs,
-            std::cmp::max(boxes.len() + 1, rng.gen_range(0..boxes.len() * 2)) as u16,
+            core::cmp::max(boxes.len() + 1, rng.gen_range(0..boxes.len() * 2)) as u16,
         );
         assert!(outputs > 0);
         assert!(sufficient_amount * (outputs as u64) <= input_sum);
@@ -667,7 +669,6 @@ mod test {
                 .map(|b| b.creation_height)
                 .max()
                 .unwrap();
-            dbg!(height);
             let mut state_context: ErgoStateContext = force_any_val();
             state_context.pre_header.height = height;
             state_context.pre_header.version = version;

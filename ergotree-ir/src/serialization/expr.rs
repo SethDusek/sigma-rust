@@ -1,5 +1,3 @@
-
-
 use super::bin_op::bin_op_sigma_parse;
 use super::bin_op::bin_op_sigma_serialize;
 use super::{op_code::OpCode, sigma_byte_writer::SigmaByteWrite};

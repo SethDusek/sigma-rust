@@ -1,5 +1,6 @@
 //! Miner fee included in transaction
 
+use alloc::string::String;
 use ergotree_ir::chain::address::Address;
 use ergotree_ir::chain::address::AddressEncoder;
 use ergotree_ir::chain::address::NetworkPrefix;

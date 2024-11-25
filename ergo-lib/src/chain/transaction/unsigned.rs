@@ -6,16 +6,17 @@ use super::DataInput;
 use super::Transaction;
 use super::TxIoVec;
 use super::{distinct_token_ids, TransactionError};
+use alloc::vec::Vec;
 use bounded_vec::BoundedVec;
 use ergo_chain_types::blake2b256_hash;
 
+use core::convert::TryInto;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::chain::ergo_box::ErgoBoxCandidate;
 use ergotree_ir::chain::token::TokenId;
 use ergotree_ir::chain::tx_id::TxId;
+use ergotree_ir::chain::IndexSet;
 use ergotree_ir::serialization::SigmaSerializationError;
-use indexmap::IndexSet;
-use std::convert::TryInto;
 
 /// Unsigned (inputs without proofs) transaction
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]

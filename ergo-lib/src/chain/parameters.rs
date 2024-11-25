@@ -1,5 +1,5 @@
 //! Blockchain parameters. This module defines adjustable blockchain parameters that can be voted on by miners
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 #[repr(i8)]
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
@@ -103,7 +103,7 @@ impl Parameters {
     }
 }
 
-impl std::default::Default for Parameters {
+impl Default for Parameters {
     /// Default blockchain parameters
     // Taken from https://github.com/ergoplatform/ergo/blob/master/ergo-core/src/main/scala/org/ergoplatform/settings/Parameters.scala#L291
     fn default() -> Self {

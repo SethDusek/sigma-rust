@@ -79,7 +79,7 @@ pub unsafe fn hints_bag_get(
 }
 
 /// TransactionHintsBag
-pub struct TransactionHintsBag(pub(crate) ergo_lib::wallet::multi_sig::TransactionHintsBag);
+pub struct TransactionHintsBag(pub(crate) ergo_lib::wallet::TransactionHintsBag);
 pub type TransactionHintsBagPtr = *mut TransactionHintsBag;
 pub type ConstTransactionHintsBagPtr = *const TransactionHintsBag;
 
@@ -90,7 +90,7 @@ pub unsafe fn transaction_hints_bag_empty(
     let transaction_hints_bag_out =
         mut_ptr_as_mut(transaction_hints_bag_out, "transaction_hints_bag_out")?;
     *transaction_hints_bag_out = Box::into_raw(Box::new(TransactionHintsBag(
-        ergo_lib::wallet::multi_sig::TransactionHintsBag::empty(),
+        ergo_lib::wallet::TransactionHintsBag::empty(),
     )));
     Ok(())
 }

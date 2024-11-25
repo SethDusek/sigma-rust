@@ -1,5 +1,7 @@
-use std::str::FromStr;
+use core::str::FromStr;
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use ergotree_ir::chain::context_extension::ContextExtension;
 use serde::ser::SerializeStruct;
 use serde::Serialize;
