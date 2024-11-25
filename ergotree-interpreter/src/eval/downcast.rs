@@ -214,12 +214,12 @@ mod tests {
             );
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION)
-                .for_each(|version| assert!(try_eval_out_with_version::<BigInt256>(&downcast(v_bigint.clone(), SType::SBigInt), &ctx, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<BigInt256>(&downcast(v_bigint, SType::SBigInt), &ctx, version).is_err()));
             (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
                 |version| {
                     assert_eq!(
                         try_eval_out_with_version::<BigInt256>(
-                            &downcast(v_bigint.clone(), SType::SBigInt),
+                            &downcast(v_bigint, SType::SBigInt),
                             &ctx,
                             version
                         ).unwrap(),
@@ -234,7 +234,7 @@ mod tests {
             let c_short: Constant = v_short.into();
             let c_int: Constant = v_int.into();
             let c_long: Constant = v_long.into();
-            let c_bigint: Constant = v_bigint.clone().into();
+            let c_bigint: Constant = v_bigint.into();
 
             assert_eq!(
                 eval_out_wo_ctx::<i64>(&downcast(c_byte, SType::SLong)),
@@ -307,11 +307,11 @@ mod tests {
             .is_err());
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION)
-                .for_each(|version| assert!(try_eval_out_with_version::<i32>(&downcast(v_bigint.clone(), SType::SInt), &ctx, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i32>(&downcast(v_bigint, SType::SInt), &ctx, version).is_err()));
             (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i32>(
-                        &downcast(v_bigint.clone(), SType::SInt),
+                        &downcast(v_bigint, SType::SInt),
                         &ctx,
                         version
                     );
@@ -361,11 +361,11 @@ mod tests {
             assert!(try_eval_out_wo_ctx::<i16>(&downcast(c_long_oob, SType::SShort)).is_err());
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION)
-                .for_each(|version| assert!(try_eval_out_with_version::<i16>(&downcast(v_bigint.clone(), SType::SShort), &ctx, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i16>(&downcast(v_bigint, SType::SShort), &ctx, version).is_err()));
             (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i16>(
-                        &downcast(v_bigint.clone(), SType::SShort),
+                        &downcast(v_bigint, SType::SShort),
                         &ctx,
                         version
                     );
@@ -426,11 +426,11 @@ mod tests {
             assert!(try_eval_out_wo_ctx::<i8>(&downcast(c_long_oob, SType::SByte)).is_err());
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION)
-                .for_each(|version| assert!(try_eval_out_with_version::<i8>(&downcast(v_bigint.clone(), SType::SByte), &ctx, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i8>(&downcast(v_bigint, SType::SByte), &ctx, version).is_err()));
             (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i8>(
-                        &downcast(v_bigint.clone(), SType::SByte),
+                        &downcast(v_bigint, SType::SByte),
                         &ctx,
                         version
                     );

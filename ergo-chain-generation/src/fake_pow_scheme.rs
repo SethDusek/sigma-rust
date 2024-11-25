@@ -8,13 +8,12 @@
 #[cfg(test)]
 mod tests {
     use ergo_lib::ergo_chain_types::{blake2b256_hash, ADDigest, BlockId, Digest32};
+    use ergo_lib::ergotree_ir::sigma_protocol::dlog_group::order_bigint;
     use ergo_nipopow::{NipopowAlgos, NipopowProof};
 
     use ergo_chain_types::{AutolykosSolution, Header, Votes};
     use ergo_lib::ergotree_interpreter::sigma_protocol::private_input::DlogProverInput;
-    use ergo_lib::ergotree_ir::{
-        serialization::sigma_byte_writer::SigmaByteWriter, sigma_protocol::dlog_group::order,
-    };
+    use ergo_lib::ergotree_ir::serialization::sigma_byte_writer::SigmaByteWriter;
     use ergo_nipopow::PoPowHeader;
     use num_bigint::BigInt;
     use rand::{thread_rng, Rng};
@@ -149,7 +148,7 @@ mod tests {
 
         let (sk, _) = default_miner_secret();
         let nonce: Vec<u8> = std::iter::repeat(0_u8).take(8).collect();
-        let d = order() / (height + 1);
+        let d = order_bigint() / (height + 1);
         let autolykos_solution = AutolykosSolution {
             miner_pk: sk.public_key().unwrap().public_key.into(),
             pow_onetime_pk: Some(x.public_image().h),

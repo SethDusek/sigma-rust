@@ -529,7 +529,7 @@ mod tests {
                   val v20 = upcast(v18)
                   val v21 = upcast(v10)
                   val v22 = upcast(v11) / v21
-                  sigmaProp(v1.propBytes == SELF.propBytes && v1.value >= SELF.value && v2(1) == v3(1) && v4._1 == v5._1 && v6._1 == v7._1 && v8._1 == v9._1 && if (v11 == 0) if (v14) v16 * v17 * BigInt256(Int256(997)) >= upcast(-v18) * v19 * BigInt256(Int256(1000)) + upcast(v13 * 997) else v19 * v20 * BigInt256(Int256(997)) >= upcast(-v13) * v16 * BigInt256(Int256(1000)) + upcast(v18 * 997) else if (v14 && v18 > 0) upcast(-v11) <= v17 * v21 / v19 min v20 * v21 / v16 else v17 >= v22 * v19 && v20 >= v22 * v16)
+                  sigmaProp(v1.propBytes == SELF.propBytes && v1.value >= SELF.value && v2(1) == v3(1) && v4._1 == v5._1 && v6._1 == v7._1 && v8._1 == v9._1 && if (v11 == 0) if (v14) v16 * v17 * BigInt256(997) >= upcast(-v18) * v19 * BigInt256(1000) + upcast(v13 * 997) else v19 * v20 * BigInt256(997) >= upcast(-v13) * v16 * BigInt256(1000) + upcast(v18 * 997) else if (v14 && v18 > 0) upcast(-v11) <= v17 * v21 / v19 min v20 * v21 / v16 else v17 >= v22 * v19 && v20 >= v22 * v16)
                 }
             "#]],
         )
@@ -556,7 +556,7 @@ mod tests {
                       (v7: Box) => 
                         {
                           val v9 = v7.tokens(0)._2
-                          v9 >= upcast(1000) && upcast(v5._2) * upcast(v6) * BigInt256(Int256(997)) <= upcast(v9) * upcast(v2._2) * BigInt256(Int256(1000)) + upcast(v6 * 997)
+                          v9 >= upcast(1000) && upcast(v5._2) * upcast(v6) * BigInt256(997) <= upcast(v9) * upcast(v2._2) * BigInt256(1000) + upcast(v6 * 997)
                         }
 
                       }

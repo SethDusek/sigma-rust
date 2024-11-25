@@ -3,7 +3,6 @@ use ergotree_ir::bigint256::BigInt256;
 use ergotree_ir::mir::byte_array_to_bigint::ByteArrayToBigInt;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::Value;
-use std::convert::TryFrom;
 
 use crate::eval::env::Env;
 use crate::eval::Context;
@@ -23,9 +22,11 @@ impl Evaluable for ByteArrayToBigInt {
                 "ByteArrayToBigInt: byte array is empty".into(),
             ));
         }
-        match BigInt256::try_from(&input[..]) {
-            Ok(n) => Ok(Value::BigInt(n)),
-            Err(e) => Err(UnexpectedValue(e)),
+        match BigInt256::from_be_slice(&input[..]) {
+            Some(n) => Ok(Value::BigInt(n)),
+            None => Err(UnexpectedValue(
+                "ByteArrayToBigInt: input array out of bounds".into(),
+            )),
         }
     }
 }

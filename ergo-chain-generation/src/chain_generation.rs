@@ -10,6 +10,7 @@ use ergo_lib::{
         transaction::{prover_result::ProverResult, Input, Transaction, TxIoVec},
     },
     ergo_chain_types::{BlockId, Digest32},
+    ergotree_ir::sigma_protocol::dlog_group::order_bigint,
 };
 use ergo_lib::{
     ergo_chain_types::ADDigest,
@@ -21,7 +22,6 @@ use ergo_lib::{
         chain::ergo_box::{box_value::BoxValue, BoxId},
         ergo_tree::ErgoTree,
         serialization::{sigma_byte_writer::SigmaByteWriter, SigmaSerializable},
-        sigma_protocol::dlog_group::order,
     },
 };
 use ergo_merkle_tree::{MerkleNode, MerkleTree};
@@ -196,7 +196,7 @@ fn prove_block(
         .0
         .to_vec();
     // Order of the secp256k1 elliptic curve
-    let order = order();
+    let order = order_bigint();
     let target_b = order.clone() / ergo_nipopow::decode_compact_bits(header.n_bits);
 
     let x = DlogProverInput::random();
@@ -293,8 +293,8 @@ fn generate_element(
         concat.extend(pk);
         concat.extend(msg);
         concat.extend(w);
-        let valid_range = (BigInt::from(2_u8).pow(256) / order()) * order();
-        numeric_hash(&concat, valid_range, order())
+        let valid_range = (BigInt::from(2_u8).pow(256) / order_bigint()) * order_bigint();
+        numeric_hash(&concat, valid_range, order_bigint())
     } else {
         // Autolykos v. 2: H(j|h|M) (line 5 from the Algo 2 of the spec)
         let mut concat = vec![];
