@@ -30,7 +30,7 @@ core2 = { workspace = true }
 [features]
 default = ["std", "json"]
 arbitrary = ["proptest", "proptest-derive", "std"]
-json = ["serde", "serde_json", "serde_with", "std"]
-std = ["dep:url", "base16/std", "base64/std"]
+json = ["serde", "serde_json", "serde_with"]
+std = ["dep:url", "base16/std", "base64/std", "serde/std"]
 
 [dev-dependencies]

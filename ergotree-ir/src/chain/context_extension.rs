@@ -19,7 +19,7 @@ use super::IndexMap;
 #[cfg_attr(
     feature = "json",
     derive(serde::Deserialize),
-    serde(try_from = "indexmap::IndexMap<String, String>")
+    serde(try_from = "IndexMap<String, String>")
 )]
 pub struct ContextExtension {
     /// key-value pairs of variable id and it's value

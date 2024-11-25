@@ -49,7 +49,7 @@ json = [
     "ergo-chain-types/json",
 ]
 default = ["json", "std"]
-std = ["rand", "miette"]
+std = ["rand", "miette", "ergotree-ir/std"]
 arbitrary = [
     "std",
     "proptest",
