@@ -334,10 +334,12 @@ impl SType {
 /// - emitting typeCode of each node (see special case for collections below)
 /// - then recursively serializing subtrees from left to right on each level
 /// - for each collection of primitive type there is special type code to emit single byte instead of two bytes
+///
 /// Types code intervals
 /// - (1 .. MaxPrimTypeCode)  // primitive types
 /// - (CollectionTypeCode .. CollectionTypeCode + MaxPrimTypeCode) // collections of primitive types
 /// - (MaxCollectionTypeCode ..)  // Other types
+///
 /// Collection of non-primitive type is serialized as (CollectionTypeCode, serialize(elementType))
 impl SigmaSerializable for SType {
     fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> SigmaSerializeResult {

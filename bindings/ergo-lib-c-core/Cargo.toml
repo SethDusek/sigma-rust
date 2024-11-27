@@ -25,6 +25,7 @@ serde_with = { workspace = true }
 bounded-vec = { workspace = true, features = ["serde"] }
 
 [features]
-default = ["mnemonic_gen", "ergo-lib/compiler"]
+default = ["mnemonic_gen", "ergo-lib/compiler", "json"]
+json = []
 rest = ["tokio", "ergo-lib/rest"]
 mnemonic_gen = ["ergo-lib/mnemonic_gen"]

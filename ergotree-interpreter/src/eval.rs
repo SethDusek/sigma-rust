@@ -365,8 +365,6 @@ fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
 #[allow(clippy::todo)]
 pub(crate) mod tests {
 
-    #![allow(dead_code)]
-
     use super::env::Env;
     use super::*;
     use ergotree_ir::mir::bin_op::BinOp;
