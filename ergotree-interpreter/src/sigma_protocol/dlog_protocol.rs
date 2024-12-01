@@ -44,6 +44,7 @@ pub mod interactive_prover {
     use crate::sigma_protocol::crypto_utils;
     use crate::sigma_protocol::wscalar::Wscalar;
     use crate::sigma_protocol::{private_input::DlogProverInput, Challenge};
+    use ergo_chain_types::ec_point::exponentiate_gen;
     use ergo_chain_types::{
         ec_point::{exponentiate, generator, inverse},
         EcPoint,
@@ -67,7 +68,7 @@ pub mod interactive_prover {
         let e: Scalar = challenge.clone().into();
         let minus_e = e.negate();
         let h_to_e = exponentiate(&public_input.h, &minus_e);
-        let g_to_z = exponentiate(&generator(), &z);
+        let g_to_z = exponentiate_gen(&z);
         let a = g_to_z * &h_to_e;
         (
             FirstDlogProverMessage { a: a.into() },
@@ -80,8 +81,7 @@ pub mod interactive_prover {
     /// that leaf to compute the necessary randomness "r" and the commitment "a"
     pub fn first_message() -> (Wscalar, FirstDlogProverMessage) {
         let r = dlog_group::random_scalar_in_group_range(crypto_utils::secure_rng());
-        let g = generator();
-        let a = exponentiate(&g, &r);
+        let a = exponentiate_gen(&r);
         (r.into(), FirstDlogProverMessage { a: a.into() })
     }
 
@@ -115,7 +115,7 @@ pub mod interactive_prover {
         let g = generator();
         let h = *proposition.h.clone();
         let e: Scalar = challenge.clone().into();
-        let g_z = exponentiate(&g, second_message.z.as_scalar_ref());
+        let g_z = exponentiate_gen(second_message.z.as_scalar_ref());
         let h_e = exponentiate(&h, &e);
         g_z * &inverse(&h_e)
     }

@@ -2,7 +2,7 @@
 use std::convert::TryInto;
 use std::fmt::Formatter;
 
-use elliptic_curve::ops::MulByGenerator;
+use ergo_chain_types::ec_point::exponentiate_gen;
 use ergo_chain_types::EcPoint;
 use ergotree_ir::serialization::SigmaSerializable;
 use ergotree_ir::sigma_protocol::dlog_group;
@@ -14,7 +14,6 @@ use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 extern crate derive_more;
 use derive_more::From;
 use k256::elliptic_curve::PrimeField;
-use k256::ProjectivePoint;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 
@@ -57,7 +56,7 @@ impl DlogProverInput {
     /// Create new DlogProverInput
     pub fn new(w: Wscalar) -> DlogProverInput {
         Self {
-            pk: EcPoint::from(ProjectivePoint::mul_by_generator(w.as_scalar_ref())),
+            pk: exponentiate_gen(w.as_scalar_ref()),
             w,
         }
     }
