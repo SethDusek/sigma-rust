@@ -21,7 +21,7 @@ pub(crate) static GET_ENCODED_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 
 pub(crate) static NEGATE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     let negated: EcPoint = match obj {
-        Value::GroupElement(ec_point) => Ok(-(*ec_point).clone()),
+        Value::GroupElement(ec_point) => Ok(-(*ec_point)),
         _ => Err(EvalError::UnexpectedValue(format!(
             "expected obj to be Value::GroupElement, got: {0:?}",
             obj
@@ -47,7 +47,7 @@ mod tests {
     fn eval_get_encoded() {
         let input = force_any_val::<EcPoint>();
         let expr: Expr = MethodCall::new(
-            input.clone().into(),
+            input.into(),
             sgroup_elem::GET_ENCODED_METHOD.clone(),
             vec![],
         )
@@ -65,7 +65,7 @@ mod tests {
     fn eval_negate() {
         let input = force_any_val::<EcPoint>();
         let expr: Expr = MethodCall::new(
-            input.clone().into(),
+            input.into(),
             sgroup_elem::NEGATE_METHOD.clone(),
             vec![],
         )

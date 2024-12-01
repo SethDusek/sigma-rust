@@ -123,7 +123,7 @@ impl UnsignedTransaction {
 
     /// Returns distinct token ids from all output_candidates
     pub fn distinct_token_ids(&self) -> IndexSet<TokenId> {
-        distinct_token_ids(self.output_candidates.clone())
+        distinct_token_ids(&self.output_candidates)
     }
 }
 

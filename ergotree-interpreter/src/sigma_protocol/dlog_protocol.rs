@@ -46,7 +46,7 @@ pub mod interactive_prover {
     use crate::sigma_protocol::{private_input::DlogProverInput, Challenge};
     use ergo_chain_types::ec_point::exponentiate_gen;
     use ergo_chain_types::{
-        ec_point::{exponentiate, generator, inverse},
+        ec_point::{exponentiate, inverse},
         EcPoint,
     };
     use ergotree_ir::sigma_protocol::dlog_group;
@@ -65,7 +65,7 @@ pub mod interactive_prover {
         let z = dlog_group::random_scalar_in_group_range(crypto_utils::secure_rng());
 
         //COMPUTE a = g^z*h^(-e)  (where -e here means -e mod q)
-        let e: Scalar = challenge.clone().into();
+        let e: Scalar = challenge.into();
         let minus_e = e.negate();
         let h_to_e = exponentiate(&public_input.h, &minus_e);
         let g_to_z = exponentiate_gen(&z);
@@ -94,7 +94,7 @@ pub mod interactive_prover {
         rnd: Wscalar,
         challenge: &Challenge,
     ) -> SecondDlogProverMessage {
-        let e: Scalar = challenge.clone().into();
+        let e: Scalar = challenge.into();
         // modulo multiplication, no need to explicit mod op
         let ew = e.mul(private_input.w.as_scalar_ref());
         // modulo addition, no need to explicit mod op
@@ -112,9 +112,8 @@ pub mod interactive_prover {
         challenge: &Challenge,
         second_message: &SecondDlogProverMessage,
     ) -> EcPoint {
-        let g = generator();
-        let h = *proposition.h.clone();
-        let e: Scalar = challenge.clone().into();
+        let h = *proposition.h;
+        let e: Scalar = challenge.into();
         let g_z = exponentiate_gen(second_message.z.as_scalar_ref());
         let h_e = exponentiate(&h, &e);
         g_z * &inverse(&h_e)
