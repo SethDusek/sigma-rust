@@ -105,7 +105,7 @@ pub mod interactive_prover {
     /// The function computes initial prover's commitment to randomness
     /// ("a" message of the sigma-protocol) based on the verifier's challenge ("e")
     /// and prover's response ("z")
-    ///  
+    ///
     /// g^z = a*h^e => a = g^z/h^e
     pub fn compute_commitment(
         proposition: &ProveDlog,

@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 use std::ops::{Add, Mul, Neg};
 
 /// Elliptic curve point
-#[derive(PartialEq, Clone, Default, From, Into)]
+#[derive(PartialEq, Clone, Copy, Default, From, Into)]
 #[cfg_attr(
     feature = "json",
     derive(serde::Serialize, serde::Deserialize),
