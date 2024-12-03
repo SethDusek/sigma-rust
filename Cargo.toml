@@ -55,7 +55,7 @@ derive_more = { version = "0.99", features = [
 ] }
 num-derive = "0.4.2"
 thiserror = { version = "2.0.1", default-features = false }
-bounded-vec = { git = "https://github.com/SethDusek/bounded-vec", branch = "no_std" } # TODO: merge no_std support in bounded-vec upstream
+bounded-vec = { version = "0.8.0", default-features = false } 
 bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10", default-features = false }

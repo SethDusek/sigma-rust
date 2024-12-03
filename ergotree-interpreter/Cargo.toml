@@ -34,7 +34,7 @@ serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 serde_with = { workspace = true, optional = true }
 proptest = { workspace = true, optional = true }
-ergo_avltree_rust = { git = "https://github.com/SethDusek/scorex_crypto_avltree", branch = "no_std" } # TODO: wait for upstream
+ergo_avltree_rust = { version = "0.1.1" }
 gf2_192 = { version = "^0.28.0", path = "../gf2_192" }
 miette = { workspace = true, optional = true }
 hashbrown = { workspace = true }
