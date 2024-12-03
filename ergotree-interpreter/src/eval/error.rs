@@ -2,6 +2,7 @@ use alloc::boxed::Box;
 use alloc::string::String;
 use core::fmt::Debug;
 use core::fmt::Display;
+use ergotree_ir::ergo_tree::ErgoTreeVersion;
 use ergotree_ir::mir::expr::SubstDeserializeError;
 
 use bounded_vec::BoundedVecOutOfBounds;
@@ -76,12 +77,12 @@ pub enum EvalError {
     #[error("eval error: {0:?}")]
     Spanned(SpannedEvalError),
     /// Script version error
-    #[error("Method requires at least version {required_version}, but activated version is {activated_version}")]
+    #[error("Method requires at least version {required_version:?}, but activated version is {activated_version:?}")]
     ScriptVersionError {
         /// Opcode/method call requires this version
-        required_version: u8,
+        required_version: ErgoTreeVersion,
         /// Currently activated script version on network
-        activated_version: u8,
+        activated_version: ErgoTreeVersion,
     },
     /// Deserialize substitution error, see [`ergotree_ir::mir::expr::Expr::substitute_deserialize`]
     #[error("DeserializeRegister/DeserializeContext error: {0}")]

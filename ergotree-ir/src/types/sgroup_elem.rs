@@ -1,3 +1,4 @@
+use crate::ergo_tree::ErgoTreeVersion;
 use crate::serialization::types::TypeCode;
 use crate::types::stype_companion::STypeCompanion;
 use alloc::sync::Arc;
@@ -38,7 +39,8 @@ lazy_static! {
             vec![SType::SGroupElement],
             SType::SColl(Arc::new(SType::SByte)),
         ),
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
     /// GroupElement.geEncoded
     pub static ref GET_ENCODED_METHOD: SMethod = SMethod::new(STypeCompanion::GroupElem, GET_ENCODED_METHOD_DESC.clone(),);
@@ -52,7 +54,8 @@ lazy_static! {
             vec![SType::SGroupElement],
             SType::SGroupElement,
         ),
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
     /// GroupElement.negate
     pub static ref NEGATE_METHOD: SMethod = SMethod::new(STypeCompanion::GroupElem, NEGATE_METHOD_DESC.clone(),);

@@ -173,6 +173,7 @@ pub(crate) static SERIALIZE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
 mod tests {
     use ergo_chain_types::EcPoint;
     use ergotree_ir::bigint256::BigInt256;
+    use ergotree_ir::ergo_tree::ErgoTreeVersion;
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::expr::Expr;
     use ergotree_ir::mir::long_to_byte_array::LongToByteArray;
@@ -185,7 +186,7 @@ mod tests {
     use ergotree_ir::types::stype_param::STypeVar;
     use proptest::proptest;
 
-    use crate::eval::tests::{eval_out, eval_out_wo_ctx};
+    use crate::eval::tests::{eval_out, eval_out_wo_ctx, try_eval_out_with_version};
     use ergotree_ir::chain::context::Context;
     use ergotree_ir::types::sglobal::{self, SERIALIZE_METHOD};
     use ergotree_ir::types::stype::SType;
@@ -204,7 +205,13 @@ mod tests {
             vec![constant.into()],
         )
         .unwrap();
-        eval_out_wo_ctx(&serialize_node.into())
+        let ctx = force_any_val::<Context>();
+        assert!((0u8..ErgoTreeVersion::V3.into()).all(|version| {
+            try_eval_out_with_version::<Vec<u8>>(&serialize_node.clone().into(), &ctx, version, 3)
+                .is_err()
+        }));
+        try_eval_out_with_version(&serialize_node.into(), &ctx, ErgoTreeVersion::V3.into(), 3)
+            .unwrap()
     }
 
     #[test]

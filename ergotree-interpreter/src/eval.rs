@@ -379,6 +379,9 @@ pub(crate) mod tests {
     use ergotree_ir::mir::constant::TryExtractInto;
     use ergotree_ir::mir::val_def::ValDef;
     use ergotree_ir::mir::val_use::ValUse;
+    use ergotree_ir::serialization::sigma_byte_reader::from_bytes;
+    use ergotree_ir::serialization::sigma_byte_reader::SigmaByteRead;
+    use ergotree_ir::serialization::SigmaSerializable;
     use ergotree_ir::types::stype::SType;
     use expect_test::expect;
     use sigma_test_util::force_any_val;
@@ -425,10 +428,15 @@ pub(crate) mod tests {
     pub fn try_eval_out_with_version<'ctx, T: TryExtractFrom<Value<'static>> + 'static>(
         expr: &Expr,
         ctx: &'ctx Context<'ctx>,
-        version: u8,
+        tree_version: u8,
+        activated_version: u8,
     ) -> Result<T, EvalError> {
         let mut ctx = ctx.clone();
-        ctx.pre_header.version = version + 1;
+        ctx.pre_header.version = activated_version + 1;
+        ctx.tree_version.set(tree_version.into());
+        // roundtrip expr to test methodcall versioning
+        from_bytes(&expr.sigma_serialize_bytes()?)
+            .with_tree_version(ctx.tree_version(), Expr::sigma_parse)?;
         let mut env = Env::empty();
         expr.eval(&mut env, &ctx).and_then(|v| {
             v.to_static()

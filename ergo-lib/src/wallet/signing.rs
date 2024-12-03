@@ -110,6 +110,7 @@ pub fn make_context<'ctx, T: ErgoTransaction>(
         pre_header: state_ctx.pre_header.clone(),
         extension,
         headers: state_ctx.headers.clone(),
+        tree_version: Default::default(),
     })
 }
 // Updates a Context, changing its self box and context extension to transaction.inputs[i]

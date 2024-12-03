@@ -15,11 +15,7 @@ fn upcast_to_bigint<'a>(in_v: Value<'a>, ctx: &Context) -> Result<Value<'a>, Eva
         Value::Short(v) => Ok(BigInt256::from(v).into()),
         Value::Int(v) => Ok(BigInt256::from(v).into()),
         Value::Long(v) => Ok(BigInt256::from(v).into()),
-        Value::BigInt(_)
-            if ctx.activated_script_version() >= ErgoTreeVersion::V6_SOFT_FORK_VERSION =>
-        {
-            Ok(in_v)
-        }
+        Value::BigInt(_) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => Ok(in_v),
         _ => Err(EvalError::UnexpectedValue(format!(
             "Upcast: cannot upcast {0:?} to BigInt",
             in_v
@@ -186,11 +182,11 @@ mod tests {
         fn from_bigint(v in any::<BigInt256>()) {
             let c: Constant = v.into();
             let ctx = force_any_val::<Context>();
-            (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
-                assert!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version).is_err());
+            (0..ErgoTreeVersion::V3.into()).for_each(|version| {
+                assert!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version, version).is_err());
             });
-            (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(|version| {
-                assert_eq!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version).unwrap(), v.clone());
+            (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(|version| {
+                assert_eq!(try_eval_out_with_version::<BigInt256>(&Upcast::new(c.clone().into(), SType::SBigInt).unwrap().into(), &ctx, version, version).unwrap(), v.clone());
             });
         }
     }

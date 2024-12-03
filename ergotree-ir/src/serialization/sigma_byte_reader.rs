@@ -1,4 +1,6 @@
 //! Sigma byte stream writer
+use crate::ergo_tree::ErgoTreeVersion;
+
 use super::constant_store::ConstantStore;
 use super::val_def_type_store::ValDefTypeStore;
 use core2::io::Cursor;
@@ -13,6 +15,7 @@ pub struct SigmaByteReader<R> {
     substitute_placeholders: bool,
     val_def_type_store: ValDefTypeStore,
     was_deserialize: bool,
+    version: ErgoTreeVersion,
 }
 
 impl<R: Read> SigmaByteReader<R> {
@@ -24,6 +27,7 @@ impl<R: Read> SigmaByteReader<R> {
             substitute_placeholders: false,
             val_def_type_store: ValDefTypeStore::new(),
             was_deserialize: false,
+            version: ErgoTreeVersion::MAX_SCRIPT_VERSION,
         }
     }
 
@@ -39,19 +43,14 @@ impl<R: Read> SigmaByteReader<R> {
             substitute_placeholders: true,
             val_def_type_store: ValDefTypeStore::new(),
             was_deserialize: false,
+            version: ErgoTreeVersion::MAX_SCRIPT_VERSION,
         }
     }
 }
 
 /// Create SigmaByteReader from a byte array (with empty constant store)
 pub fn from_bytes<T: AsRef<[u8]>>(bytes: T) -> SigmaByteReader<Cursor<T>> {
-    SigmaByteReader {
-        inner: Cursor::new(bytes),
-        constant_store: ConstantStore::empty(),
-        substitute_placeholders: false,
-        val_def_type_store: ValDefTypeStore::new(),
-        was_deserialize: false,
-    }
+    SigmaByteReader::new(Cursor::new(bytes), ConstantStore::empty())
 }
 
 /// Sigma byte reader trait with a constant store to resolve segregated constants
@@ -85,6 +84,16 @@ pub trait SigmaByteRead: ReadSigmaVlqExt {
             self.seek(core2::io::SeekFrom::Current(0))
         }
     }
+
+    /// Call `f` with reader's ErgoTree version set to `version` inside f's scope
+    fn with_tree_version<T>(
+        &mut self,
+        version: ErgoTreeVersion,
+        f: impl FnOnce(&mut Self) -> T,
+    ) -> T;
+
+    /// Maximum version that deserializer can handle. By default this will be [ErgoTreeVersion::MAX_SCRIPT_VERSION] but for consensus-critical applications it should be set to activated block version
+    fn tree_version(&self) -> ErgoTreeVersion;
 }
 
 impl<R: Read> Read for SigmaByteReader<R> {
@@ -132,5 +141,21 @@ impl<R: ReadSigmaVlqExt> SigmaByteRead for SigmaByteReader<R> {
 
     fn set_deserialize(&mut self, has_deserialize: bool) {
         self.was_deserialize = has_deserialize
+    }
+
+    fn with_tree_version<T>(
+        &mut self,
+        version: ErgoTreeVersion,
+        f: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        let tmp = self.version;
+        self.version = version;
+        let res = f(self);
+        self.version = tmp;
+        res
+    }
+
+    fn tree_version(&self) -> ErgoTreeVersion {
+        self.version
     }
 }

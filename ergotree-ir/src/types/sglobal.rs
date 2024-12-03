@@ -1,3 +1,4 @@
+use crate::ergo_tree::ErgoTreeVersion;
 use crate::serialization::types::TypeCode;
 
 use super::sfunc::SFunc;
@@ -40,7 +41,8 @@ lazy_static! {
             t_range: SType::SGroupElement.into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
      /// GLOBAL.GroupGenerator
     pub static ref GROUP_GENERATOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, GROUP_GENERATOR_METHOD_DESC.clone(),);
@@ -60,7 +62,8 @@ lazy_static! {
             t_range: SType::SColl(SType::SByte.into()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
      /// GLOBAL.xor
     pub static ref XOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, XOR_METHOD_DESC.clone(),);
@@ -76,7 +79,8 @@ lazy_static! {
             t_range: SType::STypeVar(STypeVar::t()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![STypeVar::t()]
+        explicit_type_args: vec![STypeVar::t()],
+        min_version: ErgoTreeVersion::V3
     };
     /// GLOBAL.fromBigEndianBytes
     pub static ref FROM_BIGENDIAN_BYTES_METHOD: SMethod = SMethod::new(STypeCompanion::Global, FROM_BIGENDIAN_BYTES_METHOD_DESC.clone(),);
@@ -91,7 +95,8 @@ lazy_static! {
             t_range: SType::SColl(SType::SByte.into()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V3
     };
      /// GLOBAL.serialize
     pub static ref SERIALIZE_METHOD: SMethod = SMethod::new(STypeCompanion::Global, SERIALIZE_METHOD_DESC.clone(),);
