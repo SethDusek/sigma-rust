@@ -35,8 +35,12 @@ ergotree-interpreter = { version = "^0.28.0", path = "./ergotree-interpreter" }
 ergo-nipopow = { version = "^0.15", path = "./ergo-nipopow" }
 ergo-merkle-tree = { version = "^0.15.0", path = "./ergo-merkle-tree" }
 ergo-rest = { version = "^0.13.0", path = "./ergo-rest" }
-ergo-lib = { version = "^0.28.0", path = "./ergo-lib"}
-k256 = { version = "0.13.1", features = ["arithmetic", "ecdsa", "precomputed-tables"] }
+ergo-lib = { version = "^0.28.0", path = "./ergo-lib" }
+k256 = { version = "0.13.1", features = [
+    "arithmetic",
+    "ecdsa",
+    "precomputed-tables",
+] }
 elliptic-curve = { version = "0.13.8", features = ["ff"] }
 thiserror = "1"
 bounded-vec = { version = "^0.7.0" }

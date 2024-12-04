@@ -1,5 +1,4 @@
 //! Extended private key operations according to BIP-32
-use std::convert::TryInto;
 
 use super::{
     derivation_path::{ChildIndex, ChildIndexError, DerivationPath},
@@ -27,12 +26,21 @@ type HmacSha512 = Hmac<Sha512>;
 
 /// Extended secret key
 /// implemented according to BIP-32
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct ExtSecretKey {
-    /// The secret key
-    private_input: DlogProverInput,
+    private_input: Wscalar,
     chain_code: ChainCode,
     derivation_path: DerivationPath,
+}
+
+impl std::fmt::Debug for ExtSecretKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ExtSecretKey")
+            .field("private_input", &"*****") // disable debug output for secret key to prevent key leakage in logs
+            .field("chain_code", &self.chain_code)
+            .field("derivation_path", &self.derivation_path)
+            .finish()
+    }
 }
 
 /// Extended secret key errors
@@ -65,8 +73,8 @@ impl ExtSecretKey {
         chain_code: ChainCode,
         derivation_path: DerivationPath,
     ) -> Result<Self, ExtSecretKeyError> {
-        let private_input = DlogProverInput::from_bytes(&secret_key_bytes)
-            .ok_or(ExtSecretKeyError::ScalarEncodingError)?;
+        let private_input =
+            Wscalar::from_bytes(&secret_key_bytes).ok_or(ExtSecretKeyError::ScalarEncodingError)?;
         Ok(Self {
             private_input,
             chain_code,
@@ -81,7 +89,7 @@ impl ExtSecretKey {
 
     /// Returns secret key
     pub fn secret_key(&self) -> SecretKey {
-        self.private_input.clone().into()
+        DlogProverInput::new(self.private_input.clone()).into()
     }
 
     /// Byte representation of the underlying scalar
@@ -91,7 +99,7 @@ impl ExtSecretKey {
 
     /// Public image associated with the private input
     pub fn public_image(&self) -> ProveDlog {
-        self.private_input.public_image()
+        DlogProverInput::new(self.private_input.clone()).public_image()
     }
 
     /// Public image bytes in SEC-1 encoded & compressed format
@@ -102,12 +110,11 @@ impl ExtSecretKey {
     /// The extended public key associated with this secret key
     pub fn public_key(&self) -> Result<ExtPubKey, ExtSecretKeyError> {
         #[allow(clippy::unwrap_used)]
-        Ok(ExtPubKey::new(
-            // unwrap is safe as it is used on an Infallible result type
-            self.public_image_bytes()?.try_into().unwrap(),
-            self.chain_code,
-            self.derivation_path.clone(),
-        )?)
+        Ok(ExtPubKey {
+            public_key: *self.public_image().h,
+            chain_code: self.chain_code,
+            derivation_path: self.derivation_path.clone(),
+        })
     }
 
     /// Derive a child extended secret key using the provided index
@@ -126,16 +133,14 @@ impl ExtSecretKey {
         let mac_bytes = mac.finalize().into_bytes();
         let mut secret_key_bytes = [0; SecretKeyBytes::LEN];
         secret_key_bytes.copy_from_slice(&mac_bytes[..32]);
-        if let Some(dlog_prover) = DlogProverInput::from_bytes(&secret_key_bytes) {
+        if let Some(wscalar) = Wscalar::from_bytes(&secret_key_bytes) {
             // parse256(IL) + kpar (mod n).
             // via https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#child-key-derivation-ckd-functions
-            let child_secret_key: DlogProverInput = Wscalar::from(
-                dlog_prover
-                    .w
+            let child_secret_key = Wscalar::from(
+                wscalar
                     .as_scalar_ref()
-                    .add(self.private_input.w.as_scalar_ref()),
-            )
-            .into();
+                    .add(self.private_input.as_scalar_ref()),
+            );
             if child_secret_key.is_zero() {
                 // ki == 0 case of:
                 // > In case parse256(IL) ≥ n or ki = 0, the resulting key is invalid, and one
