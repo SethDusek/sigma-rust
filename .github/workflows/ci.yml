@@ -253,10 +253,15 @@ jobs:
 
   android_tests:
     name: Test JNI(Android) bindings
-    runs-on: macos-12
+    runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v2
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - uses: actions-rs/toolchain@v1
         with:
