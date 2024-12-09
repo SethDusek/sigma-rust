@@ -70,6 +70,8 @@ pub enum Literal {
     Int(i32),
     /// Long
     Long(i64),
+    /// String type
+    String(Arc<str>),
     /// Big integer
     BigInt(BigInt256),
     /// Sigma property
@@ -120,6 +122,7 @@ impl core::fmt::Debug for Literal {
             Literal::GroupElement(v) => v.fmt(f),
             Literal::AvlTree(v) => v.fmt(f),
             Literal::CBox(v) => v.fmt(f),
+            Literal::String(v) => v.fmt(f),
         }
     }
 }
@@ -177,6 +180,7 @@ impl core::fmt::Display for Literal {
             Literal::GroupElement(v) => v.fmt(f),
             Literal::AvlTree(v) => write!(f, "AvlTree({:?})", v),
             Literal::CBox(v) => write!(f, "ErgoBox({:?})", v),
+            Literal::String(v) => write!(f, "String({v})"),
         }
     }
 }
@@ -366,6 +370,7 @@ impl<'ctx> TryFrom<Value<'ctx>> for Constant {
                 }
             }
             Value::AvlTree(a) => Ok(Constant::from(*a)),
+            Value::String(s) => Ok(Constant::from(s)),
             Value::Context => Err("Cannot convert Value::Context into Constant".into()),
             Value::Header(_) => Err("Cannot convert Value::Header(_) into Constant".into()),
             Value::PreHeader(_) => Err("Cannot convert Value::PreHeader(_) into Constant".into()),
@@ -593,6 +598,24 @@ impl From<ADDigest> for Constant {
             v: Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(
                 a.0.iter().map(|&i| i as i8).collect(),
             ))),
+        }
+    }
+}
+
+impl From<Arc<str>> for Constant {
+    fn from(s: Arc<str>) -> Self {
+        Constant {
+            tpe: SType::SString,
+            v: Literal::String(s),
+        }
+    }
+}
+
+impl From<String> for Constant {
+    fn from(s: String) -> Self {
+        Constant {
+            tpe: SType::SString,
+            v: Literal::String(s.into()),
         }
     }
 }
@@ -826,6 +849,19 @@ impl TryExtractFrom<Literal> for BigInt256 {
     fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
         match v {
             Literal::BigInt(bi) => Ok(bi),
+            _ => Err(TryExtractFromError(format!(
+                "expected {:?}, found {:?}",
+                core::any::type_name::<Self>(),
+                v
+            ))),
+        }
+    }
+}
+
+impl TryExtractFrom<Literal> for String {
+    fn try_extract_from(v: Literal) -> Result<Self, TryExtractFromError> {
+        match v {
+            Literal::String(s) => Ok(String::from(&*s)),
             _ => Err(TryExtractFromError(format!(
                 "expected {:?}, found {:?}",
                 core::any::type_name::<Self>(),
@@ -1124,6 +1160,19 @@ pub mod tests {
         test_constant_roundtrip(());
     }
 
+    // test that invalid strings don't error but are instead parsed lossily to match reference impl
+    #[test]
+    fn parse_invalid_string() {
+        let mut bytes = Constant::from(".".to_string())
+            .sigma_serialize_bytes()
+            .unwrap();
+        *bytes.last_mut().unwrap() = 0xf0;
+        assert_eq!(
+            Constant::sigma_parse_bytes(&bytes).unwrap().v,
+            Literal::String("�".into())
+        );
+    }
+
     proptest! {
 
         #![proptest_config(ProptestConfig::with_cases(8))]
@@ -1253,6 +1302,11 @@ pub mod tests {
 
         #[test]
         fn tuple_nested_types_roundtrip(v in any::<(Option<i64>, Vec<SigmaProp>)>()) {
+            test_constant_roundtrip(v);
+        }
+
+        #[test]
+        fn string_roundtrip(v in any::<String>()) {
             test_constant_roundtrip(v);
         }
 

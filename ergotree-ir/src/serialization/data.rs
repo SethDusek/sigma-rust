@@ -1,5 +1,6 @@
 use alloc::boxed::Box;
 
+use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec;
 use alloc::vec::Vec;
@@ -43,6 +44,10 @@ impl DataSerializer {
             Literal::Long(v) => w.put_i64(*v)?,
             Literal::BigInt(v) => {
                 v.sigma_serialize(w)?;
+            }
+            Literal::String(s) => {
+                w.put_usize_as_u32_unwrapped(s.len())?;
+                w.write_all(s.as_bytes())?;
             }
             Literal::GroupElement(ecp) => ecp.sigma_serialize(w)?,
             Literal::SigmaProp(s) => s.value().sigma_serialize(w)?,
@@ -101,6 +106,12 @@ impl DataSerializer {
             SShort => Literal::Short(r.get_i16()?),
             SInt => Literal::Int(r.get_i32()?),
             SLong => Literal::Long(r.get_i64()?),
+            SString => {
+                let len = r.get_u32()?;
+                let mut buf = vec![0; len as usize];
+                r.read_exact(&mut buf)?;
+                Literal::String(String::from_utf8_lossy(&buf).into())
+            }
             SBigInt => Literal::BigInt(BigInt256::sigma_parse(r)?),
             SUnit => Literal::Unit,
             SGroupElement => Literal::GroupElement(Arc::new(EcPoint::sigma_parse(r)?)),

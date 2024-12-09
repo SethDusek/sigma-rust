@@ -1,5 +1,6 @@
 //! SType hierarchy
 
+use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::convert::TryInto;
@@ -60,6 +61,8 @@ pub enum SType {
     SFunc(SFunc),
     /// Context object ("CONTEXT" in ErgoScript)
     SContext,
+    /// UTF-8 String type
+    SString,
     /// Header of a block
     SHeader,
     /// Header of a block without solved mining puzzle
@@ -92,6 +95,7 @@ impl SType {
                 | SType::SBox
                 | SType::SAvlTree
                 | SType::SContext
+                | SType::SString
                 | SType::SBoolean
                 | SType::SHeader
                 | SType::SPreHeader
@@ -150,6 +154,7 @@ impl core::fmt::Display for SType {
             SType::STuple(t) => write!(f, "{}", t),
             SType::SFunc(t) => write!(f, "{}", t),
             SType::SContext => write!(f, "Context"),
+            SType::SString => write!(f, "String"),
             SType::SHeader => write!(f, "Header"),
             SType::SPreHeader => write!(f, "PreHeader"),
             SType::SGlobal => write!(f, "Global"),
@@ -259,6 +264,12 @@ impl LiftIntoSType for AvlTreeData {
     }
 }
 
+impl LiftIntoSType for String {
+    fn stype() -> SType {
+        SType::SString
+    }
+}
+
 impl<T: LiftIntoSType> LiftIntoSType for Option<T> {
     fn stype() -> SType {
         SType::SOption(Arc::new(T::stype()))
@@ -295,6 +306,7 @@ pub(crate) mod tests {
             Just(SType::SBox),
             Just(SType::SAvlTree),
             Just(SType::SContext),
+            Just(SType::SString),
             Just(SType::SHeader),
             Just(SType::SPreHeader),
             Just(SType::SGlobal),

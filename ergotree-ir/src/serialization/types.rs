@@ -106,7 +106,7 @@ pub enum TypeCode {
     SBOX = 99,
     SAVL_TREE = 100,
     SCONTEXT = 101,
-    // SSTRING = 102,
+    SSTRING = 102,
     STYPE_VAR = 103,
     SHEADER = 104,
     SPRE_HEADER = 105,
@@ -322,6 +322,7 @@ impl SType {
             TypeCode::SBOX => SBox,
             TypeCode::SAVL_TREE => SAvlTree,
             TypeCode::SCONTEXT => SContext,
+            TypeCode::SSTRING => SString,
             TypeCode::STYPE_VAR => STypeVar(stype_param::STypeVar::sigma_parse(r)?),
             TypeCode::SHEADER => SHeader,
             TypeCode::SPRE_HEADER => SPreHeader,
@@ -362,6 +363,7 @@ impl SigmaSerializable for SType {
             SType::SBox => TypeCode::SBOX.sigma_serialize(w),
             SType::SAvlTree => TypeCode::SAVL_TREE.sigma_serialize(w),
             SType::SContext => TypeCode::SCONTEXT.sigma_serialize(w),
+            SType::SString => TypeCode::SSTRING.sigma_serialize(w),
             SType::SHeader => TypeCode::SHEADER.sigma_serialize(w),
             SType::SPreHeader => TypeCode::SPRE_HEADER.sigma_serialize(w),
             SType::SGlobal => TypeCode::SGLOBAL.sigma_serialize(w),
@@ -384,7 +386,8 @@ impl SigmaSerializable for SType {
                     SGroupElement => TypeCode::OPTION_COLL_GROUP_ELEMENT.sigma_serialize(w),
                     SSigmaProp => TypeCode::OPTION_COLL_SIGMAPROP.sigma_serialize(w),
                     STypeVar(_) | SAny | SUnit | SBox | SAvlTree | SOption(_) | SColl(_)
-                    | STuple(_) | SFunc(_) | SContext | SHeader | SPreHeader | SGlobal => {
+                    | STuple(_) | SFunc(_) | SContext | SString | SHeader | SPreHeader
+                    | SGlobal => {
                         // if not "embeddable" type fallback to generic Option type code following
                         // elem type code
                         TypeCode::OPTION.sigma_serialize(w)?;
@@ -392,7 +395,7 @@ impl SigmaSerializable for SType {
                     }
                 },
                 STypeVar(_) | SAny | SUnit | SBox | SAvlTree | SOption(_) | STuple(_)
-                | SFunc(_) | SContext | SHeader | SPreHeader | SGlobal => {
+                | SFunc(_) | SContext | SString | SHeader | SPreHeader | SGlobal => {
                     // if not "embeddable" type fallback to generic Option type code following
                     // elem type code
                     TypeCode::OPTION.sigma_serialize(w)?;
@@ -419,7 +422,8 @@ impl SigmaSerializable for SType {
                     SGroupElement => TypeCode::NESTED_COLL_GROUP_ELEMENT.sigma_serialize(w),
                     SSigmaProp => TypeCode::NESTED_COLL_SIGMAPROP.sigma_serialize(w),
                     STypeVar(_) | SAny | SUnit | SBox | SAvlTree | SOption(_) | SColl(_)
-                    | STuple(_) | SFunc(_) | SContext | SHeader | SPreHeader | SGlobal => {
+                    | STuple(_) | SFunc(_) | SContext | SString | SHeader | SPreHeader
+                    | SGlobal => {
                         // if not "embeddable" type fallback to generic Coll type code following
                         // elem type code
                         TypeCode::COLL.sigma_serialize(w)?;
@@ -427,7 +431,7 @@ impl SigmaSerializable for SType {
                     }
                 },
                 STypeVar(_) | SAny | SUnit | SBox | SAvlTree | SOption(_) | STuple(_)
-                | SFunc(_) | SContext | SHeader | SPreHeader | SGlobal => {
+                | SFunc(_) | SContext | SString | SHeader | SPreHeader | SGlobal => {
                     // if not "embeddable" type fallback to generic Coll type code following
                     // elem type code
                     TypeCode::COLL.sigma_serialize(w)?;
@@ -515,9 +519,11 @@ impl SigmaSerializable for SType {
                     }
                     (
                         STypeVar(_) | SAny | SUnit | SBox | SAvlTree | SOption(_) | SColl(_)
-                        | STuple(_) | SFunc(_) | SContext | SHeader | SPreHeader | SGlobal,
+                        | STuple(_) | SFunc(_) | SContext | SString | SHeader | SPreHeader
+                        | SGlobal,
                         STypeVar(_) | SAny | SUnit | SBox | SAvlTree | SOption(_) | SColl(_)
-                        | STuple(_) | SFunc(_) | SContext | SHeader | SPreHeader | SGlobal,
+                        | STuple(_) | SFunc(_) | SContext | SString | SHeader | SPreHeader
+                        | SGlobal,
                     ) => {
                         // Pair of non-primitive types (`(SBox, SAvlTree)`, `((Int, Byte), (Boolean,Box))`, etc.)
                         TypeCode::TUPLE_PAIR1.sigma_serialize(w)?;

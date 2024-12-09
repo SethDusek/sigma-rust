@@ -198,6 +198,8 @@ pub enum Value<'ctx> {
     Tup(TupleItems<Value<'ctx>>),
     /// Transaction(and blockchain) context info
     Context,
+    /// String type
+    String(Arc<str>),
     /// Block header
     Header(Box<Header>),
     /// Header with predictable data
@@ -242,6 +244,7 @@ impl<'ctx> Value<'ctx> {
                     .unwrap(),
             ),
             Value::Context => Value::Context,
+            Value::String(s) => Value::String(s.clone()),
             Value::Header(h) => Value::Header(h.clone()),
             Value::PreHeader(h) => Value::PreHeader(h.clone()),
             Value::Global => Value::Global,
@@ -312,6 +315,7 @@ impl From<Literal> for Value<'static> {
             Literal::Int(i) => Value::Int(i),
             Literal::Long(l) => Value::Long(l),
             Literal::BigInt(b) => Value::BigInt(b),
+            Literal::String(s) => Value::String(s),
             Literal::Unit => Value::Unit,
             Literal::SigmaProp(s) => Value::SigmaProp(s),
             Literal::GroupElement(e) => Value::GroupElement(e.into()),
@@ -382,6 +386,7 @@ impl core::fmt::Display for Value<'_> {
             Value::Int(v) => v.fmt(f),
             Value::Long(v) => write!(f, "{}L", v),
             Value::BigInt(v) => v.fmt(f),
+            Value::String(v) => v.fmt(f),
             Value::SigmaProp(v) => v.fmt(f),
             Value::GroupElement(v) => v.fmt(f),
             Value::AvlTree(v) => write!(f, "AvlTree({:?})", v),
@@ -405,6 +410,7 @@ impl StoreWrapped for i64 {}
 impl StoreWrapped for BigInt256 {}
 impl StoreWrapped for Header {}
 impl StoreWrapped for ErgoBox {}
+impl StoreWrapped for Arc<str> {}
 impl StoreWrapped for Ref<'_, ErgoBox> {}
 impl StoreWrapped for EcPoint {}
 impl StoreWrapped for SigmaProp {}
