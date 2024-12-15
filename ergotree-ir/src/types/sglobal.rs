@@ -7,6 +7,7 @@ use super::stype::SType;
 use crate::types::smethod::SMethod;
 use crate::types::stype_companion::STypeCompanion;
 use lazy_static::lazy_static;
+use crate::types::stype_param::{STypeParam, STypeVar};
 
 /// SGlobal type code
 pub const TYPE_CODE: TypeCode = TypeCode::SGLOBAL;
@@ -17,6 +18,8 @@ pub static TYPE_NAME: &str = "Global";
 pub const GROUP_GENERATOR_METHOD_ID: MethodId = MethodId(1);
 /// "xor" predefined function
 pub const XOR_METHOD_ID: MethodId = MethodId(2);
+/// "fromBigEndianBytes" predefined function
+pub const FROM_BIGENDIAN_BYTES_METHOD_ID: MethodId = MethodId(5);
 
 lazy_static! {
     /// Global method descriptors
@@ -58,4 +61,19 @@ lazy_static! {
      /// GLOBAL.xor
     pub static ref XOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, XOR_METHOD_DESC.clone(),);
 
+}
+
+lazy_static!{
+    static ref FROM_BIGENDIAN_BYTES_METHOD_DESC: SMethodDesc = SMethodDesc {
+        method_id: FROM_BIGENDIAN_BYTES_METHOD_ID,
+        name: "fromBigEndianBytes",
+        tpe: SFunc {
+            t_dom: vec![SType::SGlobal, SType::SColl(SType::SByte.into())],
+            t_range:SType::STypeVar(STypeVar::t()).into(),
+            tpe_params: vec![STypeParam::param_t()],
+        },
+        explicit_type_args: vec![]
+    };
+    /// GLOBAL.fromBigEndianBytes
+    pub static ref FROM_BIGENDIAN_BYTES_METHOD: SMethod = SMethod::new(STypeCompanion::Global, FROM_BIGENDIAN_BYTES_METHOD_DESC.clone(),);
 }
