@@ -37,7 +37,7 @@ ergo-merkle-tree = { version = "^0.15.0", path = "./ergo-merkle-tree" }
 ergo-rest = { version = "^0.13.0", path = "./ergo-rest" }
 ergo-lib = { version = "^0.28.0", path = "./ergo-lib" }
 k256 = { version = "0.13.1", features = ["arithmetic", "ecdsa"] }
-elliptic-curve = { version = "0.12", features = ["ff"] }
+elliptic-curve = { version = "0.13", features = ["ff"] }
 thiserror = "1"
 bounded-vec = { version = "^0.7.0" }
 bitvec = { version = "1.0.1" }
