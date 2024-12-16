@@ -40,8 +40,8 @@ ergo-lib = { version = "^0.28.0", path = "./ergo-lib" }
 k256 = { version = "0.13.1", default-features = false, features = [
     "arithmetic",
     "ecdsa",
-] } # TODO: look into precomputed_tables feature for std, could be useful for speeding up signature verification
-elliptic-curve = { version = "0.12", features = ["ff"] }
+] }
+elliptic-curve = { version = "0.13", features = ["ff"] }
 derive_more = { version = "0.99", features = [
     "add",
     "add_assign",
@@ -55,7 +55,7 @@ derive_more = { version = "0.99", features = [
 ] }
 num-derive = "0.4.2"
 thiserror = { version = "2.0.1", default-features = false }
-bounded-vec = { version = "0.8.0", default-features = false } 
+bounded-vec = { version = "0.8.0", default-features = false }
 bitvec = { version = "1.0.1", default-features = false, features = ["alloc"] }
 blake2 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10", default-features = false }

@@ -2,6 +2,7 @@
 
 pub mod box_selector;
 pub mod derivation_path;
+mod deterministic;
 pub mod ext_pub_key;
 pub mod ext_secret_key;
 pub mod miner_fee;
@@ -26,15 +27,12 @@ use hashbrown::HashMap;
 use secret_key::SecretKey;
 use thiserror::Error;
 
-#[cfg(feature = "std")]
 use crate::chain::ergo_state_context::ErgoStateContext;
-#[cfg(feature = "std")]
+use crate::chain::transaction::reduced::reduce_tx;
 use crate::chain::transaction::reduced::ReducedTransaction;
-#[cfg(feature = "std")]
 use crate::chain::transaction::unsigned::UnsignedTransaction;
 #[cfg(feature = "std")]
 use crate::chain::transaction::Input;
-#[cfg(feature = "std")]
 use crate::chain::transaction::Transaction;
 #[cfg(feature = "std")]
 use crate::ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
@@ -44,12 +42,11 @@ use crate::wallet::multi_sig::{generate_commitments, generate_commitments_for};
 
 use self::ext_secret_key::ExtSecretKey;
 use self::ext_secret_key::ExtSecretKeyError;
+use self::signing::sign_reduced_transaction;
+use self::signing::TransactionContext;
 use self::signing::TxSigningError;
 #[cfg(feature = "std")]
-use self::signing::{
-    make_context, sign_message, sign_reduced_transaction, sign_transaction, sign_tx_input,
-    TransactionContext,
-};
+use self::signing::{make_context, sign_message, sign_transaction, sign_tx_input};
 
 /// Wallet
 pub struct Wallet {
@@ -158,6 +155,46 @@ impl Wallet {
             tx_hints.add_hints_for_input(index, hints);
         }
         Ok(tx_hints)
+    }
+
+    /// Generate commitments for P2PK inputs using deterministic nonces. \
+    /// See: [`Wallet::sign_transaction_deterministic`]
+    pub fn generate_deterministic_commitments(
+        &self,
+        reduced_tx: &ReducedTransaction,
+        aux_rand: &[u8],
+    ) -> Result<TransactionHintsBag, TxSigningError> {
+        let mut tx_hints = TransactionHintsBag::empty();
+        let msg = reduced_tx.unsigned_tx.bytes_to_sign()?;
+        for (index, input) in reduced_tx.reduced_inputs().iter().enumerate() {
+            if let Some(bag) = self::deterministic::generate_commitments_for(
+                &*self.prover,
+                &input.sigma_prop,
+                &msg,
+                aux_rand,
+            ) {
+                tx_hints.add_hints_for_input(index, bag)
+            };
+        }
+        Ok(tx_hints)
+    }
+
+    /// Generate signatures for P2PK inputs deterministically
+    ///
+    /// Schnorr signatures need an unpredictable nonce added to the signature to avoid private key leakage. Normally this is generated using 32 bytes of entropy, but on platforms where that
+    /// is not available, `sign_transaction_deterministic` can be used to generate the nonce using a hash of the private key and message. \
+    /// Additionally `aux_rand` can be optionally supplied with up 32 bytes of entropy.
+    /// # Limitations
+    /// Only inputs that reduce to a single public key can be signed. Thus proveDhTuple, n-of-n and t-of-n signatures can not be produced using this method
+    pub fn sign_transaction_deterministic(
+        &self,
+        tx_context: TransactionContext<UnsignedTransaction>,
+        state_context: &ErgoStateContext,
+        aux_rand: &[u8],
+    ) -> Result<Transaction, WalletError> {
+        let reduced_tx = reduce_tx(tx_context, state_context)?;
+        let hints = self.generate_deterministic_commitments(&reduced_tx, aux_rand)?;
+        sign_reduced_transaction(&*self.prover, reduced_tx, Some(&hints)).map_err(From::from)
     }
 
     /// Signs a message
