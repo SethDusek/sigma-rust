@@ -1,7 +1,11 @@
 //! IR expression
 
-use std::convert::Infallible;
-use std::convert::TryFrom;
+use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::convert::Infallible;
+use core::convert::TryFrom;
+use core::convert::TryInto;
 
 use crate::chain::context::Context;
 use crate::chain::ergo_box::RegisterId;
@@ -324,8 +328,10 @@ impl Expr {
         if &expr_tpe == expected_tpe {
             Ok(())
         } else {
-            use std::backtrace::Backtrace;
-            let backtrace = Backtrace::capture();
+            #[cfg(feature = "std")]
+            let backtrace = std::backtrace::Backtrace::capture();
+            #[cfg(not(feature = "std"))]
+            let backtrace = "Backtraces not supported without std";
             Err(InvalidExprEvalTypeError(format!(
                 "expected: {0:?}, got: {1:?}\nBacktrace:\n{backtrace}",
                 expected_tpe, expr_tpe
@@ -485,7 +491,7 @@ impl Traversable for Expr {
 
     fn children<'a>(&'a self) -> Box<dyn Iterator<Item = &Expr> + '_> {
         match self {
-            Expr::Const(_) => Box::new(std::iter::empty()),
+            Expr::Const(_) => Box::new(core::iter::empty()),
             Expr::SubstConstants(op) => op.children(),
             Expr::ByteArrayToLong(op) => op.children(),
             Expr::ByteArrayToBigInt(op) => op.children(),
@@ -498,8 +504,8 @@ impl Traversable for Expr {
             Expr::MethodCall(op) => op.children(),
             Expr::PropertyCall(op) => op.children(),
             Expr::BinOp(op) => op.children(),
-            Expr::Global => Box::new(std::iter::empty()),
-            Expr::Context => Box::new(std::iter::empty()),
+            Expr::Global => Box::new(core::iter::empty()),
+            Expr::Context => Box::new(core::iter::empty()),
             Expr::OptionGet(v) => v.children(),
             Expr::Apply(op) => op.children(),
             Expr::FuncValue(op) => op.children(),
@@ -507,7 +513,7 @@ impl Traversable for Expr {
             Expr::BlockValue(op) => op.children(),
             Expr::SelectField(op) => op.children(),
             Expr::ExtractAmount(op) => op.children(),
-            Expr::ConstPlaceholder(_) => Box::new(std::iter::empty()),
+            Expr::ConstPlaceholder(_) => Box::new(core::iter::empty()),
             Expr::Collection(op) => op.children(),
             Expr::ValDef(op) => op.children(),
             Expr::And(op) => op.children(),
@@ -555,7 +561,7 @@ impl Traversable for Expr {
     }
     fn children_mut<'a>(&'a mut self) -> Box<dyn Iterator<Item = &mut Expr> + '_> {
         match self {
-            Expr::Const(_) => Box::new(std::iter::empty()),
+            Expr::Const(_) => Box::new(core::iter::empty()),
             Expr::SubstConstants(op) => op.children_mut(),
             Expr::ByteArrayToLong(op) => op.children_mut(),
             Expr::ByteArrayToBigInt(op) => op.children_mut(),
@@ -568,8 +574,8 @@ impl Traversable for Expr {
             Expr::MethodCall(op) => op.children_mut(),
             Expr::PropertyCall(op) => op.children_mut(),
             Expr::BinOp(op) => op.children_mut(),
-            Expr::Global => Box::new(std::iter::empty()),
-            Expr::Context => Box::new(std::iter::empty()),
+            Expr::Global => Box::new(core::iter::empty()),
+            Expr::Context => Box::new(core::iter::empty()),
             Expr::OptionGet(v) => v.children_mut(),
             Expr::Apply(op) => op.children_mut(),
             Expr::FuncValue(op) => op.children_mut(),
@@ -577,7 +583,7 @@ impl Traversable for Expr {
             Expr::BlockValue(op) => op.children_mut(),
             Expr::SelectField(op) => op.children_mut(),
             Expr::ExtractAmount(op) => op.children_mut(),
-            Expr::ConstPlaceholder(_) => Box::new(std::iter::empty()),
+            Expr::ConstPlaceholder(_) => Box::new(core::iter::empty()),
             Expr::Collection(op) => op.children_mut(),
             Expr::ValDef(op) => op.children_mut(),
             Expr::And(op) => op.children_mut(),
@@ -680,7 +686,7 @@ impl<T: TryFrom<Expr>> TryExtractFrom<Expr> for T {
         let res: Result<Self, TryExtractFromError> = v.clone().try_into().map_err(|_| {
             TryExtractFromError(format!(
                 "Cannot extract {0:?} from {1:?}",
-                std::any::type_name::<T>(),
+                core::any::type_name::<T>(),
                 v
             ))
         });
@@ -698,9 +704,10 @@ pub(crate) mod arbitrary {
     use crate::mir::func_value::FuncArg;
     use crate::sigma_protocol::sigma_boolean::ProveDlog;
     use crate::types::sfunc::SFunc;
+    use alloc::sync::Arc;
+    use alloc::vec;
     use proptest::collection::*;
     use proptest::prelude::*;
-    use std::sync::Arc;
 
     /// Parameters for arbitrary Expr generation
     #[derive(PartialEq, Eq, Debug, Clone)]

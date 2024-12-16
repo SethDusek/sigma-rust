@@ -55,6 +55,9 @@ mod tests {
 
     use super::*;
 
+    use alloc::boxed::Box;
+
+    use alloc::vec;
     use proptest::prelude::*;
 
     proptest! {

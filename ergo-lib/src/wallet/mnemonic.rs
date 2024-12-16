@@ -1,5 +1,6 @@
 //! Mnemonic operations according to BIP32/BIP39
 
+use alloc::string::String;
 use hmac::Hmac;
 use pbkdf2::pbkdf2;
 use sha2::Sha512;

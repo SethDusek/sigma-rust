@@ -7,6 +7,9 @@ pub mod reduced;
 pub(crate) mod storage_rent;
 pub mod unsigned;
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use bounded_vec::BoundedVec;
 use ergo_chain_types::blake2b256_hash;
 use ergotree_interpreter::eval::env::Env;
@@ -25,6 +28,7 @@ use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::chain::ergo_box::ErgoBoxCandidate;
 use ergotree_ir::chain::token::TokenId;
 pub use ergotree_ir::chain::tx_id::TxId;
+use ergotree_ir::chain::IndexSet;
 use ergotree_ir::ergo_tree::ErgoTreeError;
 use thiserror::Error;
 
@@ -46,11 +50,9 @@ use self::ergo_transaction::TxValidationError;
 use self::storage_rent::try_spend_storage_rent;
 use self::unsigned::UnsignedTransaction;
 
-use indexmap::IndexSet;
-
-use std::convert::TryFrom;
-use std::convert::TryInto;
-use std::iter::FromIterator;
+use core::convert::TryFrom;
+use core::convert::TryInto;
+use core::iter::FromIterator;
 
 use super::ergo_state_context::ErgoStateContext;
 
@@ -303,7 +305,8 @@ impl SigmaSerializable for Transaction {
                 "too many tokens in transaction".to_string(),
             ));
         }
-        let mut token_ids = IndexSet::with_capacity(tokens_count as usize);
+        let mut token_ids =
+            IndexSet::with_capacity_and_hasher(tokens_count as usize, Default::default());
         for _ in 0..tokens_count {
             token_ids.insert(TokenId::sigma_parse(r)?);
         }

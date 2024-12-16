@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use alloc::sync::Arc;
 
+use alloc::vec::Vec;
 use ergotree_ir::mir::coll_append::Append;
 // use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::CollKind;

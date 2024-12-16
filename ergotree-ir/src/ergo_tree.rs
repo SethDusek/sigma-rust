@@ -11,13 +11,19 @@ use crate::serialization::{
 };
 use crate::sigma_protocol::sigma_boolean::ProveDlog;
 use crate::types::stype::SType;
-use io::Cursor;
+
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 use sigma_ser::vlq_encode::WriteSigmaVlqExt;
 
 use crate::serialization::constant_store::ConstantStore;
+use core::convert::TryFrom;
+use core2::io;
 use derive_more::From;
-use std::convert::TryFrom;
-use std::io;
+use io::Cursor;
+#[cfg(feature = "std")]
 use std::sync::OnceLock;
 use thiserror::Error;
 
@@ -30,6 +36,7 @@ pub struct ParsedErgoTree {
     header: ErgoTreeHeader,
     constants: Vec<Constant>,
     root: Expr,
+    #[cfg(feature = "std")]
     has_deserialize: OnceLock<bool>,
 }
 
@@ -40,7 +47,7 @@ impl ParsedErgoTree {
         let mut new_constants = self.constants.clone();
         if let Some(old_constant) = self.constants.get(index) {
             if constant.tpe == old_constant.tpe {
-                let _ = std::mem::replace(&mut new_constants[index], constant);
+                let _ = core::mem::replace(&mut new_constants[index], constant);
                 Ok(Self {
                     constants: new_constants,
                     ..self
@@ -157,6 +164,7 @@ impl ErgoTree {
         let was_deserialize = r.was_deserialize();
         r.set_deserialize(false);
         let root = Expr::sigma_parse(r)?;
+        #[allow(unused)]
         let has_deserialize = r.was_deserialize();
         r.set_deserialize(was_deserialize);
         if root.tpe() != SType::SSigmaProp {
@@ -166,6 +174,7 @@ impl ErgoTree {
             header,
             constants,
             root,
+            #[cfg(feature = "std")]
             has_deserialize: has_deserialize.into(),
         })
     }
@@ -208,6 +217,7 @@ impl ErgoTree {
                 header,
                 constants,
                 root: parsed_expr,
+                #[cfg(feature = "std")]
                 has_deserialize: OnceLock::new(),
             })
         } else {
@@ -215,6 +225,7 @@ impl ErgoTree {
                 header,
                 constants: Vec::new(),
                 root: expr.clone(),
+                #[cfg(feature = "std")]
                 has_deserialize: OnceLock::new(),
             })
         })
@@ -240,12 +251,14 @@ impl ErgoTree {
     pub fn has_deserialize(&self) -> bool {
         match self {
             ErgoTree::Unparsed { .. } => false,
+            #[cfg(feature = "std")]
             ErgoTree::Parsed(ParsedErgoTree {
-                header: _,
-                constants: _,
                 root,
                 has_deserialize,
+                ..
             }) => *has_deserialize.get_or_init(|| root.has_deserialize()),
+            #[cfg(not(feature = "std"))]
+            ErgoTree::Parsed(ParsedErgoTree { root, .. }) => root.has_deserialize(),
         }
     }
 
@@ -366,11 +379,11 @@ impl SigmaSerializable for ErgoTree {
     }
 
     fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> Result<Self, SigmaParsingError> {
-        let start_pos = r.stream_position()?;
+        let start_pos = r.position()?;
         let header = ErgoTreeHeader::sigma_parse(r)?;
         if header.has_size() {
             let tree_size_bytes = r.get_u32()?;
-            let body_pos = r.stream_position()?;
+            let body_pos = r.position()?;
             let mut buf = vec![0u8; tree_size_bytes as usize];
             r.read_exact(buf.as_mut_slice())?;
             let mut inner_r =
@@ -400,6 +413,7 @@ impl SigmaSerializable for ErgoTree {
                 header,
                 constants,
                 root,
+                #[cfg(feature = "std")]
                 has_deserialize: OnceLock::new(),
             }))
         }
@@ -425,8 +439,8 @@ impl TryFrom<ErgoTree> for ProveDlog {
     }
 }
 
-impl From<std::io::Error> for ErgoTreeError {
-    fn from(e: std::io::Error) -> Self {
+impl From<core2::io::Error> for ErgoTreeError {
+    fn from(e: core2::io::Error) -> Self {
         ErgoTreeError::IoError(e.to_string())
     }
 }

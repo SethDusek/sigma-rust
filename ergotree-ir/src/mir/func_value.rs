@@ -1,4 +1,7 @@
-use std::fmt;
+use alloc::boxed::Box;
+use alloc::vec;
+use alloc::vec::Vec;
+use core::fmt;
 
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;
@@ -14,12 +17,12 @@ use crate::types::stype::SType;
 use super::expr::Expr;
 use super::val_def::ValId;
 
-#[cfg(test)]
+#[cfg(feature = "arbitrary")]
 use proptest_derive::Arbitrary;
 
 /// Argument parameter for the user-defined function [`FuncValue`]
 #[derive(PartialEq, Eq, Debug, Clone)]
-#[cfg_attr(test, derive(Arbitrary))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct FuncArg {
     /// Value id (defined with [`super::val_def::ValDef`])
     pub idx: ValId,
@@ -40,7 +43,7 @@ impl SigmaSerializable for FuncArg {
     }
 }
 
-impl std::fmt::Display for FuncArg {
+impl core::fmt::Display for FuncArg {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "v{}: {}", self.idx, self.tpe)
     }

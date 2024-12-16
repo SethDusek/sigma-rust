@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 /// Extension section of Ergo block. Contains key-value storage.
 #[derive(Clone, Debug, Default)]
 pub struct ExtensionCandidate {

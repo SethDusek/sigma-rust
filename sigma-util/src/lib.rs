@@ -1,5 +1,5 @@
 //! Ergo primitives
-
+#![no_std]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
@@ -12,6 +12,8 @@
 // Clippy exclusions
 #![allow(clippy::unit_arg)]
 #![deny(rustdoc::broken_intra_doc_links)]
+
+extern crate alloc;
 
 pub mod hash;
 mod vec_ext;

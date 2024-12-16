@@ -104,6 +104,7 @@ pub fn order_bigint() -> BigInt {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;

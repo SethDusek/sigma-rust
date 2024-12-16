@@ -1,7 +1,9 @@
 //! Evaluating predefined `Header` (or SHeader) type properties
 
-use std::{convert::TryInto, sync::Arc};
+use alloc::sync::Arc;
+use core::convert::TryInto;
 
+use alloc::vec::Vec;
 use ergo_chain_types::Header;
 use ergotree_ir::{bigint256::BigInt256, mir::constant::TryExtractInto};
 
@@ -92,8 +94,9 @@ pub(crate) static VOTES_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::expect_used, clippy::panic, clippy::unwrap_used)]
 mod tests {
-    use std::convert::{TryFrom, TryInto};
+    use core::convert::{TryFrom, TryInto};
 
+    use alloc::{boxed::Box, vec::Vec};
     use ergo_chain_types::{BlockId, Digest, Digest32, EcPoint, Votes};
     use ergotree_ir::{
         bigint256::BigInt256,

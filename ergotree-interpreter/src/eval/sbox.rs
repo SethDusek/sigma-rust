@@ -1,7 +1,7 @@
-use std::convert::TryInto;
-
 use crate::eval::EvalError;
 
+use alloc::boxed::Box;
+use alloc::string::ToString;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::ergo_tree::ErgoTreeVersion;
 use ergotree_ir::mir::constant::TryExtractInto;

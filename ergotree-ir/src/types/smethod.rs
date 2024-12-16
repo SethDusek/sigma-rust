@@ -1,9 +1,12 @@
+use alloc::vec;
+use alloc::vec::Vec;
+
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::types::TypeCode;
 use crate::serialization::SigmaParsingError;
-use std::collections::HashMap;
-use std::convert::TryFrom;
+use core::convert::TryFrom;
+use hashbrown::HashMap;
 
 use super::sfunc::SFunc;
 use super::stype::SType;
@@ -18,11 +21,11 @@ use crate::serialization::SigmaParsingError::UnknownMethodId;
 pub struct MethodId(pub u8);
 
 impl MethodId {
-    pub(crate) fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> std::io::Result<()> {
+    pub(crate) fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> core2::io::Result<()> {
         w.put_u8(self.0)
     }
 
-    pub(crate) fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> std::io::Result<Self> {
+    pub(crate) fn sigma_parse<R: SigmaByteRead>(r: &mut R) -> core2::io::Result<Self> {
         Ok(Self(r.get_u8()?))
     }
 }

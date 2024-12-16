@@ -1,6 +1,8 @@
 //! OR conjunction for sigma propositions
 
-use std::convert::TryInto;
+use core::convert::TryInto;
+
+use alloc::vec::Vec;
 
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
@@ -97,6 +99,7 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;

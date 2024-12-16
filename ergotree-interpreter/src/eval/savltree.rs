@@ -1,5 +1,8 @@
-use std::convert::TryFrom;
-use std::sync::Arc;
+use alloc::boxed::Box;
+use alloc::string::ToString;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
 
 use bytes::Bytes;
 use ergo_avltree_rust::authenticated_tree_ops::AuthenticatedTreeOps;
@@ -429,7 +432,7 @@ pub(crate) static UPDATE_EVAL_FN: EvalFn =
         }
     };
 
-fn map_eval_err<T: std::fmt::Debug>(e: T) -> EvalError {
+fn map_eval_err<T: core::fmt::Debug>(e: T) -> EvalError {
     EvalError::AvlTree(format!("{:?}", e))
 }
 
@@ -437,7 +440,7 @@ fn map_eval_err<T: std::fmt::Debug>(e: T) -> EvalError {
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
-    use std::sync::Arc;
+    use alloc::sync::Arc;
 
     use ergo_avltree_rust::batch_avl_prover::BatchAVLProver;
     use ergotree_ir::{

@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::calc_blake2b256::CalcBlake2b256;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::NativeColl;
@@ -32,6 +33,7 @@ impl Evaluable for CalcBlake2b256 {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;

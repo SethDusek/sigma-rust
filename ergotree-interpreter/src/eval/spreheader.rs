@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use alloc::{sync::Arc, vec::Vec};
 
 use ergo_chain_types::PreHeader;
 use ergotree_ir::mir::constant::TryExtractInto;
@@ -44,7 +44,7 @@ pub(crate) static VOTES_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::expect_used)]
 mod tests {
-    use std::convert::{TryFrom, TryInto};
+    use core::convert::{TryFrom, TryInto};
 
     use ergo_chain_types::{BlockId, EcPoint, Votes};
     use ergotree_ir::{

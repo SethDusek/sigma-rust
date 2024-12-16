@@ -1,7 +1,10 @@
 //! ErgoBoxCandidate builder
 
-use std::collections::HashMap;
-use std::convert::{TryFrom, TryInto};
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::convert::{TryFrom, TryInto};
+use hashbrown::HashMap;
 
 use ergotree_ir::chain::address::AddressEncoderError;
 use ergotree_ir::chain::ergo_box::box_value::BoxValue;

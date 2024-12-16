@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use crate::mir::val_def::ValId;
 use crate::types::stype::SType;

@@ -9,39 +9,44 @@ pub mod miner_fee;
 pub mod mnemonic;
 #[cfg(feature = "mnemonic_gen")]
 pub mod mnemonic_generator;
+#[cfg(feature = "std")]
 pub mod multi_sig;
 pub mod secret_key;
 pub mod signing;
 pub mod tx_builder;
 pub mod tx_context;
 
+use crate::ergotree_interpreter::sigma_protocol::prover::hint::{Hint, HintsBag};
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use ergotree_interpreter::sigma_protocol::private_input::PrivateInput;
 use ergotree_interpreter::sigma_protocol::prover::Prover;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
 use ergotree_interpreter::sigma_protocol::prover::TestProver;
+use hashbrown::HashMap;
 use secret_key::SecretKey;
-use signing::{sign_transaction, TxSigningError};
 use thiserror::Error;
 
 use crate::chain::ergo_state_context::ErgoStateContext;
 use crate::chain::transaction::reduced::reduce_tx;
 use crate::chain::transaction::reduced::ReducedTransaction;
 use crate::chain::transaction::unsigned::UnsignedTransaction;
+#[cfg(feature = "std")]
 use crate::chain::transaction::Input;
 use crate::chain::transaction::Transaction;
+#[cfg(feature = "std")]
 use crate::ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 use crate::wallet::mnemonic::Mnemonic;
-use crate::wallet::multi_sig::{
-    generate_commitments, generate_commitments_for, TransactionHintsBag,
-};
+#[cfg(feature = "std")]
+use crate::wallet::multi_sig::{generate_commitments, generate_commitments_for};
 
 use self::ext_secret_key::ExtSecretKey;
 use self::ext_secret_key::ExtSecretKeyError;
-use self::signing::make_context;
-use self::signing::sign_message;
 use self::signing::sign_reduced_transaction;
-use self::signing::sign_tx_input;
 use self::signing::TransactionContext;
+use self::signing::TxSigningError;
+#[cfg(feature = "std")]
+use self::signing::{make_context, sign_message, sign_transaction, sign_tx_input};
 
 /// Wallet
 pub struct Wallet {
@@ -93,6 +98,7 @@ impl Wallet {
     }
 
     /// Signs a transaction
+    #[cfg(feature = "std")]
     pub fn sign_transaction(
         &self,
         tx_context: TransactionContext<UnsignedTransaction>,
@@ -104,6 +110,7 @@ impl Wallet {
     }
 
     /// Signs a reduced transaction (generating proofs for inputs)
+    #[cfg(feature = "std")]
     pub fn sign_reduced_transaction(
         &self,
         reduced_tx: ReducedTransaction,
@@ -114,6 +121,7 @@ impl Wallet {
     }
 
     /// Generate commitments for Transaction by wallet secrets
+    #[cfg(feature = "std")]
     pub fn generate_commitments(
         &self,
         tx_context: TransactionContext<UnsignedTransaction>,
@@ -129,6 +137,7 @@ impl Wallet {
     }
 
     /// Generate Commitments for reduced Transaction
+    #[cfg(feature = "std")]
     pub fn generate_commitments_for_reduced_transaction(
         &self,
         reduced_tx: ReducedTransaction,
@@ -185,10 +194,11 @@ impl Wallet {
     ) -> Result<Transaction, WalletError> {
         let reduced_tx = reduce_tx(tx_context, state_context)?;
         let hints = self.generate_deterministic_commitments(&reduced_tx, aux_rand)?;
-        self.sign_reduced_transaction(reduced_tx, Some(&hints))
+        sign_reduced_transaction(&*self.prover, reduced_tx, Some(&hints)).map_err(From::from)
     }
 
     /// Signs a message
+    #[cfg(feature = "std")]
     pub fn sign_message(
         &self,
         sigma_tree: SigmaBoolean,
@@ -198,6 +208,7 @@ impl Wallet {
     }
 
     /// Signs a transaction input
+    #[cfg(feature = "std")]
     pub fn sign_tx_input(
         &self,
         input_idx: usize,
@@ -218,5 +229,108 @@ impl Wallet {
             input_idx,
             message_to_sign.as_slice(),
         )?)
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+use proptest::prelude::Strategy;
+/// TransactionHintsBag
+#[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "json",
+    serde(
+        try_from = "crate::chain::json::hint::TransactionHintsBagJson",
+        into = "crate::chain::json::hint::TransactionHintsBagJson"
+    )
+)]
+#[cfg_attr(feature = "arbitrary", derive(proptest_derive::Arbitrary))]
+#[derive(PartialEq, Debug, Clone)]
+pub struct TransactionHintsBag {
+    #[cfg_attr(
+        feature = "arbitrary",
+        proptest(
+            strategy = "proptest::collection::hash_map(proptest::prelude::any::<usize>(), proptest::prelude::any::<HintsBag>(), 0..5).prop_map(HashMap::from_iter)"
+        )
+    )]
+    pub(crate) secret_hints: HashMap<usize, HintsBag>,
+    #[cfg_attr(
+        feature = "arbitrary",
+        proptest(
+            strategy = "proptest::collection::hash_map(proptest::prelude::any::<usize>(), proptest::prelude::any::<HintsBag>(), 0..5).prop_map(HashMap::from_iter)"
+        )
+    )]
+    pub(crate) public_hints: HashMap<usize, HintsBag>,
+}
+
+impl TransactionHintsBag {
+    /// Empty TransactionHintsBag
+    pub fn empty() -> Self {
+        TransactionHintsBag {
+            secret_hints: HashMap::new(),
+            public_hints: HashMap::new(),
+        }
+    }
+
+    /// Replacing Hints for an input index
+    pub fn replace_hints_for_input(&mut self, index: usize, hints_bag: HintsBag) {
+        let public: Vec<Hint> = hints_bag
+            .hints
+            .clone()
+            .into_iter()
+            .filter(|hint| matches!(hint, Hint::CommitmentHint(_)))
+            .collect();
+        let secret: Vec<Hint> = hints_bag
+            .hints
+            .into_iter()
+            .filter(|hint| matches!(hint, Hint::SecretProven(_)))
+            .collect();
+
+        self.secret_hints.insert(index, HintsBag { hints: secret });
+        self.public_hints.insert(index, HintsBag { hints: public });
+    }
+
+    /// Adding hints for a input index
+    pub fn add_hints_for_input(&mut self, index: usize, hints_bag: HintsBag) {
+        let mut public: Vec<Hint> = hints_bag
+            .hints
+            .clone()
+            .into_iter()
+            .filter(|hint| matches!(hint, Hint::CommitmentHint(_)))
+            .collect();
+        let mut secret: Vec<Hint> = hints_bag
+            .hints
+            .into_iter()
+            .filter(|hint| matches!(hint, Hint::SecretProven(_)))
+            .collect();
+        let secret_bag = HintsBag::empty();
+        let public_bag = HintsBag::empty();
+        let old_secret: &Vec<Hint> = &self.secret_hints.get(&index).unwrap_or(&secret_bag).hints;
+        for hint in old_secret {
+            secret.push(hint.clone());
+        }
+
+        let old_public: &Vec<Hint> = &self.public_hints.get(&index).unwrap_or(&public_bag).hints;
+        for hint in old_public {
+            public.push(hint.clone());
+        }
+        self.secret_hints.insert(index, HintsBag { hints: secret });
+        self.public_hints.insert(index, HintsBag { hints: public });
+    }
+
+    /// Outputting HintsBag corresponding for an index
+    pub fn all_hints_for_input(&self, index: usize) -> HintsBag {
+        let mut hints: Vec<Hint> = Vec::new();
+        let secret_bag = HintsBag::empty();
+        let public_bag = HintsBag::empty();
+        let secrets: &Vec<Hint> = &self.secret_hints.get(&index).unwrap_or(&secret_bag).hints;
+        for hint in secrets {
+            hints.push(hint.clone());
+        }
+        let public: &Vec<Hint> = &self.public_hints.get(&index).unwrap_or(&public_bag).hints;
+        for hint in public {
+            hints.push(hint.clone());
+        }
+        let hints_bag: HintsBag = HintsBag { hints };
+        hints_bag
     }
 }

@@ -1,4 +1,5 @@
 use crate::eval::Env;
+use alloc::vec::Vec;
 use ergotree_ir::mir::global_vars::GlobalVars;
 use ergotree_ir::mir::value::Value;
 use ergotree_ir::reference::Ref;
@@ -33,6 +34,7 @@ impl Evaluable for GlobalVars {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
 
     use crate::eval::tests::eval_out;

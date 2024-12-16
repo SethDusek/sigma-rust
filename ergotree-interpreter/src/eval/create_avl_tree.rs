@@ -2,13 +2,15 @@ use super::Evaluable;
 use crate::eval::env::Env;
 use crate::eval::Context;
 use crate::eval::EvalError;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
 use ergo_chain_types::ADDigest;
 use ergotree_ir::mir::avl_tree_data::{AvlTreeData, AvlTreeFlags};
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::create_avl_tree::CreateAvlTree;
 use ergotree_ir::mir::value::Value;
 use sigma_util::AsVecU8;
-use std::convert::TryFrom;
 
 impl Evaluable for CreateAvlTree {
     fn eval<'ctx>(
@@ -38,7 +40,7 @@ impl Evaluable for CreateAvlTree {
     }
 }
 
-fn map_eval_err<T: std::fmt::Debug>(e: T) -> EvalError {
+fn map_eval_err<T: core::fmt::Debug>(e: T) -> EvalError {
     EvalError::AvlTree(format!("{:?}", e))
 }
 

@@ -1,4 +1,6 @@
-use std::convert::TryFrom;
+use core::convert::TryFrom;
+
+use alloc::boxed::Box;
 
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
@@ -126,7 +128,7 @@ impl_traversable_expr!(SelectField, boxed input);
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     use crate::serialization::sigma_serialize_roundtrip;
 

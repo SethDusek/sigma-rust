@@ -1,6 +1,7 @@
 //! Decode byte array to EC point
 
-use std::sync::Arc;
+use alloc::boxed::Box;
+use alloc::sync::Arc;
 
 use crate::serialization::op_code::OpCode;
 use crate::types::stype::SType;
@@ -72,11 +73,13 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;
     use crate::mir::expr::Expr;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

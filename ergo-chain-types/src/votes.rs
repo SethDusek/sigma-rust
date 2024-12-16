@@ -1,8 +1,9 @@
 //! Main "remote" type for [Vote]()
 use crate::{Base16DecodedBytes, Base16EncodedBytes};
+use alloc::vec::Vec;
 use thiserror::Error;
 
-use std::convert::{TryFrom, TryInto};
+use core::convert::{TryFrom, TryInto};
 
 /// Votes for changing system parameters
 #[cfg_attr(feature = "json", derive(serde::Serialize, serde::Deserialize))]
@@ -36,7 +37,7 @@ impl TryFrom<Vec<u8>> for Votes {
 pub enum VotesError {
     /// Invalid byte array size
     #[error("Votes: Invalid byte array size ({0})")]
-    InvalidSize(#[from] std::array::TryFromSliceError),
+    InvalidSize(#[from] core::array::TryFromSliceError),
 }
 
 impl TryFrom<Base16DecodedBytes> for Votes {

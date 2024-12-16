@@ -25,6 +25,7 @@ impl Evaluable for ExtractCreationInfo {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use crate::eval::tests::eval_out;
     use crate::eval::Context;

@@ -1,13 +1,16 @@
 //! Builder for an UnsignedTransaction
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::convert::TryInto;
 use ergotree_ir::chain::context::TxIoVec;
 use ergotree_ir::chain::context_extension::ContextExtension;
 use ergotree_ir::chain::token::TokenAmount;
 use ergotree_ir::chain::token::TokenAmountError;
 use ergotree_ir::ergo_tree::ErgoTree;
-use std::collections::HashMap;
-use std::collections::HashSet;
-use std::convert::TryInto;
+use hashbrown::HashMap;
+use hashbrown::HashSet;
 
 use bounded_vec::BoundedVecOutOfBounds;
 use ergotree_interpreter::sigma_protocol;
@@ -379,7 +382,7 @@ fn check_unused_token_burn_permit(
 #[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
 
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     use ergotree_ir::chain::ergo_box::arbitrary::ArbBoxParameters;
     use ergotree_ir::chain::ergo_box::box_value::checked_sum;

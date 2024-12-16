@@ -1,9 +1,12 @@
 //! Transitioning type for Base16 encoded bytes in JSON serialization
 
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::convert::TryInto;
 #[cfg(feature = "json")]
 use serde::{Deserialize, Serialize};
-use std::convert::TryFrom;
-use std::convert::TryInto;
 extern crate derive_more;
 use derive_more::{From, Into};
 

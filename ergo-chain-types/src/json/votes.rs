@@ -1,6 +1,7 @@
 //! Code to implement `Votes` JSON encoding
 
-use std::convert::{TryFrom, TryInto};
+use alloc::vec::Vec;
+use core::convert::{TryFrom, TryInto};
 
 use crate::votes::{Votes, VotesError};
 use crate::Base16DecodedBytes;

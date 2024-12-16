@@ -1,5 +1,6 @@
 //! Main "remote" type for [BlockId]()
 
+use alloc::{string::String, vec::Vec};
 use derive_more::Display;
 
 use crate::DigestNError;

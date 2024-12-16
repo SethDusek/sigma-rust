@@ -7,6 +7,8 @@ use super::stype::SType;
 use super::stype_companion::STypeCompanion;
 use super::stype_param::STypeVar;
 use crate::types::smethod::MethodId;
+use alloc::vec;
+use alloc::vec::Vec;
 use lazy_static::lazy_static;
 
 /// SOption type code

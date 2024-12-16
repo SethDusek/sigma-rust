@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use alloc::boxed::Box;
+
+use alloc::sync::Arc;
 
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;
@@ -84,6 +86,7 @@ mod arbitrary {
     use super::*;
     use crate::mir::expr::arbitrary::ArbExprParams;
     use crate::types::sfunc::SFunc;
+    use alloc::vec;
     use proptest::prelude::*;
 
     impl Arbitrary for ForAll {

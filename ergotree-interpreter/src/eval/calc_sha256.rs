@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::calc_sha256::CalcSha256;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::NativeColl;

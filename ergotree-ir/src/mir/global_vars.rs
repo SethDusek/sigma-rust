@@ -1,7 +1,7 @@
 //! Global variables
 
-use std::fmt::Display;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use core::fmt::Display;
 
 use crate::has_opcode::HasOpCode;
 use crate::serialization::op_code::OpCode;
@@ -56,7 +56,7 @@ impl HasOpCode for GlobalVars {
 }
 
 impl Display for GlobalVars {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             GlobalVars::SelfBox => write!(f, "SELF"),
             GlobalVars::Inputs => write!(f, "INPUTS"),

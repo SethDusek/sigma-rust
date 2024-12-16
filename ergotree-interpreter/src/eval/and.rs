@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::and::And;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::value::Value;

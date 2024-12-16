@@ -1,7 +1,9 @@
 use crate::serialization::types::TypeCode;
 use crate::types::stuple::STuple;
 use crate::types::stype_companion::STypeCompanion;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use super::sfunc::SFunc;
 use super::smethod::MethodId;

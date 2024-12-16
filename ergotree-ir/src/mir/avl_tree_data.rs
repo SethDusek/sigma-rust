@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use ergo_chain_types::ADDigest;
 use sigma_ser::ScorexSerializable;
 
@@ -134,12 +135,14 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;
     use crate::mir::expr::Expr;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

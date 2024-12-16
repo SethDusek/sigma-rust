@@ -1,5 +1,6 @@
 //! Hints for a prover which helps the prover to prove a statement.
 
+use alloc::vec::Vec;
 use derive_more::From;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 

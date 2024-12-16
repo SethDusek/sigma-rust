@@ -1,6 +1,8 @@
 //! Vec extensions
 
-use std::sync::Arc;
+use alloc::sync::Arc;
+
+use alloc::vec::Vec;
 
 /// Vec<i8> to Vec<u8> conversion
 pub trait FromVecI8 {

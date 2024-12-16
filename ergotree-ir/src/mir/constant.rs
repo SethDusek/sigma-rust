@@ -17,6 +17,15 @@ use crate::types::stuple::STuple;
 use crate::types::stuple::TupleItems;
 use crate::types::stype::LiftIntoSType;
 use crate::types::stype::SType;
+use alloc::boxed::Box;
+
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::convert::TryInto;
+use core::fmt::Formatter;
 use ergo_chain_types::ADDigest;
 use ergo_chain_types::Base16DecodedBytes;
 use ergo_chain_types::Digest32;
@@ -24,10 +33,6 @@ use ergo_chain_types::EcPoint;
 use impl_trait_for_tuples::impl_for_tuples;
 use sigma_util::AsVecI8;
 use sigma_util::AsVecU8;
-use std::convert::TryFrom;
-use std::convert::TryInto;
-use std::fmt::Formatter;
-use std::sync::Arc;
 
 mod constant_placeholder;
 
@@ -83,20 +88,20 @@ pub enum Literal {
     Tup(TupleItems<Literal>),
 }
 
-impl std::fmt::Debug for Constant {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for Constant {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         format!("{:?}: {:?}", self.v, self.tpe).fmt(f)
     }
 }
 
-impl std::fmt::Display for Constant {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Constant {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         self.v.fmt(f)
     }
 }
 
-impl std::fmt::Debug for Literal {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Debug for Literal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(i8_bytes))) => {
                 base16::encode_lower(&i8_bytes.as_vec_u8()).fmt(f)
@@ -119,8 +124,8 @@ impl std::fmt::Debug for Literal {
     }
 }
 
-impl std::fmt::Display for Literal {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Literal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             Literal::Coll(CollKind::NativeColl(NativeColl::CollByte(i8_bytes))) => {
                 write!(f, "Coll[Byte](")?;
@@ -755,13 +760,13 @@ impl<T: TryExtractFrom<Literal> + StoreWrapped> TryExtractFrom<Literal> for Vec<
                 } => v.iter().cloned().map(T::try_extract_from).collect(),
                 _ => Err(TryExtractFromError(format!(
                     "expected {:?}, found {:?}",
-                    std::any::type_name::<Self>(),
+                    core::any::type_name::<Self>(),
                     coll
                 ))),
             },
             _ => Err(TryExtractFromError(format!(
                 "expected {:?}, found {:?}",
-                std::any::type_name::<Self>(),
+                core::any::type_name::<Self>(),
                 c
             ))),
         }
@@ -775,13 +780,13 @@ impl TryExtractFrom<Literal> for Vec<i8> {
                 CollKind::NativeColl(NativeColl::CollByte(bs)) => Ok(bs.iter().copied().collect()), // TODO: optimize
                 _ => Err(TryExtractFromError(format!(
                     "expected {:?}, found {:?}",
-                    std::any::type_name::<Self>(),
+                    core::any::type_name::<Self>(),
                     v
                 ))),
             },
             _ => Err(TryExtractFromError(format!(
                 "expected {:?}, found {:?}",
-                std::any::type_name::<Self>(),
+                core::any::type_name::<Self>(),
                 v
             ))),
         }
@@ -823,7 +828,7 @@ impl TryExtractFrom<Literal> for BigInt256 {
             Literal::BigInt(bi) => Ok(bi),
             _ => Err(TryExtractFromError(format!(
                 "expected {:?}, found {:?}",
-                std::any::type_name::<Self>(),
+                core::any::type_name::<Self>(),
                 v
             ))),
         }
@@ -836,7 +841,7 @@ impl TryExtractFrom<Literal> for AvlTreeData {
             Literal::AvlTree(a) => Ok(*a),
             _ => Err(TryExtractFromError(format!(
                 "expected {:?}, found {:?}",
-                std::any::type_name::<Self>(),
+                core::any::type_name::<Self>(),
                 v
             ))),
         }
@@ -926,7 +931,7 @@ impl TryFrom<Base16DecodedBytes> for Constant {
 #[allow(clippy::todo)]
 /// Arbitrary impl
 pub(crate) mod arbitrary {
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     use super::*;
     use crate::mir::value::CollKind;
@@ -1092,6 +1097,7 @@ pub(crate) mod arbitrary {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 pub mod tests {
     use super::*;

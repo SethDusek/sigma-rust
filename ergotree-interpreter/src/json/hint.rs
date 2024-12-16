@@ -1,6 +1,9 @@
-use std::convert::TryFrom;
-use std::num::ParseIntError;
-use std::str::FromStr;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::num::ParseIntError;
+use core::str::FromStr;
 
 use ergo_chain_types::Base16DecodedBytes;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;

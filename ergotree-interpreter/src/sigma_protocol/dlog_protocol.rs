@@ -2,6 +2,8 @@
 
 use super::wscalar::Wscalar;
 use super::ProverMessage;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use ergo_chain_types::EcPoint;
 use ergotree_ir::serialization::SigmaSerializable;
 
@@ -38,10 +40,10 @@ pub struct SecondDlogProverMessage {
 
 /// Interactive prover
 pub mod interactive_prover {
-    use std::ops::Mul;
+    use alloc::boxed::Box;
+    use core::ops::Mul;
 
     use super::{FirstDlogProverMessage, SecondDlogProverMessage};
-    use crate::sigma_protocol::crypto_utils;
     use crate::sigma_protocol::wscalar::Wscalar;
     use crate::sigma_protocol::{private_input::DlogProverInput, Challenge};
     use blake2::Blake2b;
@@ -52,7 +54,6 @@ pub mod interactive_prover {
         EcPoint,
     };
     use ergotree_ir::serialization::SigmaSerializable;
-    use ergotree_ir::sigma_protocol::dlog_group;
     use ergotree_ir::sigma_protocol::sigma_boolean::ProveDlog;
     use k256::elliptic_curve::ops::Reduce;
     use k256::{ProjectivePoint, Scalar};
@@ -61,12 +62,16 @@ pub mod interactive_prover {
     /// For every leaf marked “simulated”, use the simulator of the sigma protocol for that leaf
     /// to compute the commitment "a" and the response "z", given the challenge "e" that
     /// is already stored in the leaf
+    #[cfg(feature = "std")]
     pub(crate) fn simulate(
         public_input: &ProveDlog,
         challenge: &Challenge,
     ) -> (FirstDlogProverMessage, SecondDlogProverMessage) {
+        use ergotree_ir::sigma_protocol::dlog_group;
         //SAMPLE a random z <- Zq
-        let z = dlog_group::random_scalar_in_group_range(crypto_utils::secure_rng());
+        let z = dlog_group::random_scalar_in_group_range(
+            crate::sigma_protocol::crypto_utils::secure_rng(),
+        );
 
         //COMPUTE a = g^z*h^(-e)  (where -e here means -e mod q)
         let e: Scalar = challenge.clone().into();
@@ -83,8 +88,12 @@ pub mod interactive_prover {
     /// Step 6 from <https://ergoplatform.org/docs/ErgoScript.pdf>
     /// For every leaf marked “real”, use the first prover step of the sigma protocol for
     /// that leaf to compute the necessary randomness "r" and the commitment "a"
+    #[cfg(feature = "std")]
     pub fn first_message() -> (Wscalar, FirstDlogProverMessage) {
-        let r = dlog_group::random_scalar_in_group_range(crypto_utils::secure_rng());
+        use ergotree_ir::sigma_protocol::dlog_group;
+        let r = dlog_group::random_scalar_in_group_range(
+            crate::sigma_protocol::crypto_utils::secure_rng(),
+        );
         let g = generator();
         let a = exponentiate(&g, &r);
         (r.into(), FirstDlogProverMessage { a: a.into() })

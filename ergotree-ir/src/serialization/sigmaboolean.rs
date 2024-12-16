@@ -7,6 +7,7 @@ use crate::serialization::{
 use crate::sigma_protocol::sigma_boolean::{
     ProveDhTuple, ProveDlog, SigmaBoolean, SigmaConjecture, SigmaProofOfKnowledgeTree,
 };
+
 use ergo_chain_types::EcPoint;
 
 use crate::sigma_protocol::sigma_boolean::cand::Cand;

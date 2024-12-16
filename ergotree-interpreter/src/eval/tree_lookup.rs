@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use bytes::Bytes;
 use ergotree_ir::mir::tree_lookup::TreeLookup;
 use ergotree_ir::mir::value::Value;
@@ -60,7 +62,7 @@ impl Evaluable for TreeLookup {
     }
 }
 
-fn map_eval_err<T: std::fmt::Debug>(e: T) -> EvalError {
+fn map_eval_err<T: core::fmt::Debug>(e: T) -> EvalError {
     EvalError::AvlTree(format!("{:?}", e))
 }
 

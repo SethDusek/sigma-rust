@@ -1,5 +1,6 @@
-use std::fmt::Display;
+use core::fmt::Display;
 
+use alloc::{format, string::String};
 use derive_more::From;
 use thiserror::Error;
 
@@ -66,7 +67,7 @@ impl From<RegisterId> for u8 {
 }
 
 impl Display for RegisterId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             RegisterId::MandatoryRegisterId(id) => write!(f, "{}", id),
             RegisterId::NonMandatoryRegisterId(id) => write!(f, "{}", id),

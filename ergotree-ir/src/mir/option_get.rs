@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use alloc::boxed::Box;
+
+use alloc::sync::Arc;
 
 use super::expr::Expr;
 use super::expr::InvalidArgumentError;

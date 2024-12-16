@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::byte_array_to_long::ByteArrayToLong;
 use ergotree_ir::mir::value::Value;
 
@@ -35,6 +36,8 @@ impl Evaluable for ByteArrayToLong {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+
+    use alloc::boxed::Box;
 
     use super::*;
     use crate::eval::tests::try_eval_out_wo_ctx;
