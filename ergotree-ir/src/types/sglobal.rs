@@ -6,10 +6,10 @@ use super::smethod::SMethodDesc;
 use super::stype::SType;
 use crate::types::smethod::SMethod;
 use crate::types::stype_companion::STypeCompanion;
+use crate::types::stype_param::STypeVar;
 use alloc::vec;
 use alloc::vec::Vec;
 use lazy_static::lazy_static;
-use crate::types::stype_param::{STypeParam, STypeVar};
 
 /// SGlobal type code
 pub const TYPE_CODE: TypeCode = TypeCode::SGLOBAL;
@@ -26,7 +26,7 @@ pub const FROM_BIGENDIAN_BYTES_METHOD_ID: MethodId = MethodId(5);
 lazy_static! {
     /// Global method descriptors
     pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
-        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC,];
+        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
 }
 
 lazy_static! {
@@ -65,16 +65,16 @@ lazy_static! {
 
 }
 
-lazy_static!{
+lazy_static! {
     static ref FROM_BIGENDIAN_BYTES_METHOD_DESC: SMethodDesc = SMethodDesc {
         method_id: FROM_BIGENDIAN_BYTES_METHOD_ID,
         name: "fromBigEndianBytes",
         tpe: SFunc {
             t_dom: vec![SType::SGlobal, SType::SColl(SType::SByte.into())],
             t_range:SType::STypeVar(STypeVar::t()).into(),
-            tpe_params: vec![STypeParam::param_t()],
+            tpe_params: vec![],
         },
-        explicit_type_args: vec![]
+        explicit_type_args: vec![STypeVar::t()]
     };
     /// GLOBAL.fromBigEndianBytes
     pub static ref FROM_BIGENDIAN_BYTES_METHOD: SMethod = SMethod::new(STypeCompanion::Global, FROM_BIGENDIAN_BYTES_METHOD_DESC.clone(),);

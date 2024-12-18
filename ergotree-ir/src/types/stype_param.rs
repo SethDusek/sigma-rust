@@ -100,14 +100,3 @@ pub struct STypeParam {
     upper_bound: Option<SType>,
     lower_bound: Option<SType>,
 }
-
-impl STypeParam {
-    /// paramT
-    pub fn param_t() -> Self {
-        Self {
-            ident: STypeVar::t(),
-            upper_bound: None,
-            lower_bound: None,
-        }
-    }
-}

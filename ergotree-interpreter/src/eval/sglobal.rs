@@ -4,10 +4,11 @@ use crate::eval::EvalError;
 
 use ergotree_ir::mir::value::{CollKind, NativeColl, Value};
 
+use super::EvalFn;
+use crate::eval::Vec;
 use ergo_chain_types::ec_point::generator;
 use ergotree_ir::bigint256::BigInt256;
 use ergotree_ir::types::stype::SType;
-use super::EvalFn;
 
 fn helper_xor(x: &[i8], y: &[i8]) -> Arc<[i8]> {
     x.iter().zip(y.iter()).map(|(x1, x2)| *x1 ^ *x2).collect()
@@ -70,10 +71,12 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
 
     let bytes = match bytes_val {
         Value::Coll(CollKind::NativeColl(NativeColl::CollByte(bytes))) => bytes,
-        _ => return Err(EvalError::UnexpectedValue(format!(
-            "fromBigEndianBytes: expected first argument to be byte array, got {:?}",
-            bytes_val
-        ))),
+        _ => {
+            return Err(EvalError::UnexpectedValue(format!(
+                "fromBigEndianBytes: expected first argument to be byte array, got {:?}",
+                bytes_val
+            )))
+        }
     };
 
     match *type_val {
@@ -91,9 +94,10 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
                     "To deserialize Short with fromBigEndianBytes, exactly two bytes should be provided".to_string(),
                 ));
             }
-            let b0 = bytes[0] as i16;
-            let b1 = bytes[1] as i16;
-            Ok(Value::Short(((b0 & 0xFF) << 8 | (b1 & 0xFF)) as i16))
+            let value = bytes
+                .iter()
+                .fold(0i16, |acc, &x| (acc << 8) | (x as u8 as i16));
+            Ok(Value::Short(value))
         }
         SType::SInt => {
             if bytes.len() != 4 {
@@ -101,11 +105,10 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
                     "To deserialize Int with fromBigEndianBytes, exactly four bytes should be provided".to_string(),
                 ));
             }
-            let bytes_vec: Vec<u8> = bytes.iter().map(|&x| x as u8).collect();
-            let int_bytes: [u8; 4] = bytes_vec.try_into().map_err(|_| EvalError::UnexpectedValue(
-                "Invalid byte array length for Int".to_string(),
-            ))?;
-            Ok(Value::Int(i32::from_be_bytes(int_bytes)))
+            let value = bytes
+                .iter()
+                .fold(0i32, |acc, &x| (acc << 8) | (x as u8 as i32));
+            Ok(Value::Int(value))
         }
         SType::SLong => {
             if bytes.len() != 8 {
@@ -113,11 +116,10 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
                     "To deserialize Long with fromBigEndianBytes, exactly eight bytes should be provided".to_string(),
                 ));
             }
-            let bytes_vec: Vec<u8> = bytes.iter().map(|&x| x as u8).collect();
-            let long_bytes: [u8; 8] = bytes_vec.try_into().map_err(|_| EvalError::UnexpectedValue(
-                "Invalid byte array length for Long".to_string(),
-            ))?;
-            Ok(Value::Long(i64::from_be_bytes(long_bytes)))
+            let value = bytes
+                .iter()
+                .fold(0i64, |acc, &x| (acc << 8) | (x as u8 as i64));
+            Ok(Value::Long(value))
         }
         SType::SBigInt => {
             if bytes.len() > 32 {
@@ -126,21 +128,15 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
                 ));
             }
             let bytes_vec: Vec<u8> = bytes.iter().map(|&x| x as u8).collect();
-            let big_int = num_bigint::BigInt::from_bytes_be(num_bigint::Sign::Plus, &bytes_vec);
-            Ok(Value::BigInt(BigInt256::try_from(big_int).map_err(|e|
-                EvalError::UnexpectedValue(format!("Failed to convert to BigInt256: {:?}", e))
-            )?))
-        }
-        SType::SUnit => {
-            if !bytes.is_empty() {
-                return Err(EvalError::UnexpectedValue(
-                    "To deserialize Unit with fromBigEndianBytes, empty byte array should be provided".to_string(),
-                ));
-            }
-            Ok(Value::Unit)
+            Ok(Value::BigInt(
+                BigInt256::from_be_slice(&bytes_vec).ok_or_else(|| {
+                    EvalError::UnexpectedValue("Failed to convert to BigInt256".to_string())
+                })?,
+            ))
         }
         _ => Err(EvalError::UnexpectedValue(format!(
-            "Unsupported type provided in fromBigEndianBytes: {:?}", type_val
+            "Unsupported type provided in fromBigEndianBytes: {:?}",
+            type_val
         ))),
     }
 };
@@ -155,7 +151,7 @@ mod tests {
     use ergotree_ir::mir::method_call::MethodCall;
     use ergotree_ir::mir::property_call::PropertyCall;
 
-    use crate::eval::tests::eval_out;
+    use crate::eval::tests::{eval_out, eval_out_wo_ctx};
     use ergotree_ir::chain::context::Context;
     use ergotree_ir::types::sglobal;
     use ergotree_ir::types::stype::SType;
@@ -194,85 +190,126 @@ mod tests {
         );
     }
 
-    #[test]
-    fn eval_from_bigendian_bytes() {
-        let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
+    use proptest::prelude::*;
 
-        let bytes = vec![0_i8, 0, 0, 1];
-        let expr: Expr = MethodCall::new(
-            Expr::Global,
-            sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
-            vec![bytes.into()],
-        )
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(64))]
+
+        #[test]
+        fn test_bigendian_bytes_roundtrip(
+            v_byte in any::<i8>(),
+            v_short in any::<i16>(),
+            v_int in any::<i32>(),
+            v_long in any::<i64>()
+        ) {
+            {
+                let bytes = vec![v_byte];
+
+                let type_args = std::iter::once((STypeVar::t(), SType::SByte)).collect();
+                let expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
+                    vec![bytes.into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                assert_eq!(eval_out_wo_ctx::<i8>(&expr), v_byte);
+            }
+
+            {
+                let bytes = vec![(v_short >> 8) as i8, v_short as i8];
+
+                let type_args = std::iter::once((STypeVar::t(), SType::SShort)).collect();
+                let expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
+                    vec![bytes.into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                assert_eq!(eval_out_wo_ctx::<i16>(&expr), v_short);
+            }
+
+            {
+                let bytes = vec![
+                    (v_int >> 24) as i8,
+                    (v_int >> 16) as i8,
+                    (v_int >> 8) as i8,
+                    v_int as i8
+                ];
+
+                let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
+                let expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
+                    vec![bytes.into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                assert_eq!(eval_out_wo_ctx::<i32>(&expr), v_int);
+            }
+
+            {
+                let bytes = vec![
+                    (v_long >> 56) as i8,
+                    (v_long >> 48) as i8,
+                    (v_long >> 40) as i8,
+                    (v_long >> 32) as i8,
+                    (v_long >> 24) as i8,
+                    (v_long >> 16) as i8,
+                    (v_long >> 8) as i8,
+                    v_long as i8
+                ];
+
+                let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
+                let expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
+                    vec![bytes.clone().into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                assert_eq!(eval_out_wo_ctx::<i64>(&expr), v_long);
+
+                let original_long = ((bytes[0] as i64) << 56) |
+                                  (((bytes[1] as i64) & 0xFF) << 48) |
+                                  (((bytes[2] as i64) & 0xFF) << 40) |
+                                  (((bytes[3] as i64) & 0xFF) << 32) |
+                                  (((bytes[4] as i64) & 0xFF) << 24) |
+                                  (((bytes[5] as i64) & 0xFF) << 16) |
+                                  (((bytes[6] as i64) & 0xFF) << 8) |
+                                  ((bytes[7] as i64) & 0xFF);
+                assert_eq!(original_long, v_long);
+            }
+        }
+
+        #[test]
+        fn test_bigint_roundtrip(v_long in any::<i64>()) {
+            let bytes = vec![
+                (v_long >> 56) as i8,
+                (v_long >> 48) as i8,
+                (v_long >> 40) as i8,
+                (v_long >> 32) as i8,
+                (v_long >> 24) as i8,
+                (v_long >> 16) as i8,
+                (v_long >> 8) as i8,
+                v_long as i8
+            ];
+
+            let type_args = std::iter::once((STypeVar::t(), SType::SBigInt)).collect();
+            let expr: Expr = MethodCall::with_type_args(
+                Expr::Global,
+                sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
+                vec![bytes.into()],
+                type_args,
+            )
             .unwrap()
             .into();
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<i32>(&expr, &ctx), 1);
+            assert_eq!(eval_out_wo_ctx::<BigInt256>(&expr), BigInt256::from(v_long));
+        }
     }
-
-    #[test]
-    fn eval_from_bigendian_bytes_short() {
-        let type_args = std::iter::once((STypeVar::t(), SType::SShort)).collect();
-
-        let bytes = vec![0_i8, 1];
-        let expr: Expr = MethodCall::new(
-            Expr::Global,
-            sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
-            vec![bytes.into()],
-        )
-            .unwrap()
-            .into();
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<i16>(&expr, &ctx), 1);
-    }
-
-    #[test]
-    fn eval_from_bigendian_bytes_long() {
-        let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
-
-        let bytes = vec![0_i8, 0, 0, 0, 0, 0, 0, 1];
-        let expr: Expr = MethodCall::new(
-            Expr::Global,
-            sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
-            vec![bytes.into()],
-        )
-            .unwrap()
-            .into();
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<i64>(&expr, &ctx), 1);
-    }
-
-    #[test]
-    fn eval_from_bigendian_bytes_wrong_answer() {
-        let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
-
-        let bytes = vec![0_i8, 0, 0, 1];
-        let expr: Expr = MethodCall::new(
-            Expr::Global,
-            sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
-            vec![bytes.into()],
-        )
-            .unwrap()
-            .into();
-        let ctx = force_any_val::<Context>();
-        assert_ne!(eval_out::<i32>(&expr, &ctx), 2);
-    }
-
-    #[test]
-    fn eval_from_bigendian_bytes_bigint() {
-        let type_args = std::iter::once((STypeVar::t(), SType::SBigInt)).collect();
-
-        let bytes = vec![0_i8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-        let expr: Expr = MethodCall::new(
-            Expr::Global,
-            sglobal::FROM_BIGENDIAN_BYTES_METHOD.clone().with_concrete_types(&type_args),
-            vec![bytes.into()],
-        )
-            .unwrap()
-            .into();
-        let ctx = force_any_val::<Context>();
-        let expected_bigint = num_bigint::BigInt::from(1);
-        assert_eq!(eval_out::<BigInt256>(&expr, &ctx), BigInt256::try_from(expected_bigint).unwrap());
-    }
-
 }
