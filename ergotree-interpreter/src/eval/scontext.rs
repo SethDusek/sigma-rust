@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use alloc::boxed::Box;
+use alloc::string::ToString;
+use alloc::sync::Arc;
 
 use ergotree_ir::mir::avl_tree_data::AvlTreeData;
 use ergotree_ir::mir::avl_tree_data::AvlTreeFlags;

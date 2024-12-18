@@ -1,9 +1,10 @@
 //! SType hierarchy
 
-use std::collections::HashMap;
-use std::convert::TryInto;
-use std::fmt::Debug;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
+use core::convert::TryInto;
+use core::fmt::Debug;
+use hashbrown::HashMap;
 
 use impl_trait_for_tuples::impl_for_tuples;
 
@@ -128,8 +129,8 @@ impl From<SFunc> for SType {
     }
 }
 
-impl std::fmt::Display for SType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             SType::STypeVar(t) => write!(f, "{}", t.as_string()),
             SType::SAny => write!(f, "Any"),
@@ -277,6 +278,7 @@ impl LiftIntoSType for Tuple {
 #[allow(clippy::unwrap_used)]
 pub(crate) mod tests {
     use super::*;
+    use alloc::vec;
     use proptest::prelude::*;
 
     pub(crate) fn primitive_type() -> BoxedStrategy<SType> {

@@ -2,6 +2,8 @@ use crate::eval::env::Env;
 use crate::eval::Context;
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
 use ergotree_ir::ergo_tree::ErgoTree;
 use ergotree_ir::mir::constant::Constant;
 use ergotree_ir::mir::constant::TryExtractInto;
@@ -12,7 +14,6 @@ use ergotree_ir::mir::value::Value;
 use ergotree_ir::serialization::SigmaSerializable;
 use sigma_util::AsVecI8;
 use sigma_util::AsVecU8;
-use std::convert::TryFrom;
 
 impl Evaluable for SubstConstants {
     fn eval<'ctx>(
@@ -83,7 +84,7 @@ impl Evaluable for SubstConstants {
     }
 }
 
-fn to_misc_err<T: std::fmt::Debug>(e: T) -> EvalError {
+fn to_misc_err<T: core::fmt::Debug>(e: T) -> EvalError {
     EvalError::Misc(format!("{:?}", e))
 }
 

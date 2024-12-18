@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use alloc::sync::Arc;
 
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::NativeColl;
@@ -44,7 +44,9 @@ impl Evaluable for Xor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::eval::tests::eval_out;
+    use crate::eval::tests::{eval_out, eval_out_wo_ctx};
+    use alloc::boxed::Box;
+    use alloc::vec::Vec;
     use ergotree_ir::chain::context::Context;
     use ergotree_ir::mir::expr::Expr;
     use proptest::prelude::*;
@@ -62,8 +64,7 @@ mod tests {
         }
         .into();
 
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
+        assert_eq!(eval_out_wo_ctx::<Vec<i8>>(&expr), expected_xor);
     }
 
     #[test]
@@ -94,8 +95,7 @@ mod tests {
         }
         .into();
 
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
+        assert_eq!(eval_out_wo_ctx::<Vec<i8>>(&expr), expected_xor);
     }
 
     #[test]
@@ -110,8 +110,7 @@ mod tests {
         }
         .into();
 
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
+        assert_eq!(eval_out_wo_ctx::<Vec<i8>>(&expr), expected_xor);
     }
 
     #[test]
@@ -126,8 +125,7 @@ mod tests {
         }
         .into();
 
-        let ctx = force_any_val::<Context>();
-        assert_eq!(eval_out::<Vec<i8>>(&expr, &ctx), expected_xor);
+        assert_eq!(eval_out_wo_ctx::<Vec<i8>>(&expr), expected_xor);
     }
 
     proptest! {
@@ -143,8 +141,7 @@ mod tests {
             }
             .into();
 
-            let ctx = force_any_val::<Context>();
-            assert_eq!(&eval_out::<Vec<i8>>(&expr, &ctx)[..], &expected_xor[..]);
+            assert_eq!(&eval_out_wo_ctx::<Vec<i8>>(&expr)[..], &expected_xor[..]);
         }
     }
 }

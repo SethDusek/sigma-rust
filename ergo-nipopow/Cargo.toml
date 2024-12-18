@@ -6,9 +6,7 @@ authors = ["Denys Zadorozhnyi <denys@zadorozhnyi.com>"]
 repository.workspace = true
 edition.workspace = true
 description = "Ergo blockchain types"
-exclude = [
-    "proptest-regressions/*"
-]
+exclude = ["proptest-regressions/*"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -29,10 +27,15 @@ ergo-chain-types = { workspace = true }
 ergo-merkle-tree = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-proptest = { workspace = true , optional = true }
+proptest = { workspace = true, optional = true }
 
 [dev-dependencies]
 
 [features]
-default = []
-arbitrary = ["proptest", "proptest-derive", "ergo-chain-types/arbitrary", "ergotree-ir/arbitrary"]
+default = ["sigma-ser/std", "ergo-merkle-tree/json", "serde/std"]
+arbitrary = [
+    "proptest",
+    "proptest-derive",
+    "ergo-chain-types/arbitrary",
+    "ergotree-ir/arbitrary",
+]

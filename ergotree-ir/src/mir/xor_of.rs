@@ -1,5 +1,7 @@
 //! XOR for collection of booleans
 
+use alloc::boxed::Box;
+
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
@@ -70,10 +72,12 @@ mod arbitrary {
 
 #[cfg(test)]
 #[allow(clippy::panic)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::mir::expr::Expr;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

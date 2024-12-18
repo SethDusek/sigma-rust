@@ -76,13 +76,13 @@ impl From<ergo_lib::ergotree_interpreter::sigma_protocol::prover::hint::HintsBag
 
 /// TransactionHintsBag
 #[wasm_bindgen]
-pub struct TransactionHintsBag(pub(crate) ergo_lib::wallet::multi_sig::TransactionHintsBag);
+pub struct TransactionHintsBag(pub(crate) ergo_lib::wallet::TransactionHintsBag);
 
 #[wasm_bindgen]
 impl TransactionHintsBag {
     /// Empty TransactionHintsBag
     pub fn empty() -> TransactionHintsBag {
-        TransactionHintsBag(ergo_lib::wallet::multi_sig::TransactionHintsBag::empty())
+        TransactionHintsBag(ergo_lib::wallet::TransactionHintsBag::empty())
     }
 
     /// Adding hints for input
@@ -106,8 +106,8 @@ impl TransactionHintsBag {
     }
 }
 
-impl From<ergo_lib::wallet::multi_sig::TransactionHintsBag> for TransactionHintsBag {
-    fn from(t: ergo_lib::wallet::multi_sig::TransactionHintsBag) -> Self {
+impl From<ergo_lib::wallet::TransactionHintsBag> for TransactionHintsBag {
+    fn from(t: ergo_lib::wallet::TransactionHintsBag) -> Self {
         TransactionHintsBag(t)
     }
 }

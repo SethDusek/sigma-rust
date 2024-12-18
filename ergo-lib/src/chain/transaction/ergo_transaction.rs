@@ -8,7 +8,6 @@ use ergotree_ir::{
     },
     serialization::SigmaSerializationError,
 };
-use itertools::Itertools;
 use thiserror::Error;
 
 use crate::wallet::tx_context::TransactionContextError;
@@ -59,10 +58,10 @@ pub enum TxValidationError {
     /// Negative heights are not allowed after block v1.
     /// When using sigma-rust where heights are always unsigned, this error may be because creation height was set to be >= 2147483648
     NegativeHeight,
-    #[error("Output box size {0} > maximum {}", ErgoBox::MAX_BOX_SIZE)]
+    #[error("Output box size {0} > maximum {max_size}", max_size = ErgoBox::MAX_BOX_SIZE)]
     /// Box size is > [ErgoBox::MAX_BOX_SIZE]
     BoxSizeExceeded(usize),
-    #[error("Output box size {0} > maximum {}", ErgoBox::MAX_SCRIPT_SIZE)]
+    #[error("Output box size {0} > maximum {max_size}", max_size = ErgoBox::MAX_SCRIPT_SIZE)]
     /// Script size is > [ErgoBox::MAX_SCRIPT_SIZE]
     ScriptSizeExceeded(usize),
     #[error("TX context error: {0}")]
@@ -104,7 +103,7 @@ pub trait ErgoTransaction {
 
         // Check if there are no double-spends in input (one BoxId being spent more than once)
         let len = inputs.len();
-        let unique_count = inputs.unique().count();
+        let unique_count = inputs.collect::<hashbrown::HashSet<_>>().len();
         if unique_count != len {
             return Err(TxValidationError::DoubleSpend(unique_count, len));
         }

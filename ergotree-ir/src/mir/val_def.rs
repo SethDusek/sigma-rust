@@ -10,6 +10,7 @@ use crate::types::stype::SType;
 use super::expr::Expr;
 
 extern crate derive_more;
+use alloc::boxed::Box;
 use derive_more::Display;
 use derive_more::From;
 
@@ -23,7 +24,7 @@ use proptest_derive::Arbitrary;
 pub struct ValId(pub u32);
 
 impl ValId {
-    pub(crate) fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> std::io::Result<()> {
+    pub(crate) fn sigma_serialize<W: SigmaByteWrite>(&self, w: &mut W) -> core2::io::Result<()> {
         w.put_u32(self.0)
     }
 
@@ -38,7 +39,7 @@ impl ValId {
  * This representation is more compact in serialized form.
  * @param id unique identifier of the variable in the current scope. */
 #[derive(PartialEq, Eq, Debug, Clone)]
-#[cfg_attr(test, derive(Arbitrary))]
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 pub struct ValDef {
     /// Variable id
     pub id: ValId,

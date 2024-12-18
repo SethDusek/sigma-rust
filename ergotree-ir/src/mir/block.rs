@@ -1,5 +1,8 @@
 //! Block of statements ending with an expression
 
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+
 use super::expr::Expr;
 use crate::has_opcode::HasStaticOpCode;
 use crate::serialization::op_code::OpCode;
@@ -79,6 +82,7 @@ mod arbitrary {
 }
 
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 pub mod tests {
     use crate::mir::block::BlockValue;

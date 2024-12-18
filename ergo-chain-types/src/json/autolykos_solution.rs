@@ -1,6 +1,9 @@
 //! Code to implement `AutolykosSolution` JSON encoding
 
-use std::str::FromStr;
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use core::str::FromStr;
 
 use num_bigint::BigInt;
 use num_traits::FromPrimitive;

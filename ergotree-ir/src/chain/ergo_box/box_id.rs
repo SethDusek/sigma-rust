@@ -1,7 +1,9 @@
 //! Box id type
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 use crate::serialization::SigmaSerializeResult;
+use alloc::string::String;
+use alloc::vec::Vec;
 use sigma_ser::ScorexSerializable;
 
 use crate::serialization::{
@@ -56,8 +58,8 @@ impl From<BoxId> for Vec<i8> {
     }
 }
 
-impl std::fmt::Display for BoxId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for BoxId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
@@ -75,9 +77,11 @@ impl SigmaSerializable for BoxId {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

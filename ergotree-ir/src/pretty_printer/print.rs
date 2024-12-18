@@ -1,3 +1,8 @@
+use alloc::borrow::ToOwned;
+use alloc::boxed::Box;
+
+use alloc::string::String;
+use alloc::vec::Vec;
 use thiserror::Error;
 
 use crate::mir::and::And;
@@ -77,7 +82,7 @@ use super::Printer;
 #[derive(PartialEq, Eq, Debug, Clone, Error)]
 pub enum PrintError {
     #[error("fmt error: {0:?}")]
-    FmtError(#[from] std::fmt::Error),
+    FmtError(#[from] core::fmt::Error),
 }
 
 impl Expr {

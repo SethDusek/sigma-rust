@@ -1,5 +1,8 @@
 use crate::serialization::types::TypeCode;
-use std::sync::Arc;
+use alloc::boxed::Box;
+use alloc::sync::Arc;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use super::sfunc::SFunc;
 use super::smethod::MethodId;
@@ -103,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_getreg_serialization_roundtrip() {
-        let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
+        let type_args = core::iter::once((STypeVar::t(), SType::SInt)).collect();
         let mc = MethodCall::with_type_args(
             GlobalVars::SelfBox.into(),
             GET_REG_METHOD.clone().with_concrete_types(&type_args),

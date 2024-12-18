@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use super::expr::Expr;
 use super::unary_op::OneArgOp;
 use crate::has_opcode::HasStaticOpCode;
@@ -77,6 +79,7 @@ mod arbitrary {
 
 #[cfg(test)]
 #[allow(clippy::panic)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::mir::expr::Expr;

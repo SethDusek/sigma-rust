@@ -1,5 +1,7 @@
-use std::sync::Arc;
+use alloc::string::ToString;
+use alloc::sync::Arc;
 
+use alloc::vec::Vec;
 use ergotree_ir::mir::coll_map::Map;
 use ergotree_ir::mir::value::CollKind;
 use ergotree_ir::mir::value::Value;
@@ -82,6 +84,7 @@ impl Evaluable for Map {
 #[allow(clippy::panic)]
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
 
     use crate::eval::tests::eval_out;

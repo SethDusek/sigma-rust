@@ -1,7 +1,7 @@
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 mod tests {
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     use crate::eval::tests::eval_out_wo_ctx;
     use ergotree_ir::chain::address::AddressEncoder;

@@ -1,9 +1,11 @@
 //! Naive box selector, collects inputs until target balance is reached
 
-use std::cmp::min;
-use std::collections::HashMap;
-use std::convert::TryInto;
+use core::cmp::min;
+use core::convert::TryInto;
+use hashbrown::HashMap;
 
+use alloc::string::String;
+use alloc::vec::Vec;
 use ergotree_ir::chain::ergo_box::box_value::BoxValue;
 use ergotree_ir::chain::ergo_box::BoxTokens;
 use ergotree_ir::chain::ergo_box::ErgoBox;
@@ -290,7 +292,7 @@ fn make_change_boxes(
 #[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
 
-    use std::convert::TryFrom;
+    use core::convert::TryFrom;
 
     use ergotree_ir::chain::{
         address::{AddressEncoder, NetworkPrefix},

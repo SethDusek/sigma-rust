@@ -1,6 +1,6 @@
 use crate::chain::parameters::{Parameter, Parameters};
+use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
 pub struct ParametersJson {

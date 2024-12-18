@@ -1,5 +1,5 @@
-use std::convert::TryFrom;
-use std::fmt::Debug;
+use core::convert::TryFrom;
+use core::fmt::Debug;
 
 use crate::serialization::types::TypeCode;
 use crate::serialization::SigmaParsingError;
@@ -16,6 +16,8 @@ use super::smethod::SMethod;
 use super::smethod::SMethodDesc;
 use super::soption;
 use super::spreheader;
+
+use alloc::vec::Vec;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 

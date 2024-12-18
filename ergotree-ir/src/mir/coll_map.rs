@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
@@ -84,6 +86,7 @@ impl_traversable_expr!(Map, boxed input, boxed mapper);
 mod arbitrary {
     use super::*;
     use crate::mir::expr::arbitrary::ArbExprParams;
+    use alloc::vec;
     use proptest::prelude::*;
 
     impl Arbitrary for Map {

@@ -1,4 +1,8 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
+
+use alloc::boxed::Box;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use super::stype::SType;
 use super::stype_param::STypeParam;
@@ -15,8 +19,8 @@ pub struct SFunc {
     pub tpe_params: Vec<STypeParam>,
 }
 
-impl std::fmt::Display for SFunc {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SFunc {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "(")?;
         for (i, item) in self.t_dom.iter().enumerate() {
             if i > 0 {

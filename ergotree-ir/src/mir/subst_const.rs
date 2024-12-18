@@ -1,4 +1,6 @@
 //! Substitution of constants in serialized sigma expression
+use alloc::boxed::Box;
+
 use super::expr::Expr;
 use crate::has_opcode::HasStaticOpCode;
 use crate::mir::expr::InvalidArgumentError;

@@ -1,5 +1,7 @@
 //! ErgoTree IR
 
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
@@ -20,6 +22,11 @@
 #![deny(clippy::unreachable)]
 #![deny(clippy::panic)]
 
+#[cfg(all(not(feature = "std"), any(feature = "nipopow", feature = "merkle")))]
+compile_error!("ergo-nipopow and ergo-merkle-tree are not supported without std");
+
+#[macro_use]
+extern crate alloc;
 pub mod chain;
 pub mod constants;
 mod utils;
@@ -30,8 +37,10 @@ pub mod wallet;
 /// Ergo blockchain types
 pub extern crate ergo_chain_types;
 /// Ergo Merkle Tree and Merkle verification tools
+#[cfg(feature = "merkle")]
 pub extern crate ergo_merkle_tree;
 /// Ergo NiPoPoW implementation
+#[cfg(feature = "nipopow")]
 pub extern crate ergo_nipopow;
 /// Re-exported types from dependencies
 #[cfg(feature = "rest")]

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use alloc::sync::Arc;
 
 use ergotree_ir::mir::collection::Collection;
 use ergotree_ir::mir::constant::TryExtractFromError;
@@ -46,6 +46,7 @@ impl Evaluable for Collection {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::eval::tests::eval_out_wo_ctx;

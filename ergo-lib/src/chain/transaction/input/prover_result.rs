@@ -23,11 +23,7 @@ pub struct ProverResult {
     )]
     pub proof: ProofBytes,
     /// user-defined variables to be put into context
-    #[cfg_attr(
-        feature = "json",
-        serde(rename = "extension"),
-        serde(with = "crate::chain::json::context_extension::ContextExtensionSerde")
-    )]
+    #[cfg_attr(feature = "json", serde(rename = "extension"))]
     pub extension: ContextExtension,
 }
 

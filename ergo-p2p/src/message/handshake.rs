@@ -8,6 +8,7 @@ use crate::PeerSpec;
 /// No further communication is possible until both peers have exchanged their handshakes.
 /// peerSpec - general (declared) information about peer
 /// time     - handshake time
+#[allow(unused)]
 pub struct Handshake {
     /// Peer specification
     pub peer_spec: PeerSpec,

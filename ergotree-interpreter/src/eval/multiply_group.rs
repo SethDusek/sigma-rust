@@ -30,6 +30,7 @@ impl Evaluable for MultiplyGroup {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::eval::tests::eval_out;

@@ -10,9 +10,12 @@ use crate::mir::constant::Constant;
 use crate::mir::expr::Expr;
 use crate::serialization::op_code::OpCode;
 use crate::serialization::SigmaSerializable;
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::convert::TryInto;
+use core::fmt::Formatter;
 use ergo_chain_types::EcPoint;
-use std::convert::TryFrom;
-use std::fmt::Formatter;
 
 extern crate derive_more;
 use bounded_vec::BoundedVec;
@@ -53,8 +56,8 @@ impl From<EcPoint> for ProveDlog {
     }
 }
 
-impl std::fmt::Display for ProveDlog {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for ProveDlog {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "proveDlog({})", self.h)
     }
 }
@@ -92,8 +95,8 @@ impl ProveDhTuple {
     }
 }
 
-impl std::fmt::Display for ProveDhTuple {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for ProveDhTuple {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
             "ProveDhTuple(g: {}, h: {}, u: {}, v: {})",
@@ -141,8 +144,8 @@ impl HasOpCode for SigmaConjecture {
     }
 }
 
-impl std::fmt::Display for SigmaConjecture {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SigmaConjecture {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             SigmaConjecture::Cand(c) => write!(f, "{}", c),
             SigmaConjecture::Cor(c) => write!(f, "{}", c),
@@ -272,8 +275,8 @@ impl From<Cthreshold> for SigmaBoolean {
     }
 }
 
-impl std::fmt::Display for SigmaBoolean {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SigmaBoolean {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             SigmaBoolean::TrivialProp(b) => write!(f, "sigmaProp({})", b),
             SigmaBoolean::ProofOfKnowledge(kt) => write!(f, "{}", kt),
@@ -417,10 +420,12 @@ mod arbitrary {
 
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 #[allow(clippy::panic)]
 mod tests {
     use super::*;
     use crate::serialization::sigma_serialize_roundtrip;
+
     use proptest::prelude::*;
 
     proptest! {

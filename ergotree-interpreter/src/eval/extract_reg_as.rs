@@ -1,5 +1,6 @@
-use std::convert::TryInto;
+use core::convert::TryInto;
 
+use alloc::boxed::Box;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::extract_reg_as::ExtractRegisterAs;
@@ -47,6 +48,7 @@ impl Evaluable for ExtractRegisterAs {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::*;
     use crate::eval::tests::{eval_out, try_eval_out};

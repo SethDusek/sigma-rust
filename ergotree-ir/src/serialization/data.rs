@@ -1,3 +1,8 @@
+use alloc::boxed::Box;
+
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
 use sigma_util::AsVecU8;
 
 use crate::bigint256::BigInt256;
@@ -19,8 +24,8 @@ use crate::types::stype::SType;
 use ergo_chain_types::EcPoint;
 
 use super::sigma_byte_writer::SigmaByteWrite;
-use std::convert::TryInto;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use core::convert::TryInto;
 
 /// Used to serialize and parse `Literal` and `Value`.
 pub struct DataSerializer {}

@@ -1,5 +1,7 @@
-use std::convert::TryInto;
+use core::convert::TryInto;
 
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use ergotree_ir::mir::atleast::Atleast;
 use ergotree_ir::mir::constant::TryExtractFromError;
 use ergotree_ir::mir::constant::TryExtractInto;
@@ -59,7 +61,7 @@ impl Evaluable for Atleast {
 #[allow(clippy::panic)]
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
+    use alloc::sync::Arc;
 
     use crate::eval::tests::try_eval_out_wo_ctx;
     use ergotree_ir::mir::constant::Constant;

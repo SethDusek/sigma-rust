@@ -1,6 +1,8 @@
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::expr::Expr;
 use ergotree_ir::mir::value::CollKind;
@@ -12,8 +14,8 @@ use ergotree_ir::types::stype::SType::SInt;
 use super::env::Env;
 use super::Context;
 use super::EvalFn;
-use std::convert::TryFrom;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use core::convert::TryFrom;
 
 pub(crate) static INDEX_OF_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     Ok(Value::Int({
@@ -169,7 +171,7 @@ pub(crate) static INDICES_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
     }?;
     let indices_i32 = (0..input_len)
         .map(|i| Ok(Value::Int(i32::try_from(i)?)))
-        .collect::<Result<Arc<[_]>, std::num::TryFromIntError>>();
+        .collect::<Result<Arc<[_]>, core::num::TryFromIntError>>();
     match indices_i32 {
         Ok(vec_val) => match CollKind::from_collection(SInt, vec_val) {
             Ok(coll) => Ok(Value::Coll(coll)),
@@ -336,8 +338,9 @@ pub(crate) static UPDATE_MANY_EVAL_FN: EvalFn =
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
-    use std::sync::Arc;
+    use alloc::sync::Arc;
 
+    use alloc::vec::Vec;
     use ergotree_ir::mir::constant::Constant;
     use ergotree_ir::mir::constant::Literal;
     use ergotree_ir::mir::expr::Expr;

@@ -1,10 +1,10 @@
 //! Sigma byte stream writer
 use super::constant_store::ConstantStore;
 use super::val_def_type_store::ValDefTypeStore;
+use core2::io::Cursor;
+use core2::io::Read;
+use core2::io::Seek;
 use sigma_ser::vlq_encode::ReadSigmaVlqExt;
-use std::io::Cursor;
-use std::io::Read;
-use std::io::Seek;
 
 /// Implementation of SigmaByteRead
 pub struct SigmaByteReader<R> {
@@ -73,24 +73,38 @@ pub trait SigmaByteRead: ReadSigmaVlqExt {
 
     /// Set that deserialization node was read
     fn set_deserialize(&mut self, has_deserialize: bool);
+
+    /// Get position of reader in buffer. This is functionally equivalent to [`std::io::Seek::stream_position`] but redefined here so it can be used in no_std contexts
+    fn position(&mut self) -> core2::io::Result<u64> {
+        #[cfg(feature = "std")]
+        {
+            <Self as Seek>::stream_position(self)
+        }
+        #[cfg(not(feature = "std"))]
+        {
+            self.seek(core2::io::SeekFrom::Current(0))
+        }
+    }
 }
 
 impl<R: Read> Read for SigmaByteReader<R> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> core2::io::Result<usize> {
         self.inner.read(buf)
     }
 }
 
 impl<R: Seek> Seek for SigmaByteReader<R> {
-    fn seek(&mut self, pos: std::io::SeekFrom) -> std::io::Result<u64> {
+    fn seek(&mut self, pos: core2::io::SeekFrom) -> core2::io::Result<u64> {
         self.inner.seek(pos)
     }
 
-    fn rewind(&mut self) -> std::io::Result<()> {
+    #[cfg(feature = "std")]
+    fn rewind(&mut self) -> core2::io::Result<()> {
         self.inner.rewind()
     }
 
-    fn stream_position(&mut self) -> std::io::Result<u64> {
+    #[cfg(feature = "std")]
+    fn stream_position(&mut self) -> core2::io::Result<u64> {
         self.inner.stream_position()
     }
 }

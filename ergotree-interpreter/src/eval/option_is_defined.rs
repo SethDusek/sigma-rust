@@ -25,6 +25,7 @@ impl Evaluable for OptionIsDefined {
 
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
     use super::OptionIsDefined;
     use crate::eval::tests::eval_out;

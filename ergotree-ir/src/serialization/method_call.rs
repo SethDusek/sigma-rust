@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+use hashbrown::HashMap;
+
+use alloc::vec::Vec;
 
 use crate::mir::expr::Expr;
 use crate::mir::method_call::MethodCall;
@@ -40,7 +42,7 @@ impl SigmaSerializable for MethodCall {
             .explicit_type_args
             .iter()
             .cloned()
-            .zip(std::iter::from_fn(|| Some(SType::sigma_parse(r))))
+            .zip(core::iter::from_fn(|| Some(SType::sigma_parse(r))))
             .map(|(tpe, res)| -> Result<(STypeVar, SType), SigmaParsingError> { Ok((tpe, res?)) })
             .collect::<Result<HashMap<STypeVar, SType>, _>>()?;
         Ok(MethodCall::with_type_args(
@@ -56,6 +58,8 @@ impl SigmaSerializable for MethodCall {
 #[cfg(feature = "arbitrary")]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use alloc::vec;
+
     use crate::mir::expr::Expr;
     use crate::mir::method_call::MethodCall;
     use crate::serialization::sigma_serialize_roundtrip;

@@ -7,13 +7,14 @@ use crate::chain::{
     ergo_state_context::ErgoStateContext,
     transaction::{unsigned::UnsignedTransaction, Transaction},
 };
+use alloc::vec::Vec;
 use ergotree_interpreter::sigma_protocol::prover::hint::HintsBag;
 use ergotree_interpreter::sigma_protocol::sig_serializer::SigParsingError;
 use ergotree_ir::serialization::SigmaSerializationError;
 use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
 
 use crate::chain::transaction::storage_rent::check_storage_rent_conditions;
-use crate::wallet::multi_sig::TransactionHintsBag;
+use crate::wallet::TransactionHintsBag;
 use ergotree_interpreter::sigma_protocol::prover::ProofBytes;
 use ergotree_interpreter::sigma_protocol::prover::Prover;
 use ergotree_interpreter::sigma_protocol::prover::ProverError;
@@ -289,11 +290,11 @@ mod tests {
     };
     use crate::wallet::secret_key::SecretKey;
     use crate::wallet::Wallet;
+    use core::convert::TryFrom;
+    use core::convert::TryInto;
     use ergotree_ir::chain::ergo_box::ErgoBoxCandidate;
     use ergotree_ir::ergo_tree::ErgoTree;
     use ergotree_ir::mir::expr::Expr;
-    use std::convert::TryFrom;
-    use std::convert::TryInto;
     use std::rc::Rc;
 
     fn verify_tx_proofs(

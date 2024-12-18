@@ -1,6 +1,9 @@
 use crate::eval::EvalError;
 use crate::eval::Evaluable;
 
+use alloc::boxed::Box;
+use alloc::string::ToString;
+use alloc::vec::Vec;
 use ergotree_ir::mir::value::Value;
 use ergotree_ir::types::smethod::SMethod;
 
@@ -116,6 +119,7 @@ pub fn filter_eval<'ctx>(
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
 mod tests {
+    use alloc::boxed::Box;
     use ergotree_ir::mir::bin_op::RelationOp;
     use ergotree_ir::mir::bin_op::{ArithOp, BinOp};
     use ergotree_ir::mir::constant::Constant;

@@ -5,12 +5,9 @@ use crate::rest::api::runtime::RestApiRuntime;
 use crate::Error;
 
 /// Wraps a task with future::Abortable, spawns it on the provided runtime and returns task's abort handle
-pub(crate) fn spawn_abortable<T: 'static>(
-    runtime: &RestApiRuntime,
-    task: T,
-) -> Result<AbortHandle, Error>
+pub(crate) fn spawn_abortable<T>(runtime: &RestApiRuntime, task: T) -> Result<AbortHandle, Error>
 where
-    T: futures_util::Future<Output = ()> + Send,
+    T: futures_util::Future<Output = ()> + Send + 'static,
 {
     let (abort_handle, abort_registration) = AbortHandle::new_pair();
     let future = Abortable::new(task, abort_registration);

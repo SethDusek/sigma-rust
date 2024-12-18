@@ -46,7 +46,6 @@ impl<T: Ord> Heap<T> {
     /// heap, but only if the element was previously not removed from the heap.
     #[allow(clippy::panic)]
     pub fn push(&mut self, t: T) -> Slot {
-        self.assert_consistent();
         let len = self.items.len();
         let slot = SlabSlot::Full { value: len };
         let slot_idx = if self.next_index == self.index.len() {
@@ -61,17 +60,14 @@ impl<T: Ord> Heap<T> {
         };
         self.items.push((t, slot_idx));
         self.percolate_up(len);
-        self.assert_consistent();
         Slot { idx: slot_idx }
     }
 
     pub fn peek(&self) -> Option<&T> {
-        self.assert_consistent();
         self.items.get(0).map(|i| &i.0)
     }
 
     pub fn pop(&mut self) -> Option<T> {
-        self.assert_consistent();
         if self.items.len() == 0 {
             return None;
         }
@@ -83,7 +79,6 @@ impl<T: Ord> Heap<T> {
 
     #[allow(clippy::panic)]
     pub fn remove(&mut self, slot: Slot) -> T {
-        self.assert_consistent();
         let empty = SlabSlot::Empty {
             next: self.next_index,
         };
@@ -102,7 +97,6 @@ impl<T: Ord> Heap<T> {
                 self.percolate_down(idx);
             }
         }
-        self.assert_consistent();
         return item;
     }
 
@@ -163,53 +157,6 @@ impl<T: Ord> Heap<T> {
             idx = a.len();
         }
         return idx;
-    }
-
-    #[allow(clippy::panic)]
-    fn assert_consistent(&self) {
-        if !cfg!(assert_timer_heap_consistent) {
-            return;
-        }
-
-        assert_eq!(
-            self.items.len(),
-            self.index
-                .iter()
-                .filter(|slot| {
-                    match **slot {
-                        SlabSlot::Full { .. } => true,
-                        SlabSlot::Empty { .. } => false,
-                    }
-                })
-                .count()
-        );
-
-        for (i, &(_, j)) in self.items.iter().enumerate() {
-            let index = match self.index[j] {
-                SlabSlot::Full { value } => value,
-                SlabSlot::Empty { .. } => {
-                    panic!()
-                }
-            };
-            if index != i {
-                panic!(
-                    "self.index[j] != i : i={} j={} self.index[j]={}",
-                    i, j, index
-                );
-            }
-        }
-
-        for (i, &(ref item, _)) in self.items.iter().enumerate() {
-            if i > 0 {
-                assert!(*item >= self.items[(i - 1) / 2].0, "bad at index: {}", i);
-            }
-            if let Some(left) = self.items.get(2 * i + 1) {
-                assert!(*item <= left.0, "bad left at index: {}", i);
-            }
-            if let Some(right) = self.items.get(2 * i + 2) {
-                assert!(*item <= right.0, "bad right at index: {}", i);
-            }
-        }
     }
 }
 

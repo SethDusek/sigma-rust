@@ -1,5 +1,7 @@
 //! Source position for an IR node in the source code
 
+use alloc::boxed::Box;
+
 use crate::mir::and::And;
 use crate::mir::bin_op::BinOp;
 use crate::mir::block::BlockValue;
@@ -58,6 +60,7 @@ impl From<(usize, usize)> for SourceSpan {
     }
 }
 
+#[cfg(feature = "std")]
 impl From<SourceSpan> for miette::SourceSpan {
     fn from(value: SourceSpan) -> Self {
         miette::SourceSpan::new(value.offset.into(), value.length.into())

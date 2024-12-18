@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use ergotree_ir::mir::constant::TryExtractInto;
 use ergotree_ir::mir::sigma_or::SigmaOr;
 use ergotree_ir::mir::value::Value;
@@ -28,10 +29,11 @@ impl Evaluable for SigmaOr {
 #[allow(clippy::unwrap_used)]
 #[allow(clippy::panic)]
 #[cfg(test)]
+#[cfg(feature = "arbitrary")]
 mod tests {
+    use core::convert::TryInto;
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaBoolean;
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaConjecture;
-    use std::convert::TryInto;
 
     use crate::eval::tests::eval_out;
     use ergotree_ir::chain::context::Context;

@@ -1,5 +1,10 @@
-use std::io;
-use std::{convert::TryInto, io::Cursor};
+use alloc::boxed::Box;
+use alloc::string::ToString;
+use alloc::vec::Vec;
+use alloc::{string::String, vec};
+use core::convert::TryInto;
+use core2::io;
+use core2::io::Cursor;
 
 use crate::vlq_encode;
 use crate::vlq_encode::*;
@@ -20,7 +25,7 @@ pub enum ScorexSerializationError {
     NotSupported(&'static str),
     /// Integer type conversion failed
     #[error("Bounds check error: {0}")]
-    TryFrom(#[from] std::num::TryFromIntError),
+    TryFrom(#[from] core::num::TryFromIntError),
     /// Misc error
     #[error("error: {0}")]
     Misc(&'static str),
@@ -32,9 +37,20 @@ impl From<io::Error> for ScorexSerializationError {
     }
 }
 
+#[cfg(feature = "std")]
 impl From<ScorexSerializationError> for io::Error {
     fn from(e: ScorexSerializationError) -> Self {
         io::Error::new(io::ErrorKind::InvalidInput, e.to_string())
+    }
+}
+
+#[cfg(not(feature = "std"))]
+impl From<ScorexSerializationError> for io::Error {
+    fn from(_e: ScorexSerializationError) -> Self {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Error messages are only supported on std target",
+        )
     }
 }
 
@@ -79,7 +95,7 @@ pub enum ScorexParsingError {
     BoundedVecOutOfBounds(#[from] BoundedVecOutOfBounds),
     /// Failed to convert integer type
     #[error("Bounds check error: {0}")]
-    TryFrom(#[from] std::num::TryFromIntError),
+    TryFrom(#[from] core::num::TryFromIntError),
 }
 
 impl From<io::Error> for ScorexParsingError {

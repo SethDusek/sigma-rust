@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ergotree_ir::mir::decode_point::DecodePoint;
 use ergotree_ir::mir::value::Value;
 

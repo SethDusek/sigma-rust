@@ -1,3 +1,6 @@
+use alloc::boxed::Box;
+use alloc::vec::Vec;
+
 use crate::has_opcode::HasOpCode;
 use crate::serialization::op_code::OpCode;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
@@ -83,13 +86,13 @@ impl Traversable for Collection {
     fn children(&self) -> Box<dyn Iterator<Item = &Expr> + '_> {
         match self {
             Self::Exprs { elem_tpe: _, items } => Box::new(items.iter()),
-            Self::BoolConstants(_) => Box::new(std::iter::empty()),
+            Self::BoolConstants(_) => Box::new(core::iter::empty()),
         }
     }
     fn children_mut(&mut self) -> Box<dyn Iterator<Item = &mut Expr> + '_> {
         match self {
             Self::Exprs { elem_tpe: _, items } => Box::new(items.iter_mut()),
-            Self::BoolConstants(_) => Box::new(std::iter::empty()),
+            Self::BoolConstants(_) => Box::new(core::iter::empty()),
         }
     }
 }

@@ -9,7 +9,9 @@ use crate::serialization::SigmaSerializable;
 use crate::serialization::SigmaSerializeResult;
 use crate::traversable::impl_traversable_expr;
 use crate::types::stype::SType;
-use std::sync::Arc;
+use alloc::boxed::Box;
+
+use alloc::sync::Arc;
 
 /// Returns the Option's value or error if no value
 #[derive(PartialEq, Eq, Debug, Clone)]

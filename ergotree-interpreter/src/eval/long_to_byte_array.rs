@@ -26,6 +26,8 @@ impl Evaluable for LongToByteArray {
 #[cfg(test)]
 mod tests {
 
+    use alloc::{boxed::Box, vec::Vec};
+
     use super::*;
     use crate::eval::tests::eval_out_wo_ctx;
 
