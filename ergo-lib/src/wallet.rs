@@ -197,6 +197,17 @@ impl Wallet {
         sign_reduced_transaction(&*self.prover, reduced_tx, Some(&hints)).map_err(From::from)
     }
 
+    /// Generate signatures for P2PK inputs deterministically
+    /// See: [`Wallet::sign_transaction_deterministic`]
+    pub fn sign_reduced_transaction_deterministic(
+        &self,
+        reduced_tx: ReducedTransaction,
+        aux_rand: &[u8],
+    ) -> Result<Transaction, WalletError> {
+        let hints = self.generate_deterministic_commitments(&reduced_tx, aux_rand)?;
+        sign_reduced_transaction(&*self.prover, reduced_tx, Some(&hints)).map_err(From::from)
+    }
+
     /// Signs a message
     #[cfg(feature = "std")]
     pub fn sign_message(
