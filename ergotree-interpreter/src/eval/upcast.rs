@@ -15,7 +15,7 @@ fn upcast_to_bigint<'a>(in_v: Value<'a>, ctx: &Context) -> Result<Value<'a>, Eva
         Value::Short(v) => Ok(BigInt256::from(v).into()),
         Value::Int(v) => Ok(BigInt256::from(v).into()),
         Value::Long(v) => Ok(BigInt256::from(v).into()),
-        Value::BigInt(_) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => Ok(in_v),
+        Value::BigInt(_) if ctx.tree_version() >= ErgoTreeVersion::V3 => Ok(in_v),
         _ => Err(EvalError::UnexpectedValue(format!(
             "Upcast: cannot upcast {0:?} to BigInt",
             in_v

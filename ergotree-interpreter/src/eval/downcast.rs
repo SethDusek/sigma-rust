@@ -18,7 +18,7 @@ fn downcast_to_bigint<'a>(in_v: Value<'a>, ctx: &Context<'_>) -> Result<Value<'a
         Value::Short(v) => Ok(BigInt256::from(v).into()),
         Value::Int(v) => Ok(BigInt256::from(v).into()),
         Value::Long(v) => Ok(BigInt256::from(v).into()),
-        Value::BigInt(_) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => Ok(in_v),
+        Value::BigInt(_) if ctx.tree_version() >= ErgoTreeVersion::V3 => Ok(in_v),
         _ => Err(EvalError::UnexpectedValue(format!(
             "Downcast: cannot downcast {0:?} to BigInt",
             in_v
@@ -32,7 +32,7 @@ fn downcast_to_long<'a>(in_v: Value<'a>, ctx: &Context<'_>) -> Result<Value<'a>,
         Value::Short(v) => Ok((v as i64).into()),
         Value::Int(v) => Ok((v as i64).into()),
         Value::Long(_) => Ok(in_v),
-        Value::BigInt(v) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => {
+        Value::BigInt(v) if ctx.tree_version() >= ErgoTreeVersion::V3 => {
             v.to_i64().map(Value::from).ok_or_else(|| {
                 EvalError::UnexpectedValue(
                     "Downcast: overflow converting BigInt to Long".to_string(),
@@ -57,7 +57,7 @@ fn downcast_to_int<'a>(in_v: Value<'a>, ctx: &Context<'_>) -> Result<Value<'a>, 
                 "Downcast: Int overflow".to_string(),
             )),
         },
-        Value::BigInt(v) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => {
+        Value::BigInt(v) if ctx.tree_version() >= ErgoTreeVersion::V3 => {
             v.to_i32().map(Value::from).ok_or_else(|| {
                 EvalError::UnexpectedValue(
                     "Downcast: overflow converting BigInt to Int".to_string(),
@@ -86,7 +86,7 @@ fn downcast_to_short<'a>(in_v: Value<'a>, ctx: &Context<'_>) -> Result<Value<'a>
                 "Downcast: Short overflow".to_string(),
             )),
         },
-        Value::BigInt(v) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => {
+        Value::BigInt(v) if ctx.tree_version() >= ErgoTreeVersion::V3 => {
             v.to_i16().map(Value::from).ok_or_else(|| {
                 EvalError::UnexpectedValue(
                     "Downcast: overflow converting BigInt to Short".to_string(),
@@ -121,7 +121,7 @@ fn downcast_to_byte<'a>(in_v: Value<'a>, ctx: &Context<'_>) -> Result<Value<'a>,
                 "Downcast: Byte overflow".to_string(),
             )),
         },
-        Value::BigInt(v) if ctx.activated_script_version() >= ErgoTreeVersion::V3 => {
+        Value::BigInt(v) if ctx.tree_version() >= ErgoTreeVersion::V3 => {
             v.to_i8().map(Value::from).ok_or_else(|| {
                 EvalError::UnexpectedValue(
                     "Downcast: overflow converting BigInt to Byte".to_string(),
@@ -203,7 +203,7 @@ mod tests {
             );
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V3.into())
-                .for_each(|version| assert!(try_eval_out_with_version::<BigInt256>(&downcast(v_bigint, SType::SBigInt), &ctx, version, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<BigInt256>(&downcast(v_bigint, SType::SBigInt), &ctx, version, 1).is_err()));
             (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
                 |version| {
                     assert_eq!(
@@ -244,7 +244,7 @@ mod tests {
             );
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V3.into())
-                .for_each(|version| assert!(try_eval_out_with_version::<i64>(&downcast(c_bigint.clone(), SType::SLong), &ctx, version, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i64>(&downcast(c_bigint.clone(), SType::SLong), &ctx, version, 1).is_err()));
             (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i64>(
@@ -298,7 +298,7 @@ mod tests {
             .is_err());
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V3.into())
-                .for_each(|version| assert!(try_eval_out_with_version::<i32>(&downcast(v_bigint, SType::SInt), &ctx, version, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i32>(&downcast(v_bigint, SType::SInt), &ctx, version, 1).is_err()));
             (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i32>(
@@ -353,7 +353,7 @@ mod tests {
             assert!(try_eval_out_wo_ctx::<i16>(&downcast(c_long_oob, SType::SShort)).is_err());
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V3.into())
-                .for_each(|version| assert!(try_eval_out_with_version::<i16>(&downcast(v_bigint, SType::SShort), &ctx, version, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i16>(&downcast(v_bigint, SType::SShort), &ctx, version, 1).is_err()));
             (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i16>(
@@ -419,7 +419,7 @@ mod tests {
             assert!(try_eval_out_wo_ctx::<i8>(&downcast(c_long_oob, SType::SByte)).is_err());
             let ctx = force_any_val::<Context>();
             (0..ErgoTreeVersion::V3.into())
-                .for_each(|version| assert!(try_eval_out_with_version::<i8>(&downcast(v_bigint, SType::SByte), &ctx, version, version).is_err()));
+                .for_each(|version| assert!(try_eval_out_with_version::<i8>(&downcast(v_bigint, SType::SByte), &ctx, version, 1).is_err()));
             (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
                 |version| {
                     let res = try_eval_out_with_version::<i8>(
