@@ -18,10 +18,10 @@ pub(crate) static VALUE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 };
 
 pub(crate) static GET_REG_EVAL_FN: EvalFn = |mc, _env, ctx, obj, args| {
-    if ctx.activated_script_version() < ErgoTreeVersion::V3 {
+    if ctx.tree_version() < ErgoTreeVersion::V3 {
         return Err(EvalError::ScriptVersionError {
             required_version: ErgoTreeVersion::V3,
-            activated_version: ctx.activated_script_version(),
+            activated_version: ctx.tree_version(),
         });
     }
     #[allow(clippy::unwrap_used)]
