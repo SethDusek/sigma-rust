@@ -1,7 +1,7 @@
 use crate::eval::EvalError;
 
-use alloc::boxed::Box;
 use alloc::string::ToString;
+use alloc::sync::Arc;
 use ergotree_ir::chain::ergo_box::ErgoBox;
 use ergotree_ir::ergo_tree::ErgoTreeVersion;
 use ergotree_ir::mir::constant::TryExtractInto;
@@ -57,13 +57,13 @@ pub(crate) static GET_REG_EVAL_FN: EvalFn = |mc, _env, ctx, obj, args| {
     };
     match reg_val_opt {
         Some(constant) if constant.tpe == **expected_type => {
-            Ok(Value::Opt(Box::new(Some(constant.v.into()))))
+            Ok(Value::Opt(Some(Arc::new(constant.v.into()))))
         }
         Some(constant) => Err(EvalError::UnexpectedValue(format!(
             "Expected register {reg_id} to be of type {}, got {}",
             expected_type, constant.tpe
         ))),
-        None => Ok(Value::Opt(Box::new(None))),
+        None => Ok(Value::Opt(None)),
     }
 };
 
