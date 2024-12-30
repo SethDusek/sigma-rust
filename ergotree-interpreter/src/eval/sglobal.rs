@@ -4,10 +4,14 @@ use alloc::{string::ToString, sync::Arc};
 
 use ergotree_ir::{
     mir::{
-        constant::Constant,
+        constant::{Constant, TryExtractInto},
         value::{CollKind, NativeColl, Value},
     },
-    serialization::{data::DataSerializer, sigma_byte_writer::SigmaByteWriter},
+    serialization::{
+        data::DataSerializer,
+        sigma_byte_reader::{self, SigmaByteRead},
+        sigma_byte_writer::SigmaByteWriter,
+    },
 };
 
 use super::EvalFn;
@@ -147,6 +151,27 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
     }
 };
 
+pub(crate) static DESERIALIZE_EVAL_FN: EvalFn = |mc, _env, ctx, obj, args| {
+    if obj != Value::Global {
+        return Err(EvalError::UnexpectedValue(format!(
+            "sglobal.groupGenerator expected obj to be Value::Global, got {:?}",
+            obj
+        )));
+    }
+    let output_type = &mc.tpe().t_range;
+    let bytes = args
+        .first()
+        .ok_or_else(|| EvalError::NotFound("deserialize: missing first arg".into()))?
+        .clone()
+        .try_extract_into::<Vec<u8>>()?;
+    let mut reader = sigma_byte_reader::from_bytes(&bytes);
+    Ok(Value::from(
+        reader.with_tree_version(ctx.tree_version(), |reader| {
+            DataSerializer::sigma_parse(output_type, reader)
+        })?,
+    ))
+};
+
 pub(crate) static SERIALIZE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     if obj != Value::Global {
         return Err(EvalError::UnexpectedValue(format!(
@@ -205,6 +230,7 @@ mod tests {
     use ergotree_ir::mir::property_call::PropertyCall;
     use ergotree_ir::mir::sigma_prop_bytes::SigmaPropBytes;
     use ergotree_ir::mir::unary_op::OneArgOpTryBuild;
+    use ergotree_ir::mir::value::Value;
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaProp;
     use ergotree_ir::types::sgroup_elem::GET_ENCODED_METHOD;
     use ergotree_ir::types::stype_param::STypeVar;
@@ -212,7 +238,7 @@ mod tests {
 
     use crate::eval::tests::{eval_out, eval_out_wo_ctx, try_eval_out_with_version};
     use ergotree_ir::chain::context::Context;
-    use ergotree_ir::types::sglobal::{self, SERIALIZE_METHOD};
+    use ergotree_ir::types::sglobal::{self, DESERIALIZE_METHOD, SERIALIZE_METHOD};
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
 
@@ -222,8 +248,7 @@ mod tests {
             Expr::Global,
             SERIALIZE_METHOD.clone().with_concrete_types(
                 &[(STypeVar::t(), constant.tpe.clone())]
-                    .iter()
-                    .cloned()
+                    .into_iter()
                     .collect(),
             ),
             vec![constant.into()],
@@ -236,6 +261,30 @@ mod tests {
         }));
         try_eval_out_with_version(&serialize_node.into(), &ctx, ErgoTreeVersion::V3.into(), 3)
             .unwrap()
+    }
+    fn deserialize(array: &[u8], return_type: SType) -> Constant {
+        let type_args = [(STypeVar::t(), return_type)].into_iter().collect();
+        let deserialize_node = MethodCall::with_type_args(
+            Expr::Global,
+            DESERIALIZE_METHOD.clone().with_concrete_types(&type_args),
+            vec![Constant::from(array.to_owned()).into()],
+            type_args,
+        )
+        .unwrap();
+        let ctx = force_any_val::<Context>();
+        assert!((0u8..ErgoTreeVersion::V3.into()).all(|version| {
+            try_eval_out_with_version::<Vec<u8>>(&deserialize_node.clone().into(), &ctx, version, 3)
+                .is_err()
+        }));
+        try_eval_out_with_version::<Value>(
+            &deserialize_node.into(),
+            &ctx,
+            ErgoTreeVersion::V3.into(),
+            3,
+        )
+        .unwrap()
+        .try_into()
+        .unwrap()
     }
 
     fn create_some_none_method_call<T>(value: Option<T>, tpe: SType) -> Expr
@@ -486,11 +535,41 @@ mod tests {
         );
     }
 
+    #[test]
+    fn deserialize_group_element() {
+        let ec_point = EcPoint::from_base16_str(String::from(
+            "026930cb9972e01534918a6f6d6b8e35bc398f57140d13eb3623ea31fbd069939b",
+        ))
+        .unwrap();
+        let get_encoded = MethodCall::new(
+            Constant::from(ec_point.clone()).into(),
+            GET_ENCODED_METHOD.clone(),
+            vec![],
+        )
+        .unwrap();
+        let encoded = eval_out_wo_ctx::<Vec<u8>>(&get_encoded.into());
+        assert_eq!(
+            deserialize(&encoded, SType::SGroupElement),
+            Constant::from(ec_point)
+        );
+    }
+
     proptest! {
         #[test]
         fn serialize_sigmaprop_eq_prop_bytes(sigma_prop: SigmaProp) {
             let prop_bytes = SigmaPropBytes::try_build(Constant::from(sigma_prop.clone()).into()).unwrap();
             assert_eq!(serialize(sigma_prop), &eval_out_wo_ctx::<Vec<u8>>(&prop_bytes.into())[2..])
+        }
+        #[test]
+        fn serialize_roundtrip(v in any::<Constant>()) {
+            let tpe = v.tpe.clone();
+            let res = std::panic::catch_unwind(|| assert_eq!(deserialize(&serialize(v.clone()), tpe.clone()), v));
+            if matches!(tpe, SType::SOption(_)) {
+                assert!(res.is_err());
+            }
+            else {
+                res.unwrap();
+            }
         }
     }
 }

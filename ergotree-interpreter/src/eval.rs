@@ -345,6 +345,7 @@ fn smethod_eval_fn(method: &SMethod) -> Result<EvalFn, EvalError> {
             sglobal::FROM_BIGENDIAN_BYTES_METHOD_ID => {
                 self::sglobal::SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN
             }
+            sglobal::DESERIALIZE_METHOD_ID => self::sglobal::DESERIALIZE_EVAL_FN,
             sglobal::SERIALIZE_METHOD_ID => self::sglobal::SERIALIZE_EVAL_FN,
             sglobal::SOME_METHOD_ID => self::sglobal::SGLOBAL_SOME_EVAL_FN,
             sglobal::NONE_METHOD_ID => self::sglobal::SGLOBAL_NONE_EVAL_FN,
