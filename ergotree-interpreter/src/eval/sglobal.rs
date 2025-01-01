@@ -1,6 +1,6 @@
-use alloc::{string::ToString, sync::Arc};
-
 use crate::eval::EvalError;
+use alloc::boxed::Box;
+use alloc::{string::ToString, sync::Arc};
 
 use ergotree_ir::mir::value::{CollKind, NativeColl, Value};
 
@@ -139,6 +139,30 @@ pub(crate) static SGLOBAL_FROM_BIGENDIAN_BYTES_EVAL_FN: EvalFn = |mc, _env, _ctx
             type_val
         ))),
     }
+};
+
+pub(crate) static SGLOBAL_SOME_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
+    if obj != Value::Global {
+        return Err(EvalError::UnexpectedValue(format!(
+            "sglobal.some expected obj to be Value::Global, got {:?}",
+            obj
+        )));
+    }
+    let value = args
+        .first()
+        .cloned()
+        .ok_or_else(|| EvalError::NotFound("some: missing value arg".to_string()))?;
+    Ok(Value::Opt(Box::new(Some(value))))
+};
+
+pub(crate) static SGLOBAL_NONE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
+    if obj != Value::Global {
+        return Err(EvalError::UnexpectedValue(format!(
+            "sglobal.none expected obj to be Value::Global, got {:?}",
+            obj
+        )));
+    }
+    Ok(Value::Opt(Box::new(None)))
 };
 
 #[allow(clippy::unwrap_used)]
@@ -311,5 +335,84 @@ mod tests {
             .into();
             assert_eq!(eval_out_wo_ctx::<BigInt256>(&expr), BigInt256::from(v_long));
         }
+
+
+        #[test]
+        fn test_some_and_none(
+            byte_val in any::<i8>(),
+            int_val in any::<i32>(),
+                long_val in any::<i64>()
+        ) {
+            {
+                let type_args = std::iter::once((STypeVar::t(), SType::SByte)).collect();
+                let some_expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
+                    vec![byte_val.into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                let some_result = eval_out_wo_ctx::<Option<i8>>(&some_expr);
+                assert_eq!(some_result, Some(byte_val));
+            }
+
+            {
+                let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
+                let some_expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
+                    vec![int_val.into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                let some_result = eval_out_wo_ctx::<Option<i32>>(&some_expr);
+                assert_eq!(some_result, Some(int_val));
+            }
+                 {
+                let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
+                let some_expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
+                    vec![long_val.into()],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                let some_result = eval_out_wo_ctx::<Option<i64>>(&some_expr);
+                assert_eq!(some_result, Some(long_val));
+            }
+
+                {
+                let type_args = std::iter::once((STypeVar::t(), SType::SByte)).collect();
+                let none_expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::NONE_METHOD.clone().with_concrete_types(&type_args),
+                    vec![],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                let none_result = eval_out_wo_ctx::<Option<i8>>(&none_expr);
+                assert_eq!(none_result, None);
+            }
+
+            {
+                let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
+                let none_expr: Expr = MethodCall::with_type_args(
+                    Expr::Global,
+                    sglobal::NONE_METHOD.clone().with_concrete_types(&type_args),
+                    vec![],
+                    type_args,
+                )
+                .unwrap()
+                .into();
+                let none_result = eval_out_wo_ctx::<Option<i64>>(&none_expr);
+                assert_eq!(none_result, None);
+            }
+        }
+
+
     }
 }
