@@ -1,6 +1,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
+use crate::ergo_tree::ErgoTreeVersion;
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::sigma_byte_writer::SigmaByteWrite;
 use crate::serialization::types::TypeCode;
@@ -17,7 +18,7 @@ use super::type_unify::TypeUnificationError;
 use crate::serialization::SigmaParsingError::UnknownMethodId;
 
 /// Method id unique among the methods of the same object
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
 pub struct MethodId(pub u8);
 
 impl MethodId {
@@ -71,7 +72,7 @@ impl SMethod {
 
     /// Returns method id
     pub fn method_id(&self) -> MethodId {
-        self.method_raw.method_id.clone()
+        self.method_raw.method_id
     }
 
     /// Return new SMethod with type variables substituted
@@ -105,6 +106,7 @@ pub struct SMethodDesc {
     pub(crate) tpe: SFunc,
     // Typevars that cannot be inferred from arguments. For example Box.getReg[T](4), T can not be inferred thus must be explicitly serialized
     pub(crate) explicit_type_args: Vec<STypeVar>,
+    pub(crate) min_version: ErgoTreeVersion,
 }
 
 impl SMethodDesc {
@@ -123,7 +125,8 @@ impl SMethodDesc {
                 t_range: res_tpe.into(),
                 tpe_params: vec![],
             },
-            explicit_type_args: vec![], // TODO: check if PropertyCalls need explicit type args as well
+            explicit_type_args: vec![],
+            min_version: ErgoTreeVersion::V0,
         }
     }
     pub(crate) fn as_method(&self, obj_type: STypeCompanion) -> SMethod {

@@ -1,3 +1,4 @@
+use crate::ergo_tree::ErgoTreeVersion;
 use crate::serialization::types::TypeCode;
 use alloc::boxed::Box;
 use alloc::sync::Arc;
@@ -46,6 +47,7 @@ lazy_static! {
             tpe_params: vec![],
         },
         explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
     /// Box.value
     pub static ref VALUE_METHOD: SMethod = SMethod::new(STypeCompanion::Box, VALUE_METHOD_DESC.clone(),);
@@ -60,7 +62,8 @@ lazy_static! {
             t_range: SType::SOption(Arc::new(STypeVar::t().into())).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![STypeVar::t()]
+        explicit_type_args: vec![STypeVar::t()],
+        min_version: ErgoTreeVersion::V0
     };
     /// Box.getReg
     pub static ref GET_REG_METHOD: SMethod =
@@ -81,6 +84,7 @@ lazy_static! {
             tpe_params: vec![],
         },
         explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
     /// Box.tokens
     pub static ref TOKENS_METHOD: SMethod =
