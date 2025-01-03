@@ -397,7 +397,7 @@ mod tests {
         fn test_some_and_none(
             byte_val in any::<i8>(),
             int_val in any::<i32>(),
-                long_val in any::<i64>()
+            long_val in any::<i64>()
         ) {
             {
                 let type_args = std::iter::once((STypeVar::t(), SType::SByte)).collect();

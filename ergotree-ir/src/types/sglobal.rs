@@ -33,7 +33,7 @@ pub const NONE_METHOD_ID: MethodId = MethodId(10);
 lazy_static! {
     /// Global method descriptors
     pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
-        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
+        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC, &NONE_METHOD_DESC, &SOME_METHOD_DESC];
 }
 
 lazy_static! {
