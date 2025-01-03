@@ -1,6 +1,8 @@
 //! Context(blockchain) for the interpreter
-use crate::chain::context_extension::ContextExtension;
+use core::cell::Cell;
+
 use crate::chain::ergo_box::ErgoBox;
+use crate::{chain::context_extension::ContextExtension, ergo_tree::ErgoTreeVersion};
 use bounded_vec::BoundedVec;
 use ergo_chain_types::{Header, PreHeader};
 
@@ -26,6 +28,8 @@ pub struct Context<'ctx> {
     pub headers: [Header; 10],
     /// prover-defined key-value pairs, that may be used inside a script
     pub extension: ContextExtension,
+    /// ergo tree version
+    pub tree_version: Cell<ErgoTreeVersion>,
 }
 
 impl<'ctx> Context<'ctx> {
@@ -37,8 +41,12 @@ impl<'ctx> Context<'ctx> {
         }
     }
     /// Activated script version corresponds to block version - 1
-    pub fn activated_script_version(&self) -> u8 {
-        self.pre_header.version.saturating_sub(1)
+    pub fn activated_script_version(&self) -> ErgoTreeVersion {
+        ErgoTreeVersion::from(self.pre_header.version.saturating_sub(1))
+    }
+    /// Version of ergotree being evaluated under context
+    pub fn tree_version(&self) -> ErgoTreeVersion {
+        self.tree_version.get()
     }
 }
 
@@ -95,6 +103,7 @@ mod arbitrary {
                             pre_header,
                             extension,
                             headers,
+                            tree_version: Default::default(),
                         }
                     },
                 )

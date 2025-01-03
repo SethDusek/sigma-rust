@@ -1,3 +1,4 @@
+use crate::ergo_tree::ErgoTreeVersion;
 use crate::serialization::types::TypeCode;
 
 use super::sfunc::SFunc;
@@ -22,6 +23,8 @@ pub const GROUP_GENERATOR_METHOD_ID: MethodId = MethodId(1);
 pub const XOR_METHOD_ID: MethodId = MethodId(2);
 /// "fromBigEndianBytes" predefined function
 pub const FROM_BIGENDIAN_BYTES_METHOD_ID: MethodId = MethodId(5);
+/// serialize function added in v6.0
+pub const SERIALIZE_METHOD_ID: MethodId = MethodId(3);
 /// "some" property
 pub const SOME_METHOD_ID: MethodId = MethodId(9);
 /// "none" property
@@ -29,11 +32,8 @@ pub const NONE_METHOD_ID: MethodId = MethodId(10);
 
 lazy_static! {
     /// Global method descriptors
-   pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
-        vec![&GROUP_GENERATOR_METHOD_DESC,
-        &XOR_METHOD_DESC,
-        &FROM_BIGENDIAN_BYTES_METHOD_DESC,
-        &SOME_METHOD_DESC, &NONE_METHOD_DESC];
+    pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
+        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
 }
 
 lazy_static! {
@@ -45,7 +45,8 @@ lazy_static! {
             t_range: SType::SGroupElement.into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
      /// GLOBAL.GroupGenerator
     pub static ref GROUP_GENERATOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, GROUP_GENERATOR_METHOD_DESC.clone(),);
@@ -65,7 +66,8 @@ lazy_static! {
             t_range: SType::SColl(SType::SByte.into()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
      /// GLOBAL.xor
     pub static ref XOR_METHOD: SMethod = SMethod::new(STypeCompanion::Global, XOR_METHOD_DESC.clone(),);
@@ -78,13 +80,30 @@ lazy_static! {
         name: "fromBigEndianBytes",
         tpe: SFunc {
             t_dom: vec![SType::SGlobal, SType::SColl(SType::SByte.into())],
-            t_range:SType::STypeVar(STypeVar::t()).into(),
+            t_range: SType::STypeVar(STypeVar::t()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![STypeVar::t()]
+        explicit_type_args: vec![STypeVar::t()],
+        min_version: ErgoTreeVersion::V3
     };
     /// GLOBAL.fromBigEndianBytes
     pub static ref FROM_BIGENDIAN_BYTES_METHOD: SMethod = SMethod::new(STypeCompanion::Global, FROM_BIGENDIAN_BYTES_METHOD_DESC.clone(),);
+    static ref SERIALIZE_METHOD_DESC: SMethodDesc = SMethodDesc {
+        method_id: SERIALIZE_METHOD_ID,
+        name: "serialize",
+        tpe: SFunc {
+            t_dom: vec![
+                SType::SGlobal,
+                STypeVar::t().into()
+            ],
+            t_range: SType::SColl(SType::SByte.into()).into(),
+            tpe_params: vec![],
+        },
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V3
+    };
+     /// GLOBAL.serialize
+    pub static ref SERIALIZE_METHOD: SMethod = SMethod::new(STypeCompanion::Global, SERIALIZE_METHOD_DESC.clone(),);
 }
 
 lazy_static! {
@@ -96,7 +115,8 @@ lazy_static! {
             t_range:SType::SOption(SType::STypeVar(STypeVar::t()).into()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![STypeVar::t()]
+        explicit_type_args: vec![STypeVar::t()],
+        min_version: ErgoTreeVersion::V3
     };
     /// GLOBAL.some
     pub static ref SOME_METHOD : SMethod = SMethod::new(STypeCompanion::Global, SOME_METHOD_DESC.clone(),);
@@ -111,7 +131,8 @@ lazy_static! {
             t_range:SType::SOption(SType::STypeVar(STypeVar::t()).into()).into(),
             tpe_params: vec![],
         },
-        explicit_type_args: vec![STypeVar::t()]
+        explicit_type_args: vec![STypeVar::t()],
+        min_version: ErgoTreeVersion::V3
     };
     /// GLOBAL.none
     pub static ref NONE_METHOD : SMethod = SMethod::new(STypeCompanion::Global, NONE_METHOD_DESC.clone(),);

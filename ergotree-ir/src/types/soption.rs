@@ -1,3 +1,4 @@
+use crate::ergo_tree::ErgoTreeVersion;
 use crate::serialization::types::TypeCode;
 
 use super::sfunc::SFunc;
@@ -44,7 +45,8 @@ lazy_static! {
                 ],
             SType::SOption(SType::STypeVar(STypeVar::ov()).into()),
         ),
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
     /// Option.map
     pub static ref MAP_METHOD: SMethod = SMethod::new(
@@ -66,7 +68,8 @@ lazy_static! {
                 ],
             SType::SOption(SType::STypeVar(STypeVar::iv()).into()),
         ),
-        explicit_type_args: vec![]
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V0
     };
     /// Option.map
     pub static ref FILTER_METHOD: SMethod = SMethod::new(

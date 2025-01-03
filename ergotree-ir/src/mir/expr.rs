@@ -13,6 +13,8 @@ use crate::chain::ergo_box::RegisterIdOutOfBounds;
 use crate::chain::ergo_box::RegisterValueError;
 use crate::pretty_printer::PosTrackingWriter;
 use crate::pretty_printer::Print;
+use crate::serialization::sigma_byte_reader;
+use crate::serialization::sigma_byte_reader::SigmaByteRead;
 use crate::serialization::SigmaParsingError;
 use crate::serialization::SigmaSerializable;
 use crate::source_span::Spanned;
@@ -402,6 +404,7 @@ impl Expr {
     }
 
     /// Rewrite expr, replacing [`DeserializeContext`] and [`DeserializeRegister`] nodes with their respective context extension/register values
+    // TODO: work on soft-fork for sigma-rust, in that case if deserializing expr fails with validation err, reduce_to_crypto should return true
     pub fn substitute_deserialize(self, ctx: &Context) -> Result<Self, SubstDeserializeError> {
         self.try_rewrite_bu(
             |expr| {
@@ -420,16 +423,21 @@ impl Expr {
                             .ok_or(SubstDeserializeError::ExtensionKeyNotFound(*id))?
                             .clone()
                             .try_extract_into::<Vec<u8>>()?;
-                        (tpe, Expr::sigma_parse_bytes(&vec)?)
+                        (
+                            tpe,
+                            sigma_byte_reader::from_bytes(&vec)
+                                .with_tree_version(ctx.tree_version(), Expr::sigma_parse)?,
+                        )
                     }
                     Expr::DeserializeRegister(DeserializeRegister { reg, tpe, default }) => {
                         let expr = ctx
                             .self_box
                             .get_register(*reg)?
                             .map(|constant| -> Result<_, SubstDeserializeError> {
-                                Ok(Expr::sigma_parse_bytes(
+                                Ok(sigma_byte_reader::from_bytes(
                                     &constant.try_extract_into::<Vec<u8>>()?,
-                                )?)
+                                )
+                                .with_tree_version(ctx.tree_version(), Expr::sigma_parse)?)
                             })
                             .transpose()?
                             .or(default.as_deref().cloned());

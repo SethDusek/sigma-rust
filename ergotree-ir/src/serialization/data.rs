@@ -31,6 +31,7 @@ use core::convert::TryInto;
 pub struct DataSerializer {}
 
 impl DataSerializer {
+    /// Serialize Literal without typecode serialized
     pub fn sigma_serialize<W: SigmaByteWrite>(c: &Literal, w: &mut W) -> SigmaSerializeResult {
         // for reference see http://github.com/ScorexFoundation/sigmastate-interpreter/blob/25251c1313b0131835f92099f02cef8a5d932b5e/sigmastate/src/main/scala/sigmastate/serialization/DataSerializer.scala#L26-L26
         Ok(match c {
@@ -87,6 +88,7 @@ impl DataSerializer {
         })
     }
 
+    /// Parse sigma-serialized literal
     pub fn sigma_parse<R: SigmaByteRead>(
         tpe: &SType,
         r: &mut R,

@@ -1,7 +1,7 @@
 //! ErgoTree header
 
 use alloc::string::{String, ToString};
-use derive_more::From;
+use derive_more::{From, Into};
 use thiserror::Error;
 
 use crate::serialization::sigma_byte_reader::SigmaByteRead;
@@ -103,8 +103,8 @@ impl ErgoTreeHeader {
     }
 
     /// Returns ErgoTree version
-    pub fn version(&self) -> &ErgoTreeVersion {
-        &self.version
+    pub fn version(&self) -> ErgoTreeVersion {
+        self.version
     }
 }
 
@@ -120,7 +120,7 @@ pub enum ErgoTreeHeaderError {
 }
 
 /// ErgoTree version 0..=7, should fit in 3 bits
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Debug, Clone, Copy, From, Into, Default)]
 pub struct ErgoTreeVersion(u8);
 
 impl ErgoTreeVersion {
@@ -128,9 +128,7 @@ impl ErgoTreeVersion {
     pub const VERSION_MASK: u8 = 0x07;
 
     /// Max version of ErgoTree supported by interpreter
-    pub const MAX_SCRIPT_VERSION: u8 = 3;
-    /// Version for v6.0 (Evolution)
-    pub const V6_SOFT_FORK_VERSION: u8 = 3;
+    pub const MAX_SCRIPT_VERSION: Self = Self::V3;
     /// Version 0
     pub const V0: Self = ErgoTreeVersion(0);
     /// Version 1 (size flag is mandatory)
@@ -138,7 +136,7 @@ impl ErgoTreeVersion {
     /// Version 2 (JIT)
     pub const V2: Self = ErgoTreeVersion(2);
     /// Version 3 (v6.0/Evolution)
-    pub const V3: Self = ErgoTreeVersion(Self::V6_SOFT_FORK_VERSION);
+    pub const V3: Self = ErgoTreeVersion(3);
 
     /// Returns a value of the version bits from the given header byte.
     pub fn parse_version(header_byte: u8) -> Self {

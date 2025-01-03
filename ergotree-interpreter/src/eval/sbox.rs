@@ -18,10 +18,10 @@ pub(crate) static VALUE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
 };
 
 pub(crate) static GET_REG_EVAL_FN: EvalFn = |mc, _env, ctx, obj, args| {
-    if ctx.activated_script_version() < ErgoTreeVersion::V6_SOFT_FORK_VERSION {
+    if ctx.tree_version() < ErgoTreeVersion::V3 {
         return Err(EvalError::ScriptVersionError {
-            required_version: ErgoTreeVersion::V6_SOFT_FORK_VERSION,
-            activated_version: ctx.activated_script_version(),
+            required_version: ErgoTreeVersion::V3,
+            activated_version: ctx.tree_version(),
         });
     }
     #[allow(clippy::unwrap_used)]
@@ -128,13 +128,13 @@ mod tests {
         .unwrap()
         .into();
         let ctx = force_any_val::<Context>();
-        (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
-            assert!(try_eval_out_with_version::<i64>(&expr, &ctx, version).is_err())
+        (0..ErgoTreeVersion::V3.into()).for_each(|version| {
+            assert!(try_eval_out_with_version::<i64>(&expr, &ctx, version, version).is_err())
         });
-        (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
+        (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
             |version| {
                 assert_eq!(
-                    try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version)
+                    try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version, version)
                         .unwrap()
                         .unwrap(),
                     ctx.self_box.value.as_i64()
@@ -156,23 +156,26 @@ mod tests {
         .unwrap()
         .into();
         let ctx = force_any_val::<Context>();
-        (0..ErgoTreeVersion::V6_SOFT_FORK_VERSION).for_each(|version| {
-            let res = try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version);
+        (0..ErgoTreeVersion::V3.into()).for_each(|version| {
+            let res = try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version, version);
             match res {
                 Err(EvalError::Spanned(err))
                     if matches!(
                         *err.error,
                         EvalError::ScriptVersionError {
-                            required_version: ErgoTreeVersion::V6_SOFT_FORK_VERSION,
+                            required_version: ErgoTreeVersion::V3,
                             activated_version: _
                         }
                     ) => {}
                 _ => panic!("Expected script version error"),
             }
         });
-        (ErgoTreeVersion::V6_SOFT_FORK_VERSION..=ErgoTreeVersion::MAX_SCRIPT_VERSION).for_each(
+        (ErgoTreeVersion::V3.into()..=ErgoTreeVersion::MAX_SCRIPT_VERSION.into()).for_each(
             |version| {
-                assert!(try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version).is_err())
+                assert!(
+                    try_eval_out_with_version::<Option<i64>>(&expr, &ctx, version, version)
+                        .is_err()
+                )
             },
         );
     }
