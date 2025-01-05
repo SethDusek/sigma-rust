@@ -238,6 +238,30 @@ mod tests {
             .unwrap()
     }
 
+    fn create_some_none_method_call<T>(value: Option<T>, tpe: SType) -> Expr
+    where
+        T: Into<Constant>,
+    {
+        let type_args = std::iter::once((STypeVar::t(), tpe.clone())).collect();
+        match value {
+            Some(v) => MethodCall::new(
+                Expr::Global,
+                sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
+                vec![Expr::Const(v.into())],
+            )
+            .unwrap()
+            .into(),
+            None => MethodCall::with_type_args(
+                Expr::Global,
+                sglobal::NONE_METHOD.clone().with_concrete_types(&type_args),
+                vec![],
+                type_args,
+            )
+            .unwrap()
+            .into(),
+        }
+    }
+
     #[test]
     fn eval_group_generator() {
         let expr: Expr = PropertyCall::new(Expr::Global, sglobal::GROUP_GENERATOR_METHOD.clone())
@@ -392,83 +416,18 @@ mod tests {
             assert_eq!(eval_out_wo_ctx::<BigInt256>(&expr), BigInt256::from(v_long));
         }
 
-
         #[test]
         fn test_some_and_none(
             byte_val in any::<i8>(),
             int_val in any::<i32>(),
             long_val in any::<i64>()
         ) {
-            {
-                let type_args = std::iter::once((STypeVar::t(), SType::SByte)).collect();
-                let some_expr: Expr = MethodCall::with_type_args(
-                    Expr::Global,
-                    sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
-                    vec![byte_val.into()],
-                    type_args,
-                )
-                .unwrap()
-                .into();
-                let some_result = eval_out_wo_ctx::<Option<i8>>(&some_expr);
-                assert_eq!(some_result, Some(byte_val));
-            }
-
-            {
-                let type_args = std::iter::once((STypeVar::t(), SType::SInt)).collect();
-                let some_expr: Expr = MethodCall::with_type_args(
-                    Expr::Global,
-                    sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
-                    vec![int_val.into()],
-                    type_args,
-                )
-                .unwrap()
-                .into();
-                let some_result = eval_out_wo_ctx::<Option<i32>>(&some_expr);
-                assert_eq!(some_result, Some(int_val));
-            }
-                 {
-                let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
-                let some_expr: Expr = MethodCall::with_type_args(
-                    Expr::Global,
-                    sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
-                    vec![long_val.into()],
-                    type_args,
-                )
-                .unwrap()
-                .into();
-                let some_result = eval_out_wo_ctx::<Option<i64>>(&some_expr);
-                assert_eq!(some_result, Some(long_val));
-            }
-
-                {
-                let type_args = std::iter::once((STypeVar::t(), SType::SByte)).collect();
-                let none_expr: Expr = MethodCall::with_type_args(
-                    Expr::Global,
-                    sglobal::NONE_METHOD.clone().with_concrete_types(&type_args),
-                    vec![],
-                    type_args,
-                )
-                .unwrap()
-                .into();
-                let none_result = eval_out_wo_ctx::<Option<i8>>(&none_expr);
-                assert_eq!(none_result, None);
-            }
-
-            {
-                let type_args = std::iter::once((STypeVar::t(), SType::SLong)).collect();
-                let none_expr: Expr = MethodCall::with_type_args(
-                    Expr::Global,
-                    sglobal::NONE_METHOD.clone().with_concrete_types(&type_args),
-                    vec![],
-                    type_args,
-                )
-                .unwrap()
-                .into();
-                let none_result = eval_out_wo_ctx::<Option<i64>>(&none_expr);
-                assert_eq!(none_result, None);
-            }
+            assert_eq!(eval_out_wo_ctx::<Option<i8>>(&create_some_none_method_call(Some(byte_val), SType::SByte)), Some(byte_val));
+            assert_eq!(eval_out_wo_ctx::<Option<i32>>(&create_some_none_method_call(Some(int_val), SType::SInt)), Some(int_val));
+            assert_eq!(eval_out_wo_ctx::<Option<i64>>(&create_some_none_method_call(Some(long_val), SType::SLong)), Some(long_val));
+            assert_eq!(eval_out_wo_ctx::<Option<i8>>(&create_some_none_method_call::<i8>(None, SType::SByte)), None);
+            assert_eq!(eval_out_wo_ctx::<Option<i64>>(&create_some_none_method_call::<i64>(None, SType::SLong)), None);
         }
-
 
     }
 
