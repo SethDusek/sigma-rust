@@ -25,11 +25,15 @@ pub const XOR_METHOD_ID: MethodId = MethodId(2);
 pub const FROM_BIGENDIAN_BYTES_METHOD_ID: MethodId = MethodId(5);
 /// serialize function added in v6.0
 pub const SERIALIZE_METHOD_ID: MethodId = MethodId(3);
+/// "some" property
+pub const SOME_METHOD_ID: MethodId = MethodId(9);
+/// "none" property
+pub const NONE_METHOD_ID: MethodId = MethodId(10);
 
 lazy_static! {
     /// Global method descriptors
     pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
-        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
+        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC, &NONE_METHOD_DESC, &SOME_METHOD_DESC];
 }
 
 lazy_static! {
@@ -100,4 +104,36 @@ lazy_static! {
     };
      /// GLOBAL.serialize
     pub static ref SERIALIZE_METHOD: SMethod = SMethod::new(STypeCompanion::Global, SERIALIZE_METHOD_DESC.clone(),);
+}
+
+lazy_static! {
+    static ref SOME_METHOD_DESC: SMethodDesc = SMethodDesc {
+        method_id: SOME_METHOD_ID,
+        name: "some",
+        tpe: SFunc {
+            t_dom: vec![SType::SGlobal, SType::STypeVar(STypeVar::t())],
+            t_range:SType::SOption(SType::STypeVar(STypeVar::t()).into()).into(),
+            tpe_params: vec![],
+        },
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V3
+    };
+    /// GLOBAL.some
+    pub static ref SOME_METHOD : SMethod = SMethod::new(STypeCompanion::Global, SOME_METHOD_DESC.clone(),);
+}
+
+lazy_static! {
+    static ref NONE_METHOD_DESC: SMethodDesc = SMethodDesc {
+        method_id: NONE_METHOD_ID,
+        name: "none",
+        tpe: SFunc {
+            t_dom: vec![SType::SGlobal],
+            t_range:SType::SOption(SType::STypeVar(STypeVar::t()).into()).into(),
+            tpe_params: vec![],
+        },
+        explicit_type_args: vec![STypeVar::t()],
+        min_version: ErgoTreeVersion::V3
+    };
+    /// GLOBAL.none
+    pub static ref NONE_METHOD : SMethod = SMethod::new(STypeCompanion::Global, NONE_METHOD_DESC.clone(),);
 }

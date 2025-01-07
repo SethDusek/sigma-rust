@@ -1,6 +1,6 @@
-use alloc::{string::ToString, sync::Arc};
-
 use crate::eval::EvalError;
+use alloc::boxed::Box;
+use alloc::{string::ToString, sync::Arc};
 
 use ergotree_ir::{
     mir::{
@@ -167,6 +167,30 @@ pub(crate) static SERIALIZE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     Ok(Value::from(buf))
 };
 
+pub(crate) static SGLOBAL_SOME_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
+    if obj != Value::Global {
+        return Err(EvalError::UnexpectedValue(format!(
+            "sglobal.some expected obj to be Value::Global, got {:?}",
+            obj
+        )));
+    }
+    let value = args
+        .first()
+        .cloned()
+        .ok_or_else(|| EvalError::NotFound("some: missing value arg".to_string()))?;
+    Ok(Value::Opt(Box::new(Some(value))))
+};
+
+pub(crate) static SGLOBAL_NONE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, _args| {
+    if obj != Value::Global {
+        return Err(EvalError::UnexpectedValue(format!(
+            "sglobal.none expected obj to be Value::Global, got {:?}",
+            obj
+        )));
+    }
+    Ok(Value::Opt(Box::new(None)))
+};
+
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
@@ -212,6 +236,30 @@ mod tests {
         }));
         try_eval_out_with_version(&serialize_node.into(), &ctx, ErgoTreeVersion::V3.into(), 3)
             .unwrap()
+    }
+
+    fn create_some_none_method_call<T>(value: Option<T>, tpe: SType) -> Expr
+    where
+        T: Into<Constant>,
+    {
+        let type_args = std::iter::once((STypeVar::t(), tpe.clone())).collect();
+        match value {
+            Some(v) => MethodCall::new(
+                Expr::Global,
+                sglobal::SOME_METHOD.clone().with_concrete_types(&type_args),
+                vec![Expr::Const(v.into())],
+            )
+            .unwrap()
+            .into(),
+            None => MethodCall::with_type_args(
+                Expr::Global,
+                sglobal::NONE_METHOD.clone().with_concrete_types(&type_args),
+                vec![],
+                type_args,
+            )
+            .unwrap()
+            .into(),
+        }
     }
 
     #[test]
@@ -367,6 +415,20 @@ mod tests {
             .into();
             assert_eq!(eval_out_wo_ctx::<BigInt256>(&expr), BigInt256::from(v_long));
         }
+
+        #[test]
+        fn test_some_and_none(
+            byte_val in any::<i8>(),
+            int_val in any::<i32>(),
+            long_val in any::<i64>()
+        ) {
+            assert_eq!(eval_out_wo_ctx::<Option<i8>>(&create_some_none_method_call(Some(byte_val), SType::SByte)), Some(byte_val));
+            assert_eq!(eval_out_wo_ctx::<Option<i32>>(&create_some_none_method_call(Some(int_val), SType::SInt)), Some(int_val));
+            assert_eq!(eval_out_wo_ctx::<Option<i64>>(&create_some_none_method_call(Some(long_val), SType::SLong)), Some(long_val));
+            assert_eq!(eval_out_wo_ctx::<Option<i8>>(&create_some_none_method_call::<i8>(None, SType::SByte)), None);
+            assert_eq!(eval_out_wo_ctx::<Option<i64>>(&create_some_none_method_call::<i64>(None, SType::SLong)), None);
+        }
+
     }
 
     #[test]
