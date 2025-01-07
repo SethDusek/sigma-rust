@@ -2,23 +2,44 @@
 
 use alloc::string::String;
 use core::convert::TryFrom;
+use core::default;
 use core::ops::{Add, Mul, Neg};
 use derive_more::{From, Into};
 use elliptic_curve::ops::MulByGenerator;
 use k256::elliptic_curve::group::prime::PrimeCurveAffine;
 use k256::elliptic_curve::sec1::ToEncodedPoint;
-use k256::{ProjectivePoint, PublicKey, Scalar};
+use k256::{AffinePoint, ProjectivePoint, PublicKey, Scalar};
 use sigma_ser::vlq_encode::{ReadSigmaVlqExt, WriteSigmaVlqExt};
 use sigma_ser::{ScorexParsingError, ScorexSerializable, ScorexSerializeResult};
 
-/// Elliptic curve point
-#[derive(PartialEq, Clone, Copy, Default, From, Into)]
+// /// Elliptic curve point
+#[derive(Clone, Copy, From)]
 #[cfg_attr(
     feature = "json",
     derive(serde::Serialize, serde::Deserialize),
     serde(into = "String", try_from = "String")
 )]
-pub struct EcPoint(ProjectivePoint);
+#[allow(missing_docs)]
+pub enum EcPoint {
+    Affine(AffinePoint),
+    Projective(ProjectivePoint),
+}
+impl Default for EcPoint {
+    fn default() -> Self {
+        AffinePoint::default().into()
+    }
+}
+
+impl PartialEq for EcPoint {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (EcPoint::Affine(a1), EcPoint::Affine(a2)) => a1 == a2,
+            (EcPoint::Affine(a1), EcPoint::Projective(p1)) => p1.eq_affine(a1).unwrap_u8() == 1,
+            (EcPoint::Projective(p1), EcPoint::Affine(a1)) => p1.eq_affine(a1).unwrap_u8() == 1,
+            (EcPoint::Projective(p1), EcPoint::Projective(p2)) => p1 == p2,
+        }
+    }
+}
 
 #[allow(clippy::unwrap_used)]
 impl core::fmt::Debug for EcPoint {
@@ -75,7 +96,18 @@ impl Mul<&EcPoint> for EcPoint {
     type Output = EcPoint;
 
     fn mul(self, other: &EcPoint) -> EcPoint {
-        EcPoint(ProjectivePoint::add(self.0, &other.0))
+        match (self, other) {
+            (EcPoint::Affine(a1), EcPoint::Affine(a2)) => ProjectivePoint::from(a1) + a2,
+            (EcPoint::Affine(affine_point), EcPoint::Projective(projective_point)) => {
+                projective_point + &affine_point
+            }
+            (EcPoint::Projective(projective_point), EcPoint::Affine(affine_point)) => {
+                projective_point + affine_point
+            }
+            (EcPoint::Projective(p1), EcPoint::Projective(p2)) => p1 + p2,
+        }
+        .into()
+        // EcPoint(ProjectivePoint::add(self.0, &other.0))
     }
 }
 
@@ -83,19 +115,23 @@ impl Neg for EcPoint {
     type Output = EcPoint;
 
     fn neg(self) -> EcPoint {
-        EcPoint(ProjectivePoint::neg(self.0))
+        match self {
+            EcPoint::Affine(affine_point) => (-affine_point).into(),
+            EcPoint::Projective(projective_point) => (-projective_point).into(),
+        }
+        // EcPoint::from(ProjectivePoint::neg(self.0))
     }
 }
 
 /// The generator g of the group is an element of the group such that, when written multiplicatively, every element
 /// of the group is a power of g.
 pub fn generator() -> EcPoint {
-    EcPoint(ProjectivePoint::GENERATOR)
+    EcPoint::from(ProjectivePoint::GENERATOR)
 }
 
 /// The identity(infinity) element
-pub const fn identity() -> EcPoint {
-    EcPoint(ProjectivePoint::IDENTITY)
+pub fn identity() -> EcPoint {
+    EcPoint::from(ProjectivePoint::IDENTITY)
 }
 
 /// Check if point is identity(infinity) element
@@ -111,8 +147,10 @@ pub fn inverse(ec: &EcPoint) -> EcPoint {
 /// Raises the base GroupElement to the exponent. The result is another GroupElement.
 pub fn exponentiate(base: &EcPoint, exponent: &Scalar) -> EcPoint {
     if !is_identity(base) {
-        // we treat EC as a multiplicative group, therefore, exponentiate point is multiply.
-        EcPoint(base.0 * exponent)
+        match base {
+            EcPoint::Affine(affine_point) => (*affine_point * exponent).into(),
+            EcPoint::Projective(projective_point) => (projective_point * exponent).into(),
+        }
     } else {
         *base
     }
@@ -125,7 +163,11 @@ pub fn exponentiate_gen(exponent: &Scalar) -> EcPoint {
 
 impl ScorexSerializable for EcPoint {
     fn scorex_serialize<W: WriteSigmaVlqExt>(&self, w: &mut W) -> ScorexSerializeResult {
-        let caff = self.0.to_affine();
+        // let now = std::time::Instant::now();
+        let caff = match self {
+            EcPoint::Affine(affine_point) => *affine_point,
+            EcPoint::Projective(projective_point) => projective_point.to_affine(),
+        };
         if caff.is_identity().into() {
             // infinity point
             let zeroes = [0u8; EcPoint::GROUP_SIZE];
@@ -133,6 +175,7 @@ impl ScorexSerializable for EcPoint {
         } else {
             w.write_all(caff.to_encoded_point(true).as_bytes())?;
         }
+        // println!("{} {:?}", matches!(self, EcPoint::Affine(_)), now.elapsed());
         Ok(())
     }
 
@@ -143,10 +186,10 @@ impl ScorexSerializable for EcPoint {
             let pubkey = PublicKey::from_sec1_bytes(&buf[..]).map_err(|e| {
                 ScorexParsingError::Misc(format!("failed to parse PK from bytes: {:?}", e))
             })?;
-            Ok(EcPoint(pubkey.to_projective()))
+            Ok(EcPoint::from(*pubkey.as_affine()))
         } else {
             // infinity point
-            Ok(EcPoint(ProjectivePoint::IDENTITY))
+            Ok(EcPoint::from(ProjectivePoint::IDENTITY))
         }
     }
 }

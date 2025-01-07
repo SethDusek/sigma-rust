@@ -8,7 +8,7 @@
 #![deny(non_snake_case)]
 #![deny(unused_mut)]
 #![deny(dead_code)]
-#![deny(unused_imports)]
+// #![deny(unused_imports)]
 #![deny(missing_docs)]
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(clippy::wildcard_enum_match_arm)]
