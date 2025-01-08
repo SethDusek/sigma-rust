@@ -224,7 +224,7 @@ jobs:
           - 9053:9053
 
     steps:
-      - uses: fwal/setup-swift@v1
+      - uses: fwal/setup-swift@v2
       - name: checkout
         uses: actions/checkout@v2
 
