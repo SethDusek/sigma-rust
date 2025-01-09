@@ -25,11 +25,13 @@ pub const XOR_METHOD_ID: MethodId = MethodId(2);
 pub const FROM_BIGENDIAN_BYTES_METHOD_ID: MethodId = MethodId(5);
 /// serialize function added in v6.0
 pub const SERIALIZE_METHOD_ID: MethodId = MethodId(3);
+/// Global.powHit function
+pub const POW_HIT_METHOD_ID: MethodId = MethodId(8);
 
 lazy_static! {
     /// Global method descriptors
     pub(crate) static ref METHOD_DESC: Vec<&'static SMethodDesc> =
-        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC];
+        vec![&GROUP_GENERATOR_METHOD_DESC, &XOR_METHOD_DESC, &SERIALIZE_METHOD_DESC, &FROM_BIGENDIAN_BYTES_METHOD_DESC, &POW_HIT_METHOD_DESC];
 }
 
 lazy_static! {
@@ -84,6 +86,7 @@ lazy_static! {
     };
     /// GLOBAL.fromBigEndianBytes
     pub static ref FROM_BIGENDIAN_BYTES_METHOD: SMethod = SMethod::new(STypeCompanion::Global, FROM_BIGENDIAN_BYTES_METHOD_DESC.clone(),);
+
     static ref SERIALIZE_METHOD_DESC: SMethodDesc = SMethodDesc {
         method_id: SERIALIZE_METHOD_ID,
         name: "serialize",
@@ -98,6 +101,27 @@ lazy_static! {
         explicit_type_args: vec![],
         min_version: ErgoTreeVersion::V3
     };
-     /// GLOBAL.serialize
+    /// GLOBAL.serialize
     pub static ref SERIALIZE_METHOD: SMethod = SMethod::new(STypeCompanion::Global, SERIALIZE_METHOD_DESC.clone(),);
+
+    static ref POW_HIT_METHOD_DESC: SMethodDesc = SMethodDesc {
+        method_id: POW_HIT_METHOD_ID,
+        name: "powHit",
+        tpe: SFunc {
+            t_dom: vec![
+                SType::SGlobal,
+                SType::SInt,
+                SType::SColl(SType::SByte.into()),
+                SType::SColl(SType::SByte.into()),
+                SType::SColl(SType::SByte.into()),
+                SType::SInt,
+            ],
+            t_range: SType::SBoolean.into(),
+            tpe_params: vec![],
+        },
+        explicit_type_args: vec![],
+        min_version: ErgoTreeVersion::V3
+    };
+    /// Global.powHit
+    pub static ref POW_HIT_METHOD: SMethod = SMethod::new(STypeCompanion::Global, POW_HIT_METHOD_DESC.clone());
 }

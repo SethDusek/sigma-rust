@@ -4,7 +4,7 @@ use crate::eval::EvalError;
 
 use ergotree_ir::{
     mir::{
-        constant::Constant,
+        constant::{Constant, TryExtractInto},
         value::{CollKind, NativeColl, Value},
     },
     serialization::{data::DataSerializer, sigma_byte_writer::SigmaByteWriter},
@@ -12,7 +12,7 @@ use ergotree_ir::{
 
 use super::EvalFn;
 use crate::eval::Vec;
-use ergo_chain_types::ec_point::generator;
+use ergo_chain_types::{autolykos_pow_scheme::AutolykosPowScheme, ec_point::generator};
 use ergotree_ir::bigint256::BigInt256;
 use ergotree_ir::types::stype::SType;
 
@@ -167,6 +167,42 @@ pub(crate) static SERIALIZE_EVAL_FN: EvalFn = |_mc, _env, _ctx, obj, args| {
     Ok(Value::from(buf))
 };
 
+pub(crate) static POW_HIT_EVAL_FN: EvalFn = |_mc, _env, _ctx, _obj, mut args| {
+    // Pop arguments to avoid cloning
+    let big_n: u32 = args
+        .pop()
+        .ok_or_else(|| EvalError::NotFound("powHit: missing N".into()))?
+        .try_extract_into::<i32>()?
+        .try_into()
+        .map_err(|_| EvalError::Misc("N out of bounds".into()))?;
+    let h = args
+        .pop()
+        .ok_or_else(|| EvalError::NotFound("powHit: missing h".into()))?
+        .try_extract_into::<Vec<u8>>()?;
+    let nonce = args
+        .pop()
+        .ok_or_else(|| EvalError::NotFound("powHit: missing nonce".into()))?
+        .try_extract_into::<Vec<u8>>()?;
+    let msg = args
+        .pop()
+        .ok_or_else(|| EvalError::NotFound("powHit: missing msg".into()))?
+        .try_extract_into::<Vec<u8>>()?;
+    let k = args
+        .pop()
+        .ok_or_else(|| EvalError::NotFound("powHit: missing msg".into()))?
+        .try_extract_into::<i32>()?;
+    Ok(BigInt256::try_from(
+        AutolykosPowScheme::new(
+            k.try_into()
+                .map_err(|_| EvalError::Misc("k out of bounds".into()))?,
+            big_n,
+        )?
+        .pow_hit_message_v2(&msg, &nonce, &h, big_n)?,
+    )
+    .map_err(EvalError::Misc)?
+    .into())
+};
+
 #[allow(clippy::unwrap_used)]
 #[cfg(test)]
 #[cfg(feature = "arbitrary")]
@@ -184,11 +220,12 @@ mod tests {
     use ergotree_ir::sigma_protocol::sigma_boolean::SigmaProp;
     use ergotree_ir::types::sgroup_elem::GET_ENCODED_METHOD;
     use ergotree_ir::types::stype_param::STypeVar;
+    use num_traits::Num;
     use proptest::proptest;
 
     use crate::eval::tests::{eval_out, eval_out_wo_ctx, try_eval_out_with_version};
     use ergotree_ir::chain::context::Context;
-    use ergotree_ir::types::sglobal::{self, SERIALIZE_METHOD};
+    use ergotree_ir::types::sglobal::{self, POW_HIT_METHOD, SERIALIZE_METHOD};
     use ergotree_ir::types::stype::SType;
     use sigma_test_util::force_any_val;
 
@@ -212,6 +249,28 @@ mod tests {
         }));
         try_eval_out_with_version(&serialize_node.into(), &ctx, ErgoTreeVersion::V3.into(), 3)
             .unwrap()
+    }
+
+    fn pow_hit(k: u32, msg: &[u8], nonce: &[u8], h: &[u8], big_n: u32) -> BigInt256 {
+        let expr: Expr = MethodCall::new(
+            Expr::Global,
+            POW_HIT_METHOD.clone(),
+            vec![
+                Constant::from(k as i32).into(),
+                Constant::from(msg.to_owned()).into(),
+                Constant::from(nonce.to_owned()).into(),
+                Constant::from(h.to_owned()).into(),
+                Constant::from(big_n as i32).into(),
+            ],
+        )
+        .unwrap()
+        .into();
+        let ctx = force_any_val::<Context>();
+        assert!((0..ErgoTreeVersion::V3.into())
+            .all(
+                |version| try_eval_out_with_version::<BigInt256>(&expr, &ctx, version, 3).is_err()
+            ));
+        try_eval_out_with_version(&expr, &ctx, ErgoTreeVersion::V3.into(), 3).unwrap()
     }
 
     #[test]
@@ -421,6 +480,21 @@ mod tests {
         assert_eq!(
             eval_out_wo_ctx::<Vec<u8>>(&get_encoded.into()),
             serialize(ec_point)
+        );
+    }
+
+    #[test]
+    fn powhit_eval() {
+        let msg = base16::decode("0a101b8c6a4f2e").unwrap();
+        let nonce = base16::decode("000000000000002c").unwrap();
+        let hbs = base16::decode("00000000").unwrap();
+        assert_eq!(
+            pow_hit(32, &msg, &nonce, &hbs, 1024 * 1024),
+            BigInt256::from_str_radix(
+                "326674862673836209462483453386286740270338859283019276168539876024851191344",
+                10
+            )
+            .unwrap()
         );
     }
 
