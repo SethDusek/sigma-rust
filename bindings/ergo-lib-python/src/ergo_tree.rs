@@ -32,8 +32,8 @@ impl ErgoTree {
             .map_err(to_value_error)
     }
     #[classmethod]
-    fn from_bytes(_: &Bound<'_, PyType>, bytes: &[u8]) -> PyResult<Self> {
-        ergo_tree::ErgoTree::sigma_parse_bytes(bytes)
+    fn from_bytes(_: &Bound<'_, PyType>, b: &[u8]) -> PyResult<Self> {
+        ergo_tree::ErgoTree::sigma_parse_bytes(b)
             .map(Self)
             .map_err(SigmaParsingError::from)
             .map_err(Into::into)

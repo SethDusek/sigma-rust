@@ -62,11 +62,9 @@ impl Address {
     #[new]
     #[pyo3(signature = (arg, network_prefix=None))]
     fn new(arg: &Bound<'_, PyAny>, network_prefix: Option<NetworkPrefix>) -> PyResult<Self> {
-        let encoder = if let Some(prefix) = network_prefix {
-            Some(AddressEncoder::new(address::NetworkPrefix::from(prefix)))
-        } else {
-            None
-        };
+        let encoder =
+            network_prefix.map(|prefix| AddressEncoder::new(address::NetworkPrefix::from(prefix)));
+
         match arg.extract::<&str>() {
             Ok(s) => {
                 if let Some(encoder) = encoder {
@@ -101,11 +99,10 @@ impl Address {
             .map_err(to_value_error)
     }
     /// Create an ErgoTree script from the address
-    fn ergo_tree(&self) -> PyResult<ErgoTree> {
+    pub(crate) fn ergo_tree(&self) -> PyResult<ErgoTree> {
         self.0.script().map(Into::into).map_err(to_value_error)
     }
 
-    #[pyo3(signature = (network_prefix=NetworkPrefix::Mainnet))]
     fn to_str(&self, network_prefix: NetworkPrefix) -> String {
         AddressEncoder::new(network_prefix.into()).address_to_str(&self.0)
     }
