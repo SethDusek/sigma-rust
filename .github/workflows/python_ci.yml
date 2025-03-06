@@ -5,9 +5,9 @@
 #
 name: CI
 
-defaults:
-  run:
-    working-directory: bindings/ergo-lib-python
+#defaults:
+#  run:
+#    working-directory: bindings/ergo-lib-python
 on:
   push:
     branches:
@@ -40,7 +40,7 @@ jobs:
           - runner: ubuntu-22.04
             target: ppc64le
     steps:
-      - run: pwd
+      - run: ls
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
