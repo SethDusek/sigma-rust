@@ -40,8 +40,8 @@ jobs:
           - runner: ubuntu-22.04
             target: ppc64le
     steps:
-      - run: ls -la
       - uses: actions/checkout@v4
+      - run: ls -la
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
