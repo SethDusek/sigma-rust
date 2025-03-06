@@ -19,8 +19,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.81
-          override: true
+          override: false
       - name: Build ergotree-ir
         uses: actions-rs/cargo@v1
         with:
