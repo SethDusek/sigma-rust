@@ -7,7 +7,7 @@ name: CI
 
 defaults:
   run:
-    working-directory: ./bindings/ergo-lib-python
+    working-directory: bindings/ergo-lib-python
 on:
   push:
     branches:
