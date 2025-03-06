@@ -2,7 +2,7 @@
 
 Rust implementation of [ErgoScript](https://github.com/ScorexFoundation/sigmastate-interpreter) cryptocurrency scripting language.
 
-See [Architecture](docs/architecture.md) for high-level overview.
+See [Architecture](docs/architecture.md) for high-level overview
 
 ## Crates
 
