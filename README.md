@@ -4,7 +4,7 @@ Rust implementation of [ErgoScript](https://github.com/ScorexFoundation/sigmasta
 
 See [Architecture](docs/architecture.md) for high-level overview.
 
-## Crates
+## Crates 
 
 [ergo-lib](https://github.com/ergoplatform/sigma-rust/tree/develop/ergo-lib) [![Latest Version](https://img.shields.io/crates/v/ergo-lib.svg)](https://crates.io/crates/ergo-lib) [![Documentation](https://docs.rs/ergo-lib/badge.svg)](https://docs.rs/crate/ergo-lib)
 
