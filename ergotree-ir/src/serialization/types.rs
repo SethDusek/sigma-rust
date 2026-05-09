@@ -273,6 +273,9 @@ impl SType {
                         tpe_params,
                     })
                 }
+                TypeCode::SFUNC => {
+                    return Err(SoftForkError::InvalidTypeCode(TypeCode::SFUNC as u8).into())
+                }
                 #[allow(clippy::unreachable)] // All types with typecode >= Tuple are checked
                 _ => unreachable!(),
             })
